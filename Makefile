@@ -1,7 +1,10 @@
-demo:
-	(cd green; make)
-	(echo; echo; cd pyxi; python pyxi)
+all:
+	$(MAKE) -C backend
 
 clean:
-	(cd green; make clean)
-	(cd pyxi; rm -f core *.pyc)
+	$(MAKE) -C backend clean
+
+test:
+	cd febe && python3 test_client.py
+
+.PHONY: all clean test

@@ -12,8 +12,7 @@ Python 3 implementation of the Udanax Green FEBE 88.1 protocol (Front End Back E
 Run the C backend in test mode (in-memory storage, no disk persistence):
 
 ```bash
-cd ../green/be_source
-./backend --test-mode
+../backend/build/backend --test-mode
 ```
 
 Connect and execute operations:

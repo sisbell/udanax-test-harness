@@ -1,5 +1,0 @@
-host = roman 
-#backend = backend
-frontend = fex
-backglue = intx
-frontglue = ints

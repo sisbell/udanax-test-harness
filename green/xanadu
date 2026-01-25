@@ -1,4 +1,0 @@
-stty raw
-glue_source/intf be_source/backend fe_source/fex
-stty -raw
-reset

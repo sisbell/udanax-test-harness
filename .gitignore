@@ -1,0 +1,10 @@
+# C build artifacts
+backend/build/
+
+# Python
+__pycache__/
+*.pyc
+
+# Runtime files
+backenderror
+enf.enf
