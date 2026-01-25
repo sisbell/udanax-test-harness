@@ -1,5 +1,5 @@
 CC = cc
-CFLAGS = -g
+CFLAGS = -g -w
 LFLAGS = -g
 
 BUILD = build
