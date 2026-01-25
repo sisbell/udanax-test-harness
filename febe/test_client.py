@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Test suite for x88.py - Udanax 88.1 FeBe protocol client."""
+"""Test suite for FEBE protocol client."""
 
 # Ported to Python 3 - January 2026
 
-from x88 import *
+from client import *
 
 def verify(result, expected=True):
     if result != expected:
