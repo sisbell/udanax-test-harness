@@ -150,7 +150,6 @@ bool getspecset(typetask *taskptr, typespecset *specsetptr)
   char c, c1;
   typespecset specset;
   bool getvspec();
-  bool getspan();
 
 	*specsetptr = NULL;
 	if (!getnumber (taskptr, &num)) {
@@ -182,7 +181,6 @@ bool getspecset(typetask *taskptr, typespecset *specsetptr)
 
 bool getvspec(typetask *taskptr, typevspec *vspecptr)
 {
-  bool getspanset();
 /*fprintf (logfile, " vspec"); fprintf (taskptr->errp, "X getvspec\n"); */
 	vspecptr->itemid = VSPECID;
 	vspecptr->next = NULL;
@@ -195,7 +193,6 @@ bool getspanset(typetask *taskptr, typespanset *spansetptr, char id)
 {
   typespanset spanset;
   INT num;
-  bool getspan();
 /*fprintf (logfile, " spanset"); fprintf (taskptr->errp, "X getspanset\n"); */
 	*spansetptr = NULL;
 	if (!getnumber (taskptr, &num))

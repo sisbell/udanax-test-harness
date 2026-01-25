@@ -88,7 +88,7 @@ int makecutsbackuptohere(typecuc *ptr, typewid *offset, typeknives *knives)
 /*asserttreeisok(ptr);*/
 		}
 	    }
-	    return;
+	    return(0);
 	} else {
 	  for (i=0;i<knives->nblades;++i) {
 	    cutsons(ptr,offset,knives);  
@@ -103,7 +103,7 @@ int makecutsbackuptohere(typecuc *ptr, typewid *offset, typeknives *knives)
 		  makeithcutonson((typecorecrum*)ptr, offset, (typecorecrum*)son, &grasp, knives, i);
 		  if (!crumiscutbyithknife(ptr, offset, knives, i)) {
 			if (ptr->numberofsons == 0) {
-				return;
+				return(0);
 			}
 			break;
 		  }
@@ -164,7 +164,7 @@ int makeithcutonson(typecorecrum *ptr, typewid *offset, typecorecrum *son, typew
 #ifndef DISTRIBUTION
 fprintf(stderr,"foo return in makeithcutonson\n");
 #endif
-		return;
+		return(0);
 	}
 	if ((temp =whereoncrum(son,grasp,&knives->blades[ i ],knives->dimension))<THRUME) {
 		peelsoncorrectly(ptr,offset,son,grasp,knives,i);
@@ -179,9 +179,9 @@ fprintf(stderr,"foo return in makeithcutonson\n");
 				/*dump(ptr);*/ /*dumpwholetree(ptr);*/
 				check(ptr);
 #endif
-				return;
+				return(0);
 			}
-			return;
+			return(0);
 		}       
 		(void) findleftson((typecuc*)ptr);/* make sure its in core*/
 		if (((typecuc *)ptr)->numberofsons == 0) {
@@ -219,7 +219,7 @@ int peelsoncorrectly(typecorecrum *ptr, typewid *offset, typecorecrum *son, type
 		if (roomformoresons(uncle)) {
 			if (crumleftofithcut((typecorecrum*)uncle,offset,knives,i)) {
 				newpeelcrumoffnd((typecorecrum*)son,(typecorecrum*)uncle);
-			  return;
+			  return(0);
 			}
 		}
 	}	

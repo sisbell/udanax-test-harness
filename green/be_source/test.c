@@ -20,6 +20,25 @@
 #include "ndenf.h"
 #include "coredisk.h"
 
+/* Forward declarations for test.c internal functions */
+int assertsonswispmatchesfather(typecuc *father);
+int assertwidsarepositive(typecorecrum *ptr);
+int dumphedr(typecorecrumhedr *ptr);
+int dumpinfo(typegranbottomcruminfo *infoptr, INT enftype);
+int showorgl(typetask *taskptr);
+int showsubtree(typecorecrum *father);
+int showistream(typecuc *granfptr);
+int showspanf(typecuc *spanfptr);
+int doshowspanf(typecorecrum *crumptr, typedsp *offsetptr, INT enfheight);
+int showspanfcrum(typecorecrum *crumptr, typedsp *offsetptr, INT enfheight);
+int showgranwids(typecorecrum *crum, INT down, tumbler *retptr);
+int showpoomwisps(typecuc *crum, INT down);
+int dumpistreamgr(typecuc *crumptr);
+int dodumpistreamgr(typecuc *crumptr, tumbler *offsetptr);
+int dumpmoleculegr(tumbler *offsetptr, typecbc *cbcptr);
+int dumptext(typetext *textptr);
+int dumpspanpair(typespanpair *spanpair);
+
 extern bool gettumbler();
 
 extern typecorecrum *grimreaper;
@@ -189,17 +208,17 @@ int foowid(char *msg, typewid *wptr, INT enftype)
 }
 /* pass this the fullcrum to dump the entire (incore) enfilade */
 int dumpsubtree(typecuc *father)
-{ 
+{
 #ifndef DISTRIBUTION
   typecorecrum *ptr;
 
         if (father->cenftype == POOM) {
                 dumppoomwisps (father);
-                return;
+                return(0);
         }
         dump (father);
         if (father->height <= 0)
-                return;
+                return(0);
         for (ptr = father->leftson; ptr; ptr = ptr->rightbro)
                 dumpsubtree (ptr);
 #endif
@@ -212,11 +231,11 @@ fprintf(stderr,"dump whole subtree");
 
         if (father->cenftype == POOM) {
                 dumppoomwisps (father);
-                return;
+                return(0);
         }
         dump (father);
         if (father->height <= 0)
-                return;
+                return(0);
         for (ptr = findleftson(father); ptr; ptr = findrightbro(ptr))
                 dumpwholesubtree (ptr);
 #endif
@@ -280,7 +299,7 @@ int assertsubtreeisok(typecorecrum *ptr)
 		}
 	}
         if(ptr->height == 0){
-                return;
+                return(0);
         }
 /*        if(toomanysons(ptr)){
         //      dump(ptr);
@@ -301,10 +320,10 @@ int assertsonswispmatchesfather(typecuc *father)
   typecorecrum *son;
         if(father->numberofsons == 0){
                 if(father->sonorigin.diskblocknumber != DISKPTRNULL){
-                        return;
+                        return(0);
                 }
                 fprintf(stderr,"zerosons in assert\n");
-                return;
+                return(0);
         }
         if(setwisp(father)){ 
                 fprintf(stderr,"assert wisp matched father failed \n");
@@ -322,7 +341,7 @@ int assertwidsarepositive(typecorecrum *ptr)
 	enftype = ptr->cenftype;
 
         if (enftype == GRAN)
-                return;
+                return(0);
         nstreams = widsize (enftype);
         for (i = 0; i < nstreams; ++i) {
                 tumblercheckptr(&(ptr->cwid.dsas[i]),(INT*)ptr);
@@ -505,7 +524,7 @@ int dumptumbler(tumbler *tumblerptr)
   INT i;
         if(!tumblerptr){
                 fprintf(stderr,"NULL POINTER TO TUMBLER");
-                return;
+                return(0);
         }
 
 	if (!debug)
@@ -584,7 +603,7 @@ int examine(typetask *taskptr)
                 break;
 
           default:
-                return;
+                return(0);
         }
 #endif
 }
@@ -651,7 +670,7 @@ int doshowspanf(typecorecrum *crumptr, typedsp *offsetptr, INT enfheight)
   typedsp loffset;
         showspanfcrum (crumptr, offsetptr, enfheight);
         if (crumptr->height <= 0)
-                return;
+                return(0);
         dspadd (offsetptr, &crumptr->cdsp, &loffset,crumptr ->cenftype);
         for (ptr = findleftson (crumptr); ptr; ptr = ptr->rightbro)
                 doshowspanf (ptr, &loffset, enfheight);
@@ -817,7 +836,7 @@ int dumpistreamgr(typecuc *crumptr)
 {
 #ifndef DISTRIBUTION
  tumbler offset;
-if (debug < 5) return;
+if (debug < 5) return(0);
         tumblerclear (&offset);
         dodumpistreamgr (crumptr, &offset);
 #endif
@@ -830,7 +849,7 @@ int dodumpistreamgr(typecuc *crumptr, tumbler *offsetptr)
         if (crumptr->height == 0) {
                 dumpmoleculegr (offsetptr, crumptr);
                 tumbleradd (offsetptr, &crumptr->cwid.dsas[WIDTH], offsetptr);
-                return;
+                return(0);
         }
         for (ptr = findleftson (crumptr); ptr; ptr = ptr->rightbro)
                 dodumpistreamgr (ptr, offsetptr);
@@ -1024,7 +1043,7 @@ int dumpcontextlist(typecontext *context)
         fprintf (stderr, "contextlist :\n");
         if (!context) {
                 fprintf (stderr, "  contextlist NULL\n");
-                return;
+                return(0);
         }
         for (;context; context = context->nextcontext) {
                 dumpcontext (context);
@@ -1040,7 +1059,7 @@ int dumpcontext(typecontext *context)
         fprintf (stderr, "  context %x:\n", context);
     if(context == NULL){
                 fprintf(stderr,"NULL context\n");
-                return;
+                return(0);
         }
         fprintf (stderr, "    contexttype %s\n", enftypestring (context->contexttype));
         fprintf (stderr, "    totaloffset ");
@@ -1120,7 +1139,7 @@ int dumpspan(typespan *spanptr)
 #ifndef DISTRIBUTION
 if(!spanptr){
 fprintf(stderr,"null span ptr\n");
-return;
+return(0);
 }
 
         fprintf(stderr, "   span address: ");
@@ -1203,7 +1222,7 @@ int checkitem(char *msg, typeitem *ptr)
 
         checkpointer (msg, ptr);
         if (!ptr)
-                return;
+                return(0);
         if (debug) {
                 fprintf (stderr, msg);
                 dumpitem (ptr);
@@ -1231,7 +1250,7 @@ int checkitem(char *msg, typeitem *ptr)
 
 int checkpointer(char *msg, char *ptr)
 {
-return;       /*
+return(0);       /*
         if (!ptr) {
                 if (debug) {
                         fprintf (stderr, msg);
@@ -1301,7 +1320,7 @@ int checknumofsons(typecuc *ptr)
   typecuc *np;
 	i = 0;
 	if(!ptr||!ptr->height)
-		return;
+		return(0);
 	for(np= (typecuc *)ptr->leftson;np;np=(typecuc *)np->rightbro,i++)
 		;
 	if(i!=ptr->numberofsons){
@@ -1322,7 +1341,7 @@ int nchecknumofsons(typecuc *ptr)
   typecuc *np;
 	i = 0;
 	if(!ptr||!ptr->height)
-		return;
+		return(0);
 	for(np= (typecuc *)ptr->leftson;np;np=(typecuc *)np->rightbro,i++)
 		;
 	if(i!=ptr->numberofsons){

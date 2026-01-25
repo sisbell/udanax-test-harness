@@ -32,12 +32,12 @@ onlinklist(typetask *taskptr, typelinkset *linksetptr, typeisa *linkisaptr)
 
         if (*linksetptr == NULL) {
                 *linksetptr = linkset;
-                return;
+                return(0);
         }
 
         for (temp = *linksetptr; nextlink = temp->next; temp = nextlink) {
                 if (tumblereq (&temp->address, linkisaptr))
-                        return;
+                        return(0);
         }
 
         temp->next = linkset;
@@ -75,7 +75,7 @@ fprintf(stderr,"inter linkset1 = %x, linkset2 = %x, linkset3 = %x\n",linkset1, l
 if(debug){ fprintf(stderr,"*linkset4ptr = %x\n",*linkset4ptr); }
 #endif
 debug = olddebug;
-                return;
+                return(0);
         }
 
 	/* At least two linksets aren't null */

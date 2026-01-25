@@ -161,7 +161,7 @@ int sporglset2vspanset(typetask *taskptr, typeisa *homedoc, typesporglset *sporg
 		   !sporglptr
 		|| !(sporglptr->itemid == SPORGLID)
 		|| !tumblereq (&((typesporgl *)sporglptr)->sporgladdress, &((typesporgl *)(*sporglsetptr))->sporgladdress))
-			return;
+			return(0);
 		*sporglsetptr = (typesporglset)sporglptr;
 		movetumbler (&sporglptr->sporglorigin, &ispan.stream);
 		if (iszerotumbler (&sporglptr->sporglwidth))

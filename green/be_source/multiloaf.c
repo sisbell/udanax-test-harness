@@ -12,6 +12,10 @@
 #include <sys/types.h>
 #include <netinet/in.h>
 
+/* Forward declarations */
+void actuallyreadrawloaf(typeuberrawdiskloaf *loafptr, INT blocknumber);
+void actuallywriteloaf(typeuberrawdiskloaf *loafptr, INT diskblocknumber);
+
 typedef struct freediskconscell {
   struct freediskconscell * next;
   freediskentry   * stuff;
@@ -115,7 +119,7 @@ int savepartialdiskalloctabletodisk(void)
 				loaf.numberofentrysinthisblock = htonl(i);
 				loaf.nextdiskblocknumber = 0;
 				actuallywriteloaf((typeuberrawdiskloaf*)&loaf,blocknumber);
-				return;
+				return(0);
 			}
 			ptr = fdorderedtable[bucket];
 		}
@@ -426,9 +430,9 @@ newpartialdiskfree(diskloaf)
 INT deallocateinloaf(typeuberdiskloaf *loafp, INT insidediskblocknumber)
 {
   char *lp;
-  UINTnumber, n;
+  UINT number, n;
   INT i;
-  UINTtemp;
+  UINT temp;
 
 	/*lp = (char *)&loafp->fakepartialuberloaf;*/lp = (char *) loafp +6;
 
@@ -498,10 +502,10 @@ fprintf(stderr,"lp - loafp = %d ",lp-(char*)loafp);
 INT numberofliveunterloafs(typeuberdiskloaf *loafp)
 {
   char *lp;
-  UINTnumber, n;
+  UINT number, n;
   INT i;
   INT ret;
-  UINTtemp;
+  UINT temp;
 
 	ret = 0;
 	lp = /*(char *)&loafp->fakepartialuberloaf;*/ (char *)loafp +6;
@@ -524,9 +528,9 @@ INT numberofliveunterloafs(typeuberdiskloaf *loafp)
 char *findinsideloaf(typeuberdiskloaf *loafp, INT ninsideloaf)
 {
   char *lp;
-  UINTnumber, n;
+  UINT number, n;
   INT i;
-  UINTtemp;
+  UINT temp;
 
 /*fprintf(stderr,"findinsideloaf ninsideloaf = %x \n",ninsideloaf);*/
 /*fprintf(stderr,"findinsideloaf loafp = %x \n",loafp);*/

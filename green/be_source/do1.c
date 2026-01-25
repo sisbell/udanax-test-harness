@@ -128,7 +128,7 @@ debug = TRUE;
 
 int checkspecandstringbefore(void)
 {
-return;
+return(0);
 /*if(debug){ assertspecisstring(&spec2,uppervstuffset->xxtest.string); }*/
 }
 
@@ -137,7 +137,7 @@ int copyspecset(typetask *taskptr, typespec *specptr, typespec *newptr)
   typespec  *this;
   INT *talloc();
 	if(specptr == NULL)
-		return;
+		return(0);
 	this = newptr;
 	for(;specptr;specptr=(typespec *)((typeitemheader *)specptr)->next,this=(typespec *)talloc(taskptr,sizeof(typespec))){
 		*this = *specptr;
@@ -240,7 +240,7 @@ bool docreatenewdocument(typetask *taskptr, typeisa *isaptr)
   typehint hint;
   bool createorglingranf();
 
-	makehint (ACCOUNT, DOCUMENT, NULL, &taskptr->account, &hint);
+	makehint (ACCOUNT, DOCUMENT, 0, &taskptr->account, &hint);
 	return (createorglingranf (taskptr, granf, &hint, isaptr));
 }
 
@@ -251,7 +251,7 @@ bool docreatenode_or_account(typetask *taskptr, typeisa *isaptr)
   bool createorglingranf();
 
 	tumblercopy(isaptr, &isa);
-	makehint (NODE, NODE, NULL, /*&taskptr->account*/&isa, &hint);
+	makehint (NODE, NODE, 0, /*&taskptr->account*/&isa, &hint);
 	return createorglingranf (taskptr, granf, &hint, &isa);
 }
 
@@ -266,11 +266,11 @@ bool docreatenewversion(typetask *taskptr, typeisa *isaptr, typeisa *wheretoputi
 	/* ECH 7-13 introduced test for ownership to do right thing for explicit creation
 	   of new version of someone else's document */
 	if (tumbleraccounteq(isaptr, wheretoputit) && isthisusersdocument(isaptr)) {
-		makehint (DOCUMENT, DOCUMENT, NULL, isaptr/*wheretoputit*/, &hint);
+		makehint (DOCUMENT, DOCUMENT, 0, isaptr/*wheretoputit*/, &hint);
 	} else {
 		/* This does the right thing for new version of someone else's document, as it
 		   duplicates the behavior of docreatenewdocument */
-		makehint (ACCOUNT, DOCUMENT, NULL, wheretoputit, &hint);
+		makehint (ACCOUNT, DOCUMENT, 0, wheretoputit, &hint);
 	}
 	if (!createorglingranf(taskptr, granf, &hint, newisaptr)) {
 		return (FALSE);

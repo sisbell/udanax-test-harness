@@ -37,7 +37,7 @@ int insertseq(typecuc *fullcrumptr, tumbler *address, typegranbottomcruminfo *in
 	&& ptr->cinfo.granstuff.textstuff.textlength < GRANTEXTLENGTH) {
 		if (!fillupcbcseq (ptr, &nextaddress, info)) {
 			ivemodified ((typecorecrum*)ptr);
-			return;
+			return(0);
 		}
 	}
 	reserve ((typecorecrum*)ptr);

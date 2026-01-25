@@ -10,6 +10,9 @@
 #include <stdio.h>
 #include "common.h"
 #include "players.h"
+
+/* Forward declaration */
+extern bool establishprotocol(FILE *inp, FILE *outp);
 #include "port.h"
 #include <errno.h>
 #include <sys/types.h>
@@ -180,10 +183,10 @@ fprintf(stderr,"calling bind s = %d \n",s);
 }
 
 
-void *crash()
+void crash(int signum)
 {
   INT i;
-
+  (void)signum;  /* unused */
 fprintf(stderr, "CRASH while dealing with user %d\n", user);
   for (i = 0; i < 32; i++)
     close(i);	/* BOO HISS: too many closes */
@@ -191,7 +194,7 @@ fprintf(stderr, "CRASH while dealing with user %d\n", user);
 }
 
 
-bool isthisusersdocument(tumbler *tp)
+int isthisusersdocument(tumbler *tp)
 {
 	/* was &(player[n_players].account)  !!!!!! GRRRR ECH */
 	return tumbleraccounteq(tp, &(player[user].account));

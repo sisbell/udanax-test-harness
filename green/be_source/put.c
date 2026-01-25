@@ -29,7 +29,7 @@ int puttumbler(FILE *outfile, tumbler *tumblerptr)
 
         if (!tumblercheck (tumblerptr) || tumblerptr->exp < MINEXP) {
                 dumptumbler (tumblerptr);
-                return;
+                return(0);
         }
         if (tumblerptr->sign)
                 fprintf(outfile, "-");
@@ -61,7 +61,7 @@ int putitemset(typetask *taskptr, typeitemset itemset)
 {
         if (itemset == NULL){
                 fprintf (taskptr->outp, "  \nitemset empty\n");
-		return;
+		return(0);
 	}
         for (; itemset; itemset = (typeitemset)((typeitemheader *)itemset)->next) {
                 putitem (taskptr, itemset);
@@ -107,7 +107,7 @@ int putitem(typetask *taskptr, typeitem *itemptr)
           default:
                 error(taskptr, "illegal item id for putitem ");
                 fprintf (taskptr->outp,"%x  %d\nd",itemptr,((typeitemheader *)itemptr)->itemid);
-                return;
+                return(0);
         }
 }
 

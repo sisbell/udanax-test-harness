@@ -38,7 +38,7 @@ checkalloc(char *c)
 
 
 if(!flag){
-	return;
+	return(TRUE);
 }
 	if(debug && *c){
 		fprintf(stderr,"%s",c);
@@ -49,7 +49,7 @@ if(!flag){
 		validallocthinge(r);
 		if(r->s.size == 0&&r!=(HEADER *)zzalloctop){
 		      fprintf(stderr, "checkalloc glorphed with ptr = %x bottom = %x top = %x\n",r,zzallocbot,zzalloctop);
-			statusofalloc();
+			statusofalloc("");
 			gerror("found zero size in alloced stuff"); 
 			return(1);
 		}
@@ -148,7 +148,7 @@ weresurethatthisisourmorecore(void)
 {
   char *cp;
   HEADER *up;
-  char *sbrk();
+  /* sbrk() declared in unistd.h */
   INT temp;
 
 	if (flag)

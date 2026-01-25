@@ -8,6 +8,7 @@
 */
 
 #include "xanadu.h"
+#include "enf.h"
 #include "alloc.h"
 
 int lookatalloc2(HEADER *abaseallocated)/*baseallocated is statics in alloc.d*/

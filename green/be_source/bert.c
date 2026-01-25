@@ -54,7 +54,7 @@ int checkforopen(tumbler *tp, int type, int connection)
   conscell *p;
   bertentry *bert;
   int foundnonread = FALSE;
-  bool isthisusersdocument();
+  /* isthisusersdocument() prototype in protos.h */
 
   if (type == NOBERTREQUIRED) {
     return 1;	/* Random > 0 */
@@ -103,7 +103,7 @@ int logbertmodified(tumbler *tp, int connection)
 		bert =(bertentry *) p->stuff;
 		if (bert->connection == connection && tumblereq(tp, &bert->documentid)) {
 			bert->modified = TRUE;
-			return;
+			return(0);
 		}
 	}
 }
@@ -216,12 +216,12 @@ fprintf(stderr,"exitbert:  user = %d\n", connection);
 				temp = berttable[i];
 				berttable[i] = berttable[i]->next;
 				efree((char *)temp);
-				return;
+				return(0);
 			} else {
 				temp = oldptr->next;
 				oldptr->next = p->next;
 				efree((char *)temp);
-				return;
+				return(0);
 			}
 		}
 		oldptr = p;

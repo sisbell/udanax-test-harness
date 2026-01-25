@@ -60,7 +60,7 @@ int diskfree(typediskloafptrdigit loafptr)
   bool goodblock();
 
 	if (loafptr == DISKPTRNULL)
-		return;
+		return(0);
 	if (!goodblock (loafptr)) {
 		gerror ("Unallocated block in diskfree.\n");
 	}
@@ -72,7 +72,7 @@ int diskset(typediskloafptrdigit loafptr)
   bool goodblock();
 
 	if (loafptr == DISKPTRNULL)
-		return;
+		return(0);
 	if (!goodblock (loafptr)) {
 		gerror ("Unallocated block in diskfree.\n");
 	}

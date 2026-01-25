@@ -299,7 +299,7 @@ int transferloaf(typecuc *from, typecuc *to)
   INT nsons;
 
 	if (from->height == 0)  /* bottom crums */
-		return;
+		return(0);
 	if(from->cenftype ==SPAN || from->cenftype == POOM){
 		    /*the sucker dosen't know what it is yet anywow*/
 	}
@@ -318,7 +318,7 @@ int transferloaf(typecuc *from, typecuc *to)
 int levelpull(typecuc *fullcrumptr)
 {
 /*  typecuc *ptr; */
-return;
+return(0);
 /*
 	if (!isfullcrum (fullcrumptr))
 #ifndef DISTRIBUTION
@@ -524,7 +524,7 @@ int ivemodified(typecorecrum *ptr)
   bool fatherflag;
 
 	if(!ptr)
-		return;
+		return(0);
 	rejuvinateifnotRESERVED (ptr);
 
 	fatherflag = TRUE; /* not really, but the incoming ptr wants to get

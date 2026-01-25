@@ -1,4 +1,4 @@
-/* Copyright © 1979-1999 Udanax.com. All rights reserved.
+/* Copyright ï¿½ 1979-1999 Udanax.com. All rights reserved.
 
 * This code is licensed under the terms of The Udanax Open-Source License, 
 * which contains precisely the terms of the X11 License.  The full text of 
@@ -24,7 +24,8 @@ extern PLAYER  player[];
 
 extern INT     n_players;      /* current number of players (including computer) */
 
-extern  void    *new_players(),*leave(),*crash();
+extern  void    *new_players(),*leave();
+extern  void    crash(int signum);
 
 extern INT fdtoplayer[32];
 extern INT inputfds ;

@@ -303,7 +303,7 @@ int reap(typecorecrum *localreaper)
 		temp = (typecuc *)localreaper->leftbroorfather;
 		grimreaper = grimreaper->nextcrum;
 		if (!temp) {
-			return;
+			return(0);
 		}
 		orglwrite((typecbc*)temp);
 		if (!localreaper)
@@ -312,7 +312,7 @@ int reap(typecorecrum *localreaper)
 #else
 			gerror("memory fouled\n");
 #endif
-		return;
+		return(0);
 	}
 	temp = weakfindfather(localreaper);
 	if (!temp)
@@ -323,7 +323,7 @@ int reap(typecorecrum *localreaper)
 #endif
 	if (!temp->leftson) {
 		grimreaper = grimreaper->nextcrum;
-		return;
+		return(0);
 	}
 	subtreewrite(temp);
 }
@@ -363,7 +363,7 @@ int funcrejuvinate(register typecorecrum *ptr)
 void reserve(typecorecrum *ptr)
 {
 #ifndef DISTRIBUTION
-foohex( "reserve\n",ptr);
+foohex( "reserve\n",(INT)(intptr_t)ptr);
 #endif
 	if (ptr->age != RESERVED) {
 		++reservnumber;
@@ -650,7 +650,7 @@ void freetoqueue(char *ptr)
 
 int xgrabmorecore(void)
 {
-  char* malloc(), *tmp;
+  char *tmp;
      tmp = (char *)sbrk(incrementalallocsize);
 if(!tmp){
 	gerror("no more memory in xgrabmorecore\n");

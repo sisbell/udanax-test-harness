@@ -14,9 +14,9 @@
 #ifdef DISTRIBUTION
 char granf2err[] = "g2error\n";
 #endif
-static findisatoinsertnonmolecule(); 
-static klugefindisatoinsertnonmolecule();
-static findisatoinsertmolecule();
+static int findisatoinsertnonmolecule(typecuc *fullcrumptr, typehint *hintptr, typeisa *isaptr);
+static int klugefindisatoinsertnonmolecule(typecuc *fullcrumptr, typehint *hintptr, typeisa *isaptr);
+static int findisatoinsertmolecule(typecuc *fullcrumptr, typehint *hintptr, typeisa *isaptr);
 
 
 typeorgl fetchorglgr(typetask *taskptr, typegranf fullcrumptr, typeisa *address)
@@ -239,7 +239,7 @@ int findpreviousisagr(typecorecrum *crumptr, typeisa *upperbound, typeisa *offse
 */
 	if (crumptr->height == 0) {
 		findlastisaincbcgr ((typecbc*)crumptr, offset);
-		return;
+		return(0);
 	}
 	for (ptr = findleftson((typecuc*)crumptr); ptr; ptr = findrightbro(ptr)) {
 		if (
@@ -247,7 +247,7 @@ int findpreviousisagr(typecorecrum *crumptr, typeisa *upperbound, typeisa *offse
 		|| tmp == /*ONMYLEFTBORDER*/ONMYRIGHTBORDER
 		|| !ptr->rightbro) {
 			findpreviousisagr (ptr, upperbound, offset);
-			return;
+			return(0);
 		} else {
 			tumbleradd(offset, &ptr->cwid.dsas[WIDTH], offset);
 		}
@@ -282,9 +282,9 @@ foocontext ("passing context temp =",temp);
 #endif
 		if (context2vstuff (taskptr, temp, ispanptr, &vstuffset)) {
 #ifndef DISTRIBUTION
-foohex("vstuffsetptr = ",vstuffsetptr);
-foohex("vstuffset = ", vstuffset);
-foohex("&vstuffset->next = ", &((typeitemheader *)vstuffset)->next);
+foohex("vstuffsetptr = ",(INT)(intptr_t)vstuffsetptr);
+foohex("vstuffset = ", (INT)(intptr_t)vstuffset);
+foohex("&vstuffset->next = ", (INT)(intptr_t)&((typeitemheader *)vstuffset)->next);
 #endif
 			*vstuffsetptr = vstuffset;
 			vstuffsetptr = (typevstuffset *)&((typeitemheader *)vstuffset)->next;

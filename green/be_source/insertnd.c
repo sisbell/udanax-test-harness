@@ -140,7 +140,7 @@ checkwholesubtree(fullcrumptr);
 	if (iszerotumbler (&fullcrumptr->cwid.dsas[V])
 	|| tumblercmp (&origin->dsas[V], &grasp.dsas[V]) == LESS
 	|| tumblercmp (&origin->dsas[V], &reach.dsas[V]) != LESS)
-		return;    /* this if for extensions to bc without calling cut*/
+		return(0);    /* this if for extensions to bc without calling cut*/
 	movetumbler (&origin->dsas[V], &knives.blades[0]);
 	findaddressofsecondcutforinsert(&origin->dsas[V],&knives.blades[1]);
 	knives.nblades = /*1*/2;
@@ -206,7 +206,7 @@ int firstinsertionnd(typecuc *father, typewid *origin, typewid *width, type2dbot
 	move2dinfo (infoptr, &((type2dcbc *)ptr)->c2dinfo);
 	ivemodified (ptr);
 	setwisp ((typecorecrum*)father);
-	return;
+	return(0);
 }
 INT insertmorend(typecuc *father, typedsp *offset, typewid *origin, typewid *width, type2dbottomcruminfo *infoptr, INT index)
 {

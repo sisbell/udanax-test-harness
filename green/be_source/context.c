@@ -84,14 +84,14 @@ int incontextlistnd(typecontext **clistptr, typecontext *c, INT index)
 	if (!clist) {
 /*if (debug) fprintf (stderr, "first insertion\n");*/
 		*clistptr = c;
-		return;
+		return(0);
 	}
 				/* on beginning */
 	if (whereoncontext (clist, &grasp.dsas[index], index) < THRUME) {
 /*if (debug) fprintf (stderr, "beginning\n");  */
 		c->nextcontext = clist;
 		*clistptr = c;
-		return;
+		return(0);
 	} else {
 		for (; nextc = clist->nextcontext; clist = nextc) {
 				/* in middle */
@@ -100,7 +100,7 @@ int incontextlistnd(typecontext **clistptr, typecontext *c, INT index)
 /*if (debug) fprintf (stderr, "middle\n"); */
 				c->nextcontext = nextc;
 				clist->nextcontext = c;
-				return;
+				return(0);
 		       }
 		}
 	}

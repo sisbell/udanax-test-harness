@@ -55,13 +55,13 @@ int findnextaddressinvspace(typecorecrum *crumptr, typewid *offsetptr, tumbler *
   tumbler maxt;
 
 	if (!(ptr = findleftson((typecuc*)crumptr)))
-		return;
+		return(0);
 	tumblerclear (&maxt);
 	for (; ptr; ptr = findrightbro(ptr)) {
 		prologuend (ptr, offsetptr, &grasp, &reach);
 		if(whereoncrum(ptr,offsetptr,nextvspacestartptr,V) == THRUME) {
 			findnextaddressinvspace (ptr, &grasp, nextvspacestartptr, vsaptr);
-			return;
+			return(0);
 
 		} else if (tumblercmp(&grasp.dsas[V],nextvspacestartptr) != GREATER) {
 			tumblermax (&reach.dsas[V], &maxt, &maxt);
@@ -337,7 +337,7 @@ int putvspaninlist(typetask *taskptr, typevspan *spanptr, typevspanset *spansetp
 	last = NULL;
 	if (!ptr) {
 		*spansetptr = makevspan (taskptr, spanptr, (typevspan*)NULL);
-		return;
+		return(0);
 	}
 	for (; ptr; last = ptr, ptr = ptr->next) {
 		tumbleradd (&spanptr->stream, &spanptr->width, &newspanend);
@@ -345,30 +345,30 @@ int putvspaninlist(typetask *taskptr, typevspan *spanptr, typevspanset *spansetp
 		spancmp = tumblercmp (&spanptr->stream, &oldspanend);
 		if (!spancmp) {
 			tumbleradd (&ptr->width, &spanptr->width, &ptr->width);
-			return;
+			return(0);
 		} else if (spancmp == GREATER)
 			continue;
 		spancmp = tumblercmp (&ptr->stream, &newspanend);
 		if (!spancmp) {
 			movetumbler (&spanptr->stream, &ptr->stream);
 			tumbleradd (&spanptr->width, &ptr->width, &ptr->width);
-			return;
+			return(0);
 		} else if (spancmp == GREATER) {
 			if (ptr != *spansetptr)
 				last->next = makevspan (taskptr, spanptr, ptr);
 			else
 				*spansetptr = makevspan (taskptr, spanptr, ptr);
-			return;
+			return(0);
 		}
 		startcmp = tumblercmp (&spanptr->stream, &ptr->stream);
 		endcmp = tumblercmp (&newspanend, &oldspanend);
 		if (startcmp > LESS && endcmp < GREATER)
-			return;
+			return(0);
 		switch (startcmp) {
 		  case EQUAL:
 			if (endcmp == GREATER)
 				movetumbler (&spanptr->width, &ptr->width);
-			return;
+			return(0);
 		  case LESS:
 			movetumbler (&spanptr->stream, &ptr->stream);
 			if (endcmp == GREATER)
@@ -379,7 +379,7 @@ int putvspaninlist(typetask *taskptr, typevspan *spanptr, typevspanset *spansetp
 		  case GREATER:
 			if (endcmp == GREATER) {
 			      tumblersub(&newspanend,&ptr->stream,&ptr->width);
-			      return;
+			      return(0);
 			}
 		}
 	}

@@ -174,7 +174,7 @@ fprintf(taskptr->errp, "\n");
 
           default:
                 error (taskptr, "illegal item id for senditem");
-                return;
+                return(0);
         }
 }
 

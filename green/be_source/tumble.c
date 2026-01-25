@@ -10,6 +10,12 @@
 
 #include "common.h"	/* EXTERNAL VARIABLE BEWARE!!*/
 
+/* Forward declarations for debug functions */
+#ifndef DISTRIBUTION
+extern int dump(void *ptr);
+extern int dumpwholetree(void *ptr);
+#endif
+
 tumbler ZEROTUMBLERvar;
 static INT abscmp();
 
@@ -273,13 +279,13 @@ int tumblerjustify(tumbler *tumblerptr)
   
 	mantissaptr = tumblerptr->mantissa;
 	if (mantissaptr[0] != 0) {
-		return;
+		return(0);
 	}
 	for (shift = 0; mantissaptr[shift] == 0; ++shift) {
 		if (shift == NPLACES - 1) {
 			tumblerptr->exp = 0;
 			tumblerptr->sign = 0;
-			return;
+			return(0);
 		}
 	}
 	for (i = 0, j = shift; j < NPLACES;)
@@ -300,13 +306,13 @@ int partialtumblerjustify(tumbler *tumblerptr)
 	mantissaptr = tumblerptr->mantissa;
 	/* test commented out because is done before this routine is called for efficiency */
       /*  if (mantissaptr[0] != 0) {
-		return;
+		return(0);
 	}*/
 	for (shift = 0; mantissaptr[shift] == 0; ++shift) {
 		if (shift == NPLACES - 1) {
 			tumblerptr->exp = 0;
 			tumblerptr->sign = 0;
-			return;
+			return(0);
 		}
 	}
 	for (i = 0, j = shift; j < NPLACES;)
@@ -346,10 +352,10 @@ int functiontumbleradd(tumbler *aptr, tumbler *bptr, tumbler *cptr)  /* tumbler 
 {
 	if (iszerotumbler(bptr)){
 		movetumbler (aptr, cptr);
-		return;
+		return(0);
 	  }else if (iszerotumbler(aptr)){
 		movetumbler (bptr, cptr);
-		return;
+		return(0);
 	  }else if (aptr->sign == bptr->sign) {
 		absadd (aptr, bptr, cptr);
 		cptr->sign = aptr->sign;
@@ -460,7 +466,7 @@ int absadd(tumbler *aptr, tumbler *bptr, tumbler *cptr)
 		ansmant[j++] = bmant[i++];
 	}	 
 	movetumbler (&answer, cptr);
-	return;
+	return(0);
 }
 
 #ifdef  OlDVeRsIon
@@ -502,7 +508,7 @@ int absadd(tumbler *aptr, tumbler *bptr, tumbler *cptr)
 		ansmant[j++] = bmant[i++];
 	}	 
 	movetumbler (&answer, cptr);
-	return;
+	return(0);
 }
  
 #endif
@@ -518,29 +524,29 @@ int strongsub(tumbler *aptr, tumbler *bptr, tumbler *cptr)
 	tumblerclear(&answer);
 	if (tumblereq (aptr, bptr)) {
 		movetumbler (&answer, cptr);
-		return;
+		return(0);
 	}
 	if (bptr->exp < aptr->exp) {
 		movetumbler(aptr,cptr);
-		return;
+		return(0);
 	}
 	answer.exp = aptr->exp;
 	for (i = 0; aptr->mantissa[i] == bptr->mantissa[i]; ++i) {
 		--answer.exp;
 		if (i >= NPLACES) {
 			movetumbler (&answer, cptr);
-			return;
+			return(0);
 		}
 	}
 	answer.mantissa[0] = aptr->mantissa[i] - bptr->mantissa[i];
 	if (++i >= NPLACES) {
 		movetumbler (&answer, cptr);
-		return;
+		return(0);
 	}
 	for (j = 1; j < NPLACES && i < NPLACES;)
 		answer.mantissa[j++] = aptr->mantissa[i++];
 	movetumbler (&answer, cptr);
-	return;
+	return(0);
 }
 
 int weaksub(tumbler *aptr, tumbler *bptr, tumbler *cptr)
@@ -552,7 +558,7 @@ int weaksub(tumbler *aptr, tumbler *bptr, tumbler *cptr)
 	tumblerclear(&answer);
 	if (tumblereq (aptr, bptr)) {
 		movetumbler (&answer, cptr);
-		return;
+		return(0);
 	}
 	answer.exp = aptr->exp;
 	expdiff = aptr->exp - bptr->exp;
@@ -560,7 +566,7 @@ int weaksub(tumbler *aptr, tumbler *bptr, tumbler *cptr)
 		answer.mantissa[i] = aptr->mantissa[i];
 		if (i >= NPLACES) {
 			movetumbler (&answer, cptr);
-			return;
+			return(0);
 		}
 	}
 	answer.mantissa[i] = aptr->mantissa[i] - bptr->mantissa[0];
@@ -583,7 +589,7 @@ int tumblerincrement(tumbler *aptr, INT rightshift, INT bint, tumbler *cptr)
 		tumblerclear (cptr);
 		cptr->exp = -rightshift;
 		cptr->mantissa[0] = bint;
-		return;
+		return(0);
 	}
 	if (aptr != cptr)
 		movetumbler(aptr,cptr);

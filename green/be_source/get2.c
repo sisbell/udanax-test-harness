@@ -162,7 +162,7 @@ bool validaccount(typetask *taskptr, typeisa *accountptr)
 bool getspecset(typetask *taskptr, typespecset *specsetptr)
 {
   bool any, type;
-  bool getvspec(),getbool(),getspan(),gettext();
+  bool getvspec(),getbool(),gettext();
   typespec *specset;
   INT *taskalloc();
 
@@ -193,7 +193,6 @@ bool getspecset(typetask *taskptr, typespecset *specsetptr)
 
 bool getvspec(typetask *taskptr, typevspec *vspecptr)
 {
-  bool getspanset();
 	vspecptr->itemid = VSPECID;
 	vspecptr->next = NULL;
 	prompt(taskptr, "document=> ");
@@ -208,7 +207,6 @@ bool getspanset(typetask *taskptr, typespanset *spansetptr, char id)
   bool any;
   typespan *spanset;
   INT *taskalloc();
-  bool getspan();
 
 	for (;;) {
 		prompt (taskptr, "any spans? ");

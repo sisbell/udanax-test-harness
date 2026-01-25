@@ -21,9 +21,14 @@ extern bool isxumain;
 typegranf granf;
 typespanf spanf;
 
-void diskexit()
+/* Forward declarations */
+static int indiskexit(void);
+int deletefullcrumandgarbageddescendents(typediskloafptr diskptr, bool deletefullcrumflag, typediskloaf *loafp, typediskloafptr newdiskptr);
+int deletewithgarbageddescendents(typediskloafptr diskptr, typecuc *father, bool deletefullcrumflag);
+int checkmodifiednotthere(typecuc *father, char *string);
+
+void diskexit(void)
 {
-  static indiskexit();
 	indiskexit();
 }
 
@@ -34,7 +39,7 @@ static int indiskexit(void)
 /*  FILE *record;*/bool decrementusers();
 
 	if (decrementusers()) {
-		return;
+		return(0);
 	}
 	writeenfilades();
 
@@ -89,7 +94,7 @@ int writeenfilades(void)
 static int hputwiddsp(typecuc *ptr, char **loafptrptr)
 {
   int i,nstreams;
-  UINTtemp;
+  UINT temp;
   typewid *wptr;
 
 	nstreams = widsize(ptr->cenftype);
@@ -125,7 +130,7 @@ static int varpackloaf(typecuc *father, typediskloaf *xloafptr, int refcount, in
   typecorecrum *ptr;
   INT ret;
   char *loafptr; /*,*tempptr;*/
-  UINTtemp;
+  UINT temp;
 
 	loafptr = (char *)xloafptr;
 	if (!flag) {
@@ -224,7 +229,7 @@ static int varpackloaf(typecuc *father, typediskloaf *xloafptr, int refcount, in
 
 int hputinfo(typecbc *ptr, char **loafptrptr)
 {
-  UINTtemp;
+  UINT temp;
 
 	if (!is2dcrum((typecorecrum*)ptr)) {
 		(void) humberput(ptr->cinfo.infotype,(humber)*loafptrptr,&temp);
@@ -236,16 +241,16 @@ int hputinfo(typecbc *ptr, char **loafptrptr)
 */
 			movmem(ptr->cinfo.granstuff.textstuff.textstring,(*loafptrptr),ptr->cinfo.granstuff.textstuff.textlength);
 			*loafptrptr += ptr->cinfo.granstuff.textstuff.textlength;
-			return;
+			return(0);
 		} else if (ptr->cinfo.infotype == GRANORGL) {
 			(void) humberput(ptr->cinfo.granstuff.orglstuff.diskorglptr.diskblocknumber,(humber)*loafptrptr,&temp);
 			*loafptrptr += temp;
 			(void) humberput(ptr->cinfo.granstuff.orglstuff.diskorglptr.insidediskblocknumber,(humber)*loafptrptr,&temp);
 			*loafptrptr += temp;
 			/*hputinloaf(ptr->cinfo.granstuff.orglstuff.diskorglptr,(*loafptrptr),&temp);*/
-			return;
+			return(0);
 		} else if (ptr->cinfo.infotype == GRANNULL) {
-			return;
+			return(0);
 		} else {
 #ifndef DISTRIBUTION
 			fprintf(stderr,"weird infotype in hputinfo %d \n",ptr->cinfo.infotype);
@@ -253,7 +258,7 @@ int hputinfo(typecbc *ptr, char **loafptrptr)
 #else
 	gerror("");
 #endif
-			return;
+			return(0);
 		}
 	} else {
 		if (ptr ->height) {
@@ -270,10 +275,12 @@ static int packloaf(typecuc *father, typediskloaf *loafptr, int refcount, int fl
 	return(varpackloaf (father, loafptr,refcount,flag));
 }
 
+static int orglwritepart2(typetask *taskptr, typecbc *orglcbcptr);
+static int subtreewriterecurs(typetask *taskptr, typecuc *father);
+
 int orglwrite(typecbc *orglcbcptr)
 {
   typetask task;
-  static orglwritepart2();
 
 	if (!orglcbcptr) {
 #ifndef DISTRIBUTION
@@ -298,10 +305,9 @@ static int orglwritepart2(typetask *taskptr, typecbc *orglcbcptr)
   typediskloaf loaf;
   typediskloafptr temploaf;
   INT size;
-  UINTdummy;
+  UINT dummy;
   INT newloaf;
   typecuc *orglptr;
-  static subtreewriterecurs();
 
   	loaf = zzzeroloaf;
 	if (!orglcbcptr)
@@ -314,7 +320,7 @@ static int orglwritepart2(typetask *taskptr, typecbc *orglcbcptr)
 	orglptr = infoptr->granstuff.orglstuff.orglptr;
 	if (!orglcbcptr->modified && orglptr) {
 		orglfree (orglptr);
-		return;
+		return(0);
 	}
 	if (infoptr->granstuff.orglstuff.orglincore) {
 		reserve((typecorecrum*)orglcbcptr);
@@ -345,7 +351,7 @@ static int orglwritepart2(typetask *taskptr, typecbc *orglcbcptr)
 		rejuvinate((typecorecrum*)orglcbcptr);
 		orglfree (orglptr);
 	} else {
-		return;/*zzz*/
+		return(0);/*zzz*/
 	}
 }
 
@@ -356,7 +362,7 @@ int deletefullcrumandgarbageddescendents(typediskloafptr diskptr, bool deleteful
   typeuberrawdiskloaf crum2;
 
 	if (diskptr.diskblocknumber == DISKPTRNULL) {
-		return;
+		return(0);
 	}
 	/*kluge up a bottum crum, use it to read in granf, similarly for spanf*/
 	/*tempcbc = (typecbc *)createcrum(0,GRAN);*/
@@ -408,7 +414,6 @@ int deletewithgarbageddescendents(typediskloafptr diskptr, typecuc *father, bool
 int subtreewrite(typecuc *father)
 {
   typetask task;
-  static subtreewriterecurs();
 	inittask (&task);
 	subtreewriterecurs (&task, father);
 	/*decrementandfreedisk (top);*/
@@ -416,10 +421,11 @@ int subtreewrite(typecuc *father)
 }
 
 
+static int uniqueoutloaf(typecuc *father, int refcount);
+
 static int subtreewriterecurs(typetask *taskptr, typecuc *father)
 {
   typecbc *ptr;
-  static uniqueoutloaf();
 /*fprintf(stderr,"entering subtreewriterecurs \n");*/
 
 	if (!father || !father->height)
@@ -440,7 +446,7 @@ static int subtreewriterecurs(typetask *taskptr, typecuc *father)
 #endif
 		}
 		loaffree (father);
-		return;
+		return(0);
 	}
 /*	if (//father->sonorigin.diskblocknumber == DISKPTRNULL&&//!father->leftson) {
 	       fprintf(stderr," case b insubtreewriterecurs sonorigin == -1\n");
@@ -489,7 +495,7 @@ static int subtreewriterecurs(typetask *taskptr, typecuc *father)
 
 int checkmodifiednotthere(typecuc *father, char *string)
 {
-return;
+return(0);
 #ifndef DISTRIBUTION
 #ifdef UnDeFineD
     if (father->modified&&(!father->leftson)/*&&father->sonor.diskblocknumber== DISKPTRNULL*/) {
@@ -507,7 +513,7 @@ static int uniqueoutloaf(typecuc *father, int refcount)
   typeuberdiskloaf loaf;
   typediskloafptr diskalloc();
   INT size;
-  UINTtemp;
+  UINT temp;
   INT newloaf;
 /*fprintf(stderr,"entering uniqueoutloaf\n");*/
 	if (!father->modified) {

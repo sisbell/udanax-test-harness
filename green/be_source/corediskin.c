@@ -10,8 +10,10 @@
 #include "coredisk.h"
 
 extern bool isxumain;
-static hgetwiddsp();
-static varunpackloaf();
+static int hgetwiddsp(typecuc *ptr, char **loafptrptr);
+static int varunpackloaf(INT insidediskblocknumber, typediskloaf *uloafptr, typecuc *father);
+int hgetinfo(typecbc *ptr, char **loafptrptr);
+int inorglinternal(typecbc *granorglptr, typeuberrawdiskloaf *crumptr);
 /* Initialize thing from old enf.enf */
 void initkluge(typecuc **granfptr, typecuc **spanfptr)
 {
@@ -46,7 +48,7 @@ typediskloaf *lookinsideloaffor(INT insidenumber, typediskloaf *uloafptr)
 static int unpackloaf(INT insidediskblocknumber, typediskloaf *uloafptr, typecuc *father)
 {
 	varunpackloaf (insidediskblocknumber,uloafptr, father);
-	return;
+	return(0);
 }
 /*#define hgetfromloaf(ip,lp) (*(ip)=intof(lp),fprintf(stderr,"hgetfromloaf gets %d\n",*(ip)),(lp)=((char*)lp)+lengthof(lp))*/
 
@@ -174,7 +176,7 @@ int inorglinternal(typecbc *granorglptr, typeuberrawdiskloaf *crumptr)
 {
   typediskloaf loaf;
   typecuc *ptr;
-  UINTtemp,temp2;
+  UINT temp, temp2;
   char *loafp;
   int size;
 
@@ -231,7 +233,7 @@ int inorglinternal(typecbc *granorglptr, typeuberrawdiskloaf *crumptr)
 static int hgetwiddsp(typecuc *ptr, char **loafptrptr)
 {
   int i,nstreams;
-  UINTtemp;
+  UINT temp;
   typewid *wptr;
 	nstreams = widsize(ptr->cenftype);
 	wptr = &ptr->cdsp;
@@ -248,7 +250,7 @@ static int hgetwiddsp(typecuc *ptr, char **loafptrptr)
 
 int hgetinfo(typecbc *ptr, char **loafptrptr)
 {
-  UINTtemp;
+  UINT temp;
 	if (!is2dcrum((typecorecrum*)ptr)) {
 		hgetfromloaf(&ptr->cinfo.infotype,*loafptrptr);
 /*	dump(ptr);*/
@@ -257,7 +259,7 @@ int hgetinfo(typecbc *ptr, char **loafptrptr)
 			(*loafptrptr) += lengthof((humber)*loafptrptr);
 			movmem((*loafptrptr),ptr->cinfo.granstuff.textstuff.textstring,ptr->cinfo.granstuff.textstuff.textlength);
 			(*loafptrptr) += ptr->cinfo.granstuff.textstuff.textlength;
-			return;
+			return(0);
 		}else if(ptr->cinfo.infotype == GRANORGL){
 			ptr->cinfo.granstuff.orglstuff.diskorglptr.diskblocknumber = intof((humber)*loafptrptr);
 /*			if(temp == 0 || temp == -1){
@@ -268,9 +270,9 @@ int hgetinfo(typecbc *ptr, char **loafptrptr)
 			(*loafptrptr) += lengthof((humber)*loafptrptr);
 			ptr->cinfo.granstuff.orglstuff.diskorglptr.insidediskblocknumber = intof((humber)*loafptrptr);
 			(*loafptrptr) += lengthof((humber)*loafptrptr);
-			return;
+			return(0);
 		}else{
-			return;
+			return(0);
 		}
 	}else{
 		if(ptr ->height){

@@ -12,23 +12,23 @@
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <errno.h>
-  char *findinsideloaf();
+#include <fcntl.h>
 
-extern INT errno;
+/* Forward declarations */
+char *findinsideloaf(typeuberdiskloaf *loafptr, INT insidediskblocknumber);
+void actuallyreadrawloaf(typeuberrawdiskloaf *loafptr, INT blocknumber);
+void actuallywriteloaf(typeuberrawdiskloaf *loafptr, INT diskblocknumber);
 
  INT nolread = 0 /* number of blocks read from disk in session */;
  INT nolwrote = 0 /* same for writes */;
 
 INT enffiledes;	 /* enfilade file descriptor where disk stuff is */
 bool enffileread;       /* yeah another external */
-void actuallyreadrawloaf();
 
 INT findnumberofdamnsons(typediskloafptr diskptr)
 {
   typeuberrawdiskloaf loaf;
   char *loafp;
-  void actuallywriteloaf();
-  
   INT numberofsons;
   INT height,enftype;
   INT isapex;
@@ -84,9 +84,9 @@ INT changeunterrefcount(typediskloaf *wholeloafp, char *originalloafp, INT delta
   char *loafp;
   INT height,enftype;
   INT isapex;
-  UINTrefcount;
+  UINT refcount;
   INT foo;
-  UINToldlength, newlength,dummylength, dummy;
+  UINT oldlength, newlength, dummylength, dummy;
   INT lengthdif;
   INT size;
   char *refcountloafp;
@@ -304,9 +304,9 @@ void actuallywriteloaf(typeuberrawdiskloaf *loafptr, INT diskblocknumber)
 
 bool initenffile(void)
 {
-  INT fd, creat();
-  bool ret, readallocinfo();
-  static times = 0;
+  INT fd;
+  bool ret;
+  static int times = 0;
 
 	if (times)
 		qerror ("too many inits\n");

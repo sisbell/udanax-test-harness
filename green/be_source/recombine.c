@@ -9,6 +9,12 @@
 #include "crum.h"
 #include "reap.h"
 
+/* Forward declarations */
+int eatbrossubtreend(typecuc *me, typecuc *bro);
+int takenephewnd(typecuc *me, typecuc *nephew);
+int fixdspsofbroschildren(typecuc *me, typecuc *bro);
+int shellsort(typecorecrum *v[], INT n);
+
 long noishouldbother = 0;
 long notakenephewnd = 0;
 long noeatbrosnd = 0;
@@ -33,15 +39,15 @@ int recombineseq(typecuc *father) /** zzz reg 1999 this recombines too much */
 { 
   typecuc *ptr;
         if (father->height < 3 || !father->modified){
-                return;
+                return(0);
 	}
 	if(!roomformoresons(father)){
-		return;
+		return(0);
 	}
-        for (ptr = (typecuc *)getleftson (father); ptr; ptr = (typecuc *)macrogetrightbro ((typecorecrum *)ptr)){
+        for (ptr = (typecuc *)getleftson (father); ptr; ptr = (typecuc *)findrightbro ((typecorecrum *)ptr)){
                 recombineseq (ptr);
 	}
-        for(ptr=(typecuc *)getleftson(father);ptr&&ptr->rightbro;ptr=(typecuc *)macrogetrightbro((typecorecrum *)ptr)){
+        for(ptr=(typecuc *)getleftson(father);ptr&&ptr->rightbro;ptr=(typecuc *)findrightbro((typecorecrum *)ptr)){
                 if (ptr->age == RESERVED)
                         continue;
                 if (ptr->leftson && roomformoresons (ptr)) {
@@ -104,7 +110,7 @@ int recombinend(typecuc *father)
   bool ishouldbother();
 
         if (father->height < 2  || !father->modified)
-                return;
+                return(0);
         for (ptr = getleftson (father); ptr;ptr=(typecorecrum *)getrightbro (ptr)){
                 recombinend (ptr);
         }
@@ -316,7 +322,7 @@ int fixincoresubtreewids(typecuc *ptr)
 {
   typecorecrum *son;
         if(ptr->height == 0)
-                return;
+                return(0);
         for(son = (typecorecrum *)getleftson(ptr);son;son = (typecorecrum *)getrightbro(son)){
                 fixincoresubtreewids(son);
         }
