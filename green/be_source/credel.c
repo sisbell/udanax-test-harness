@@ -7,7 +7,7 @@
 * http://udanax.xanadu.com/license.html and http://www.udanax.com/license.html
 */
 /* credel.d -  enfilade creation and deletion routines */
-#define NEWALLOC 
+/* #define NEWALLOC */  /* Disabled - causes 6M+ pre-allocations */
 #include "common.h"
 #include "enf.h"
 #include "reap.h"
@@ -70,6 +70,7 @@ INT *ealloc(unsigned nbytes)
 	if (grimreaper == NULL){
 	        xgrabmorecore();
 		/*qerror ("Why am I out of room?\n");*/
+		continue;  /* retry falloc after getting more memory */
 	    }
 	grimlyreap();
      }
@@ -616,6 +617,7 @@ int initqueues(void)
 		qpush(&allocqueuearray[(sizeof(typecbc)+sizeof(tagtype)+sizeof(HEADER) -1)/sizeof(HEADER)],falloc(sizeof(typecbc)+sizeof(tagtype)));
 		qpush(&allocqueuearray[(sizeof(type2dcbc)+sizeof(tagtype)+sizeof(HEADER) -1)/sizeof(HEADER)],falloc(sizeof(type2dcbc)+sizeof(tagtype)));
 	}
+	return 0;
 }
 int dumptable(void)
 {
