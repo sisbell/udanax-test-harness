@@ -1,4 +1,4 @@
-/* Copyright © 1979-1999 Udanax.com. All rights reserved.
+/* Copyright ï¿½ 1979-1999 Udanax.com. All rights reserved.
 
 * This code is licensed under the terms of The Udanax Open-Source License,
 * which contains precisely the terms of the X11 License.  The full text of
@@ -39,12 +39,10 @@ INT nfds = 0;
 
 INT     main_socket=ERROR;      /* socket to accept connections on */
 
-void  *new_players(player, n_playersp, block ,taskptr)
-  PLAYER    player[];       /* array of player info structures      */
-  INT      *n_playersp;     /* number of players (incl comp)        */
-  INT       block;          /* if nobody wants to join, wait on socket
-                               until somebody does. */
-  typetask *taskptr;
+void *new_players(PLAYER player[], INT *n_playersp, INT block, typetask *taskptr)
+/* player: array of player info structures
+   n_playersp: number of players (incl comp)
+   block: if nobody wants to join, wait on socket until somebody does. */
 {
   INT     readfds;                /* for select() call    */
   INT     s;                      /* temp holder for new socket   */
@@ -126,9 +124,7 @@ void  *new_players(player, n_playersp, block ,taskptr)
 }
 
 
-void *leave(player, xn_players)
-  PLAYER  player[];
-  INT    *xn_players;
+void *leave(PLAYER player[], INT *xn_players)
 {
   register INT i;
 
@@ -195,8 +191,7 @@ fprintf(stderr, "CRASH while dealing with user %d\n", user);
 }
 
 
-bool isthisusersdocument(tp)
-  tumbler *tp;
+bool isthisusersdocument(tumbler *tp)
 {
 	/* was &(player[n_players].account)  !!!!!! GRRRR ECH */
 	return tumbleraccounteq(tp, &(player[user].account));

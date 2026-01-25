@@ -1,4 +1,4 @@
-/* Copyright © 1979-1999 Udanax.com. All rights reserved.
+/* Copyright ï¿½ 1979-1999 Udanax.com. All rights reserved.
 
 * This code is licensed under the terms of The Udanax Open-Source License, 
 * which contains precisely the terms of the X11 License.  The full text of 
@@ -16,7 +16,7 @@ typedef struct hashfoo{
     typeuberrawdiskloaf urdloaf;
 } hashtable;
 hashtable xhashtable[HASHSIZE];
-inithash()
+int inithash(void)
 {
   INT i;
 	for(i =0;i<HASHSIZE;i++){
@@ -24,9 +24,7 @@ inithash()
 	}
 }
 
-void actuallyreadrawloaffromhash (loafptr, blocknumber)
-  typeuberrawdiskloaf *loafptr;
-  INT blocknumber;
+void actuallyreadrawloaffromhash(typeuberrawdiskloaf *loafptr, INT blocknumber)
 {
   INT temp;
   void addtohash(), actuallyreadrawloaf();
@@ -40,9 +38,7 @@ void actuallyreadrawloaffromhash (loafptr, blocknumber)
 
 }
 
-void writethruhash(loafptr,blocknumber)
-  typeuberrawdiskloaf *loafptr;
-  INT blocknumber;
+void writethruhash(typeuberrawdiskloaf *loafptr, INT blocknumber)
 {
   INT temp;
   void addtohash();
@@ -53,11 +49,11 @@ void writethruhash(loafptr,blocknumber)
 	addtohash(loafptr,blocknumber);
     }
 }
-hashcasheclash()
+int hashcasheclash(void)
 {
+  return 0;
 }
-INT blockisinhash(blocknumber)
-  INT blocknumber;
+INT blockisinhash(INT blocknumber)
 {
   INT temp;
       temp = hash(blocknumber);
@@ -67,9 +63,7 @@ INT blockisinhash(blocknumber)
 	  return 0;
       }
 }
-void addtohash(loafptr,blocknumber)
-  typeuberrawdiskloaf *loafptr;
-  INT blocknumber;
+void addtohash(typeuberrawdiskloaf *loafptr, INT blocknumber)
 {
   INT temp;
       temp = hash(blocknumber);
@@ -80,8 +74,7 @@ void addtohash(loafptr,blocknumber)
       xhashtable[temp].urdloaf = *loafptr;
 }
 
-INT hash(blocknumber)
-  INT blocknumber;
+INT hash(INT blocknumber)
 {
     return(abs(blocknumber*HASHMULT)%HASHSIZE);
 }

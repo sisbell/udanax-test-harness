@@ -1,4 +1,4 @@
-/* Copyright © 1979-1999 Udanax.com. All rights reserved.
+/* Copyright ï¿½ 1979-1999 Udanax.com. All rights reserved.
 
 * This code is licensed under the terms of The Udanax Open-Source License, 
 * which contains precisely the terms of the X11 License.  The full text of 
@@ -12,11 +12,7 @@
 #include "xanadu.h"
 #include "enf.h"
 
-  typecrumcontext *
-retrievecrums (fullcrumptr, address, index)
-  typecuc *fullcrumptr;
-  tumbler *address;
-  INT index;
+typecrumcontext *retrievecrums(typecuc *fullcrumptr, tumbler *address, INT index)
 {
   typecrumcontext *findcbcseqcrum();
   typedsp offset;
@@ -34,11 +30,7 @@ retrievecrums (fullcrumptr, address, index)
 	
 }
 
-  typecontext *
-retrieve (fullcrumptr, address, index)
-  typecuc *fullcrumptr;
-  tumbler *address;
-  INT index;    /* used when enftype == SPAN or POOM */
+typecontext *retrieve(typecuc *fullcrumptr, tumbler *address, INT index) /* index used when enftype == SPAN or POOM */
 {
   typecontext *findcbcnd();
   typedsp offset;
@@ -61,12 +53,7 @@ retrieve (fullcrumptr, address, index)
         }
 }
 
-  typecontext *
-retrieverestricted (fullcrumptr, span1ptr, index1, span2ptr, index2, docisaptr)
-  typecuc *fullcrumptr;
-  typespan *span1ptr, *span2ptr;
-  INT index1, index2;
-  typeisa *docisaptr;
+typecontext *retrieverestricted(typecuc *fullcrumptr, typespan *span1ptr, INT index1, typespan *span2ptr, INT index2, typeisa *docisaptr)
 {
   tumbler span1start, span1end, span2start, span2end;
   type2dbottomcruminfo info, *infoptr;
@@ -97,12 +84,7 @@ retrieverestricted (fullcrumptr, span1ptr, index1, span2ptr, index2, docisaptr)
         return(temp);
 }
 
-  typecontext *
-retrieveinarea (fullcrumptr, span1start, span1end, index1, span2start, span2end, index2, infoptr)
-  typecuc *fullcrumptr;
-  tumbler *span1start, *span1end, *span2start, *span2end;
-  typebottomcruminfo *infoptr;
-  INT index1, index2;
+typecontext *retrieveinarea(typecuc *fullcrumptr, tumbler *span1start, tumbler *span1end, INT index1, tumbler *span2start, tumbler *span2end, INT index2, typebottomcruminfo *infoptr)
 {
   typedsp offset;
   typecontext *context;
@@ -127,11 +109,7 @@ retrieveinarea (fullcrumptr, span1start, span1end, index1, span2start, span2end,
         return (context);
 }
 
-  typecontext *
-retrieveinspan (fullcrumptr, spanstart, spanend, index)
-  typecuc *fullcrumptr;
-  tumbler *spanstart, *spanend;
-  INT index;
+typecontext *retrieveinspan(typecuc *fullcrumptr, tumbler *spanstart, tumbler *spanend, INT index)
 {
   typedsp offset;
   typecontext *context, *c;
@@ -157,9 +135,7 @@ retrieveinspan (fullcrumptr, spanstart, spanend, index)
         }
 }
 
-  typecontext *
-findlastcbcseq (fullcrumptr)
-  typecorecrum *fullcrumptr;
+typecontext *findlastcbcseq(typecorecrum *fullcrumptr)
 {
   typecorecrum *ptr, *findleftson();
   typecontext *c, *makecontextfromcbc();
@@ -188,11 +164,7 @@ findlastcbcseq (fullcrumptr)
 
 
 /* Model-T like retrieves */
-  typecrumcontext *
-findcbcseqcrum (ptr, offsetptr, address)
-  typecorecrum *ptr;
-  typedsp *offsetptr;
-  tumbler *address;
+typecrumcontext *findcbcseqcrum(typecorecrum *ptr, typedsp *offsetptr, tumbler *address)
 { 
 
   typecrumcontext *createcrumcontext();
@@ -216,11 +188,7 @@ findcbcseqcrum (ptr, offsetptr, address)
         }
 }
 
-  typecontext *
-findcbcseq (ptr, offsetptr, address)
-  typecorecrum *ptr;
-  typedsp *offsetptr;
-  tumbler *address;
+typecontext *findcbcseq(typecorecrum *ptr, typedsp *offsetptr, tumbler *address)
 { 
 
   typecontext *makecontextfromcbc();
@@ -237,12 +205,7 @@ findcbcseq (ptr, offsetptr, address)
         }
 }
 
-  typecontext *
-findcbcnd (father, offsetptr, address, index)
-  typecorecrum *father;
-  typewid *offsetptr;
-  tumbler *address;
-  INT index;
+typecontext *findcbcnd(typecorecrum *father, typewid *offsetptr, tumbler *address, INT index)
 { 
 
   typecorecrum *ptr, *findleftson();
@@ -263,13 +226,7 @@ findcbcnd (father, offsetptr, address, index)
         return (retr);
 }
 
-findcbcinarea2d(crumptr,offsetptr,span1start,span1end,index1,span2start,span2end, index2, headptr, infoptr)
-  typecorecrum *crumptr;
-  typedsp *offsetptr;
-  tumbler *span1start, *span1end, *span2start, *span2end;
-  typecontext **headptr;
-  typebottomcruminfo *infoptr;
-  INT index1, index2;
+int findcbcinarea2d(typecorecrum *crumptr, typedsp *offsetptr, tumbler *span1start, tumbler *span1end, INT index1, tumbler *span2start, tumbler *span2end, INT index2, typecontext **headptr, typebottomcruminfo *infoptr)
 { 
 
   typedsp localoffset;
@@ -310,13 +267,7 @@ gerror("findcbcinarea2d");
 /*foo("leaving findcbcinarea2d\n");*/
 }
 
-    bool                  /* 6-28-84 old code*/
-crumqualifies2d (crumptr, offset, span1start, span1end, index1, span2start, span2end, index2, infoptr)  /* NOTE in retrieves this is ---40% -- of cpu*/
-  typecorecrum *crumptr;
-  typedsp *offset;
-  tumbler *span1start, *span1end, *span2start, *span2end;
-  type2dbottomcruminfo *infoptr;
-  INT index1, index2;
+bool crumqualifies2d(typecorecrum *crumptr, typedsp *offset, tumbler *span1start, tumbler *span1end, INT index1, tumbler *span2start, tumbler *span2end, INT index2, type2dbottomcruminfo *infoptr) /* 6-28-84 old code; NOTE in retrieves this is ---40% -- of cpu */
 {
   INT startcmp, endcmp;
 /*foocrum("entering crumqualifies2d\n",crumptr);*/
@@ -353,11 +304,7 @@ crumqualifies2d (crumptr, offset, span1start, span1end, index1, span2start, span
         return (TRUE);
 }
 
-findcbcinspanseq (crumptr, offsetptr, spanstart, spanend, headptr)
-  typecorecrum *crumptr;
-  typewid *offsetptr;
-  tumbler *spanstart, *spanend;
-  typecontext **headptr;
+int findcbcinspanseq(typecorecrum *crumptr, typewid *offsetptr, tumbler *spanstart, tumbler *spanend, typecontext **headptr)
 { 
 
   typewid localoffset;
@@ -384,9 +331,7 @@ findcbcinspanseq (crumptr, offsetptr, spanstart, spanend, headptr)
  
 /* sets grasp & reach from ptr & offset */
 /*  reach may be NULL so that we won't set it */
-prologuend (ptr, offset, grasp, reach)
-  typecorecrum *ptr;
-  typedsp *offset, *grasp, *reach;
+int prologuend(typecorecrum *ptr, typedsp *offset, typedsp *grasp, typedsp *reach)
 {
         dspadd (offset, &ptr->cdsp, grasp, (INT)ptr->cenftype);
         if (reach)
@@ -397,12 +342,7 @@ prologuend (ptr, offset, grasp, reach)
 
 #define intervalcmppart2(right,address) cmp = tumblercmp ((address), (right)); if (cmp == LESS) return (THRUME); else if (cmp == EQUAL) return (ONMYRIGHTBORDER); else return (TOMYRIGHT);
 
-  INT
-whereoncrum (ptr, offset, address, index)/*speed up by subsuming intervalcmp*/
-  typecorecrum *ptr;
-  typewid *offset;
-  tumbler *address;
-  register INT index;   /* used when enftype == SPAN or POOM */
+INT whereoncrum(typecorecrum *ptr, typewid *offset, tumbler *address, INT index) /*speed up by subsuming intervalcmp; index used when enftype == SPAN or POOM */
 {
   tumbler left, right;
   INT cmp;
@@ -480,10 +420,7 @@ intervalcmp (left, right, address)
 */
 
 
-  bool
-crumintersectsspanseq (crumptr, offsetptr, spanstart, spanend)
-  typecorecrum *crumptr;
-  tumbler *offsetptr, *spanstart, *spanend;
+bool crumintersectsspanseq(typecorecrum *crumptr, tumbler *offsetptr, tumbler *spanstart, tumbler *spanend)
 {
         if (iszerotumbler (&crumptr->cwid.dsas[WIDTH])) {
                 return(FALSE);

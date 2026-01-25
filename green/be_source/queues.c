@@ -1,4 +1,4 @@
-/* Copyright © 1979-1999 Udanax.com. All rights reserved.
+/* Copyright ï¿½ 1979-1999 Udanax.com. All rights reserved.
 
 * This code is licensed under the terms of The Udanax Open-Source License, 
 * which contains precisely the terms of the X11 License.  The full text of 
@@ -31,16 +31,14 @@ typedef int Boolean;
 
 /*  QINIT  --  Initialise links for null queue	*/
 
-void qinit(qhead)
-struct queue *qhead;
+void qinit(struct queue *qhead)
 {
 	qhead->qnext = qhead->qprev = qhead;
 }
 
 /*  QINSERT  --  Insert object at end of queue	*/
 
-void qinsert(qhead, object)
-struct queue *qhead, *object;
+void qinsert(struct queue *qhead, struct queue *object)
 {
 	assert(qhead->qprev->qnext == qhead);
 	assert(qhead->qnext->qprev == qhead);
@@ -53,8 +51,7 @@ struct queue *qhead, *object;
 
 /*  QPUSH  --  Push object at start of queue  */
 
-void qpush(qhead, object)
-struct queue *qhead, *object;
+void qpush(struct queue *qhead, struct queue *object)
 {
 	assert(qhead->qprev->qnext == qhead);
 	assert(qhead->qnext->qprev == qhead);
@@ -67,8 +64,7 @@ struct queue *qhead, *object;
 
 /*  QREMOVE  --  Remove object from queue.  Returns NULL if queue empty  */
 
-struct queue *qremove(qhead)
-struct queue *qhead;
+struct queue *qremove(struct queue *qhead)
 {
 	struct queue *object;
 
@@ -85,9 +81,7 @@ struct queue *qhead;
 /*  QNEXT  --  Get next object from queue nondestructively. Returns
 	       NULL at end of queue */
 
-struct queue *qnext(qthis, qhead)
-struct queue *qthis;
-struct queue *qhead;
+struct queue *qnext(struct queue *qthis, struct queue *qhead)
 {
 	struct queue *object;
 
@@ -99,8 +93,7 @@ struct queue *qhead;
 /*  QDCHAIN  --  Dequeue an item from the middle of a queue.  Passed
 		 the queue item, returns the (now dechained) queue item. */
 
-struct queue *qdchain(qitem)
-struct queue *qitem;
+struct queue *qdchain(struct queue *qitem)
 {
 	assert(qitem->qprev->qnext == qitem);
 	assert(qitem->qnext->qprev == qitem);
@@ -115,8 +108,7 @@ struct queue *qitem;
 		 macro (defined in queues.h) which uses qnext() to
 		 detect an empty queue much faster. */
 
-int qlength(qhead)
-struct queue *qhead;
+int qlength(struct queue *qhead)
 {
 	int l;
 	struct queue *qp;
@@ -137,8 +129,7 @@ struct queue *qhead;
 		Note that if the queue contains any bad pointers
 		this routine may crash.  */
 
-Boolean qvalid(qhead)
-struct queue *qhead;
+Boolean qvalid(struct queue *qhead)
 {
 	struct queue *qp;
 

@@ -1,4 +1,4 @@
-/* Copyright © 1979-1999 Udanax.com. All rights reserved.
+/* Copyright ï¿½ 1979-1999 Udanax.com. All rights reserved.
 
 * This code is licensed under the terms of The Udanax Open-Source License, 
 * which contains precisely the terms of the X11 License.  The full text of 
@@ -11,11 +11,7 @@
 
 #include "xanadu.h"
 
-restrictspecsetsaccordingtoispans (taskptr, ispanset, specset1, specset2)
-  typetask *taskptr;
-  typeispanset ispanset;
-  typespecset *specset1;
-  typespecset *specset2;
+int restrictspecsetsaccordingtoispans(typetask *taskptr, typeispanset ispanset, typespecset *specset1, typespecset *specset2)
 {
   typespecset s1;
   typespecset s2;
@@ -39,11 +35,7 @@ fooitemset("\n specset2 = \n",*specset2);
 #endif
 }
 
-restrictvspecsetovercommonispans (taskptr, ispanset, specset, newspecsetptr)
-  typetask *taskptr;
-  typeispanset ispanset;
-  typespecset specset;
-  typespecset *newspecsetptr;
+int restrictvspecsetovercommonispans(typetask *taskptr, typeispanset ispanset, typespecset specset, typespecset *newspecsetptr)
 {
   typeorgl versionorgl;
   typevspec *s1;
@@ -83,10 +75,7 @@ fooitemset("\n newspecset = \n",*newspecsetptr);
 #endif
 }
 
-removespansnotinoriginal (taskptr, original, newptr)
-  typetask *taskptr;
-  typespecset original;
-  typespecset *newptr;
+int removespansnotinoriginal(typetask *taskptr, typespecset original, typespecset *newptr)
 {
   typespecset old;
   typespecset new;
@@ -131,13 +120,7 @@ fooitemset("leaving removespansnotinoriginal\n",*newptr);
 #endif
 }
 
-  bool
-intersectspansets (taskptr, set1, set2, set3, spantype)
-  typetask *taskptr;
-  typespanset set1;
-  typespanset set2;
-  typespanset *set3;
-  INT spantype;
+bool intersectspansets(typetask *taskptr, typespanset set1, typespanset set2, typespanset *set3, INT spantype)
 {
   typespan *p;
   bool comparespans();
@@ -172,13 +155,7 @@ foospanset("",set3);
 	return (TRUE);
 }
 
-  bool
-comparespans (taskptr, span1, span2, span3, spantype)
-  typetask *taskptr;
-  typespan *span1;
-  typespan *span2;
-  typespan **span3;
-  INT spantype;
+bool comparespans(typetask *taskptr, typespan *span1, typespan *span2, typespan **span3, INT spantype)
 {
   INT *taskalloc();
   bool spanintersection();
@@ -197,9 +174,7 @@ comparespans (taskptr, span1, span2, span3, spantype)
 	}
 }
 
-  bool
-spanintersection (aptr, bptr, cptr)
-  typespan *aptr, *bptr, *cptr;
+bool spanintersection(typespan *aptr, typespan *bptr, typespan *cptr)
 {
   tumbler aend, bend;
 
@@ -256,12 +231,7 @@ foospan("\n cspan = ",cptr);
 	return (TRUE);
 }
 
-makespanpairset (taskptr, ispanset, specset1, specset2, pairsetptr)
-  typetask *taskptr;
-  typeispanset ispanset;
-  typespecset specset1;
-  typespecset specset2;
-  typespanpairset *pairsetptr;
+int makespanpairset(typetask *taskptr, typeispanset ispanset, typespecset specset1, typespecset specset2, typespanpairset *pairsetptr)
 {
   tumbler iwidth;
   typespanpairset pairset;
@@ -284,12 +254,7 @@ foo("leaving makespanpairset");
 #endif
 }
 
-makespanpairsforispan (taskptr, iwidth, specset1ptr, specset2ptr, pairsetptr)
-  typetask *taskptr;
-  tumbler *iwidth;
-  typespecset *specset1ptr;
-  typespecset *specset2ptr;
-  typespanpairset *pairsetptr;
+int makespanpairsforispan(typetask *taskptr, tumbler *iwidth, typespecset *specset1ptr, typespecset *specset2ptr, typespanpairset *pairsetptr)
 {
   typespanpair *makespanpair();
   typevspec *spec1, *spec2;
@@ -350,12 +315,7 @@ foo("leaving makespanpairsforispan\n");
 #endif
 }
 
-  typespanpair *
-makespanpair (taskptr, doc1, start1, doc2, start2, width)
-  typetask *taskptr;
-  tumbler *doc1, *doc2;
-  tumbler *start1, *start2;
-  tumbler *width;
+typespanpair *makespanpair(typetask *taskptr, tumbler *doc1, tumbler *start1, tumbler *doc2, tumbler *start2, tumbler *width)
 {
   typespanpair *spanpair;
   INT *taskalloc();
@@ -367,9 +327,7 @@ makespanpair (taskptr, doc1, start1, doc2, start2, width)
 	return (spanpair);
 }
 
-  INT   /* return LESS, EQUAL or GREATER */
-spansubtract (aptr, bptr, cptr) /* no negative spans (whatever they may be) */
-  typespan *aptr, *bptr, *cptr; /* all returned tumbler values are positive */
+INT spansubtract(typespan *aptr, typespan *bptr, typespan *cptr)
 {
   INT cmp;
 

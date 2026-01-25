@@ -1,4 +1,4 @@
-/* Copyright © 1979-1999 Udanax.com. All rights reserved.
+/* Copyright ï¿½ 1979-1999 Udanax.com. All rights reserved.
 
 * This code is licensed under the terms of The Udanax Open-Source License, 
 * which contains precisely the terms of the X11 License.  The full text of 
@@ -12,13 +12,9 @@
  static INT widdiffs();
 /* use with SPAN and POOM */
 
-insertnd (taskptr, fullcrumptr, origin, width, infoptr, index)
-  typetask *taskptr;
-  typecuc *fullcrumptr;
-  typewid *origin;  /* origin is vsa fo crum*//* note that here they're wids,*/
-  typewid *width;       /* and in deletend they're single tumblers */
-  type2dbottomcruminfo *infoptr;
-  INT index;
+int insertnd(typetask *taskptr, typecuc *fullcrumptr, typewid *origin, typewid *width, type2dbottomcruminfo *infoptr, INT index)
+  /* origin is vsa fo crum*//* note that here they're wids,*/
+  /* and in deletend they're single tumblers */
 {
   INT bothertorecombine;
   INT oldheight;
@@ -115,9 +111,7 @@ fprintf(stderr,"entering insertnd\n");
 }
 			       
 
-  static INT
-widdiffs(crumptr)
-  typecuc *crumptr;
+static INT widdiffs(typecuc *crumptr)
 {
   INT i,v;
 	if(crumptr->cenftype != POOM)
@@ -127,10 +121,7 @@ widdiffs(crumptr)
 	return(i-v);
 }
 
-makegappm (taskptr, fullcrumptr, origin, width)
-  typetask *taskptr;
-  typecuc *fullcrumptr;
-  typewid *origin , *width;
+int makegappm(typetask *taskptr, typecuc *fullcrumptr, typewid *origin, typewid *width)
 {
   typeknives knives;
   typewid offset, grasp, reach;
@@ -180,9 +171,7 @@ checkwholesubtree(fullcrumptr);
 	setwispupwards (findfather ((typecorecrum*)father),1);
 }
 
-findaddressofsecondcutforinsert (position, secondcut)
-  tumbler *position;
-  tumbler *secondcut;
+int findaddressofsecondcutforinsert(tumbler *position, tumbler *secondcut)
 {    /*needs this to give it a place to find intersectionof for text is 2.1*/
   tumbler zero, intpart;
 
@@ -193,12 +182,7 @@ findaddressofsecondcutforinsert (position, secondcut)
        tumblerincrement (secondcut, 1, 1, secondcut);
 }
 
-  INT
-doinsertnd (father, origin, width, infoptr, index)
-  typecuc *father;
-  typewid *origin, *width;
-  type2dbottomcruminfo *infoptr;
-  INT index;
+INT doinsertnd(typecuc *father, typewid *origin, typewid *width, type2dbottomcruminfo *infoptr, INT index)
 {
   typedsp  offset;
 		   
@@ -212,10 +196,7 @@ doinsertnd (father, origin, width, infoptr, index)
 	return(insertmorend (father, &offset, origin, width, infoptr, index));
 }
 
-firstinsertionnd (father, origin, width, infoptr)
-  typecuc *father;
-  typewid *origin, *width;
-  type2dbottomcruminfo *infoptr;
+int firstinsertionnd(typecuc *father, typewid *origin, typewid *width, type2dbottomcruminfo *infoptr)
 {
   typecorecrum *ptr;
 
@@ -227,13 +208,7 @@ firstinsertionnd (father, origin, width, infoptr)
 	setwisp ((typecorecrum*)father);
 	return;
 }
-  INT 
-insertmorend (father, offset, origin, width, infoptr, index)
-  typecuc *father;
-  typedsp *offset;
-  typewid *origin, *width;
-  type2dbottomcruminfo *infoptr;
-  INT index;
+INT insertmorend(typecuc *father, typedsp *offset, typewid *origin, typewid *width, type2dbottomcruminfo *infoptr, INT index)
 {
 
   typedsp grasp;
@@ -256,12 +231,7 @@ insertmorend (father, offset, origin, width, infoptr, index)
 }
 
 
-  INT
-insertcbcnd (father, grasp, origin, width, infoptr)
-  typecuc *father;
-  typedsp *grasp;
-  typewid *origin, *width;
-  type2dbottomcruminfo *infoptr;
+INT insertcbcnd(typecuc *father, typedsp *grasp, typewid *origin, typewid *width, type2dbottomcruminfo *infoptr)
 {
   typecorecrum *ptr, *new;
   typecorecrum *createcrum();
@@ -296,12 +266,7 @@ insertcbcnd (father, grasp, origin, width, infoptr)
 	return(splitsomething);
 }
  
-  typecorecrum *
-findsontoinsertundernd (father, grasp, origin, width, index)
-  typecuc *father;
-  typedsp *grasp;
-  typewid *origin, *width;
-  INT index;
+typecorecrum *findsontoinsertundernd(typecuc *father, typedsp *grasp, typewid *origin, typewid *width, INT index)
 {
   typecorecrum *ptr, *nearestonleft;
   tumbler spanend, sonstart;
@@ -325,11 +290,7 @@ findsontoinsertundernd (father, grasp, origin, width, index)
 	return (nearestonleft);
 }
 
-  bool
-isanextensionnd (ptr, offsetptr, originptr, infoptr)
-  typecbc *ptr;
-  typedsp *offsetptr, *originptr;
-  type2dbottomcruminfo *infoptr;
+bool isanextensionnd(typecbc *ptr, typedsp *offsetptr, typedsp *originptr, type2dbottomcruminfo *infoptr)
 {
   typedsp grasp, reach;
   bool lockeq();

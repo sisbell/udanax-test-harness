@@ -1,4 +1,4 @@
-/* Copyright © 1979-1999 Udanax.com. All rights reserved.
+/* Copyright ï¿½ 1979-1999 Udanax.com. All rights reserved.
 
 * This code is licensed under the terms of The Udanax Open-Source License, 
 * which contains precisely the terms of the X11 License.  The full text of 
@@ -22,19 +22,14 @@ clear (addr, count)
 //
 }
 */
-setmem (addr, count, byte)
-  register char *addr;
-  register unsigned count;
-  register char byte;
+int setmem(register char *addr, register unsigned count, register char byte)
 {
         while (count--){
                 *addr++ = byte;
         }
 }
 
-mymovmem (source, dest, count)
-  register char *source,*dest;
-  register unsigned count;
+int mymovmem(register char *source, register char *dest, register unsigned count)
 {
         if (source > dest){
                 while (count--)

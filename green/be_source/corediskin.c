@@ -13,9 +13,7 @@ extern bool isxumain;
 static hgetwiddsp();
 static varunpackloaf();
 /* Initialize thing from old enf.enf */
-void initkluge(granfptr, spanfptr)
-  typecuc **granfptr;
-  typecuc **spanfptr;
+void initkluge(typecuc **granfptr, typecuc **spanfptr)
 {
   typecbc *tempcbc;
 	
@@ -40,19 +38,12 @@ void initkluge(granfptr, spanfptr)
 	freecrum((typecorecrum*)tempcbc);
 }
 
-  typediskloaf*
-lookinsideloaffor(insidenumber,uloafptr)
-  INT insidenumber;
-  typediskloaf *uloafptr;
+typediskloaf *lookinsideloaffor(INT insidenumber, typediskloaf *uloafptr)
 {
 	return(uloafptr);
 }
 
-  static
-unpackloaf (insidediskblocknumber,uloafptr, father)
-  INT insidediskblocknumber;
-  typediskloaf *uloafptr;
-  typecuc *father;
+static int unpackloaf(INT insidediskblocknumber, typediskloaf *uloafptr, typecuc *father)
 {
 	varunpackloaf (insidediskblocknumber,uloafptr, father);
 	return;
@@ -60,11 +51,7 @@ unpackloaf (insidediskblocknumber,uloafptr, father)
 /*#define hgetfromloaf(ip,lp) (*(ip)=intof(lp),fprintf(stderr,"hgetfromloaf gets %d\n",*(ip)),(lp)=((char*)lp)+lengthof(lp))*/
 
 
-  static
-varunpackloaf (insidediskblocknumber,uloafptr, father)
-  INT insidediskblocknumber;
-  typediskloaf *uloafptr;
-  typecuc *father;
+static int varunpackloaf(INT insidediskblocknumber, typediskloaf *uloafptr, typecuc *father)
 {
   typediskloaf *xloafptr;
   typecuc *ptr;
@@ -160,8 +147,7 @@ dumphexstuff(xloafptr);
 	}
 }
 
-inloaf (father)
-  typecuc *father;
+int inloaf(typecuc *father)
 {
   typediskloaf loaf;
 	if (father->height == 0)
@@ -180,14 +166,11 @@ inloaf (father)
 	unpackloaf (father->sonorigin.insidediskblocknumber,&loaf, father);
 /*nchecknumofsons(father);*/
 }
-inorgl (granorglptr)
-  typecbc *granorglptr;
+int inorgl(typecbc *granorglptr)
 {
 	inorglinternal(granorglptr,(typeuberrawdiskloaf*)NULL);
 }
-inorglinternal (granorglptr,crumptr)
-  typecbc *granorglptr;
-  typeuberrawdiskloaf *crumptr;
+int inorglinternal(typecbc *granorglptr, typeuberrawdiskloaf *crumptr)
 {
   typediskloaf loaf;
   typecuc *ptr;
@@ -245,10 +228,7 @@ inorglinternal (granorglptr,crumptr)
 /*dump(ptr);*/
 }
 
-  static
-hgetwiddsp(ptr,loafptrptr)
-  typecuc *ptr;
-  char **loafptrptr;
+static int hgetwiddsp(typecuc *ptr, char **loafptrptr)
 {
   int i,nstreams;
   UINTtemp;
@@ -266,9 +246,7 @@ hgetwiddsp(ptr,loafptrptr)
 	}
 }
 
-hgetinfo(ptr,loafptrptr)/*this assumes ptr crum is ok except for info*/
-  typecbc *ptr;
-  char **loafptrptr;
+int hgetinfo(typecbc *ptr, char **loafptrptr)
 {
   UINTtemp;
 	if (!is2dcrum((typecorecrum*)ptr)) {

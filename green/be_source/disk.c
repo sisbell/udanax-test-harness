@@ -23,8 +23,7 @@ INT enffiledes;	 /* enfilade file descriptor where disk stuff is */
 bool enffileread;       /* yeah another external */
 void actuallyreadrawloaf();
 
-INT findnumberofdamnsons(diskptr)
-  typediskloafptr diskptr;
+INT findnumberofdamnsons(typediskloafptr diskptr)
 {
   typeuberrawdiskloaf loaf;
   char *loafp;
@@ -51,9 +50,7 @@ INT findnumberofdamnsons(diskptr)
 	return(numberofsons);
 }
 
-INT changerefcount (diskptr, delta)
-  typediskloafptr diskptr;
-  INT delta;
+INT changerefcount(typediskloafptr diskptr, INT delta)
 {
   typeuberrawdiskloaf loaf;
   char *loafp;
@@ -80,10 +77,7 @@ INT changerefcount (diskptr, delta)
 	return(refcount);
 }
 
-INT changeunterrefcount (wholeloafp,originalloafp, delta)
-  typediskloaf *wholeloafp;
-  char *originalloafp;
-  INT delta;
+INT changeunterrefcount(typediskloaf *wholeloafp, char *originalloafp, INT delta)
 {
   INT ret;
   INT numberofsons;
@@ -156,9 +150,7 @@ INT changeunterrefcount (wholeloafp,originalloafp, delta)
 /* Reads whats on disk at place named by loafptr in
 *       place pointed to by loaf
 */
-void readloaf (loafptr, diskptr)
-  typediskloaf *loafptr;
-  typediskloafptr diskptr;
+void readloaf(typediskloaf *loafptr, typediskloafptr diskptr)
 {
   typeuberrawdiskloaf uberrawloaf;
   humber temp;
@@ -175,9 +167,7 @@ void readloaf (loafptr, diskptr)
 }
 
 
-void actuallyreadrawloaf(loafptr, blocknumber)
-  typeuberrawdiskloaf *loafptr;
-  INT blocknumber;
+void actuallyreadrawloaf(typeuberrawdiskloaf *loafptr, INT blocknumber)
 {
   bool goodblock();
 /*fprintf(stderr,"entering actuallyreadloaf diskblocknumber = %d\n",blocknumber);*/
@@ -232,10 +222,7 @@ void actuallyreadrawloaf(loafptr, blocknumber)
 
 /* Writes stuff at loaf onto piece of disk named by loafptr
 */
-void writeloaf (loafptr, diskptr,newloaf)
-  typediskloaf *loafptr;
-  typediskloafptr diskptr;
-  INT newloaf;
+void writeloaf(typediskloaf *loafptr, typediskloafptr diskptr, INT newloaf)
 {
   void actuallywriteloaf();
   /*typeuberdiskloaf loaf;*/
@@ -291,10 +278,7 @@ void writeloaf (loafptr, diskptr,newloaf)
 /*fprintf(stderr,"leaving wrietloaf\n");*/
 }
 
-void actuallywriteloaf (/*size,*/loafptr, diskblocknumber)
-  /*INT size;*/
-  typeuberrawdiskloaf *loafptr;
-  INT diskblocknumber;
+void actuallywriteloaf(typeuberrawdiskloaf *loafptr, INT diskblocknumber)
 {
   void writethruhash();
 /*fprintf(stderr,"entering actuallywriteloaf diskblocknumber = %d\n",diskblocknumber);*/
@@ -318,8 +302,7 @@ void actuallywriteloaf (/*size,*/loafptr, diskblocknumber)
      /*   return (TRUE);*/
 }
 
-  bool   /* return FALSE if new file */
-initenffile ()
+bool initenffile(void)
 {
   INT fd, creat();
   bool ret, readallocinfo();
@@ -351,7 +334,7 @@ initenffile ()
 	return (ret);
 }
 
-closediskfile ()
+int closediskfile(void)
 {
 	diskallocexit (enffiledes);
 	if (close (enffiledes) != 0) {
@@ -360,13 +343,12 @@ closediskfile ()
 	}
 }
 
-dieandclosefiles ()
+int dieandclosefiles(void)
 {
 	abort ();
 }
 
-warning (message)
-  char *message;
+int warning(char *message)
 {
 	fprintf (stderr, "Warning: %s",message);
 }

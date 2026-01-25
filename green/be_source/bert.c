@@ -1,4 +1,4 @@
-/* Copyright © 1979-1999 Udanax.com. All rights reserved.
+/* Copyright ï¿½ 1979-1999 Udanax.com. All rights reserved.
 
 * This code is licensed under the terms of The Udanax Open-Source License, 
 * which contains precisely the terms of the X11 License.  The full text of 
@@ -49,10 +49,7 @@ char bertMsgBuf[256] = "";
 	WRITE		  -1	|   0	#  -1	|  -1	# WRITE | -1
 	
 */
-int checkforopen(tp, type, connection)
-  tumbler *tp;
-  int type;
-  int /* typeuser?? */ connection /* == global user */;
+int checkforopen(tumbler *tp, int type, int connection)
 {
   conscell *p;
   bertentry *bert;
@@ -91,17 +88,13 @@ int checkforopen(tp, type, connection)
 
 
 
-logbertmodifiedforcrum(crumptr, connection)
-  typecuc *crumptr;
-  int /* ??typeuser */ connection;
+int logbertmodifiedforcrum(typecuc *crumptr, int connection)
 {
 	/*logbertmodified(xxx);*/
 }
 
 
-logbertmodified(tp, connection)
-  tumbler *tp;
-  int /* ??typeuser */ connection;
+int logbertmodified(tumbler *tp, int connection)
 {
   conscell *p;
   bertentry *bert;
@@ -116,9 +109,7 @@ logbertmodified(tp, connection)
 }
 
 
-incrementopen(tp, connection)
-  tumbler *tp;
-  int /* ??typeuser */ connection;
+int incrementopen(tumbler *tp, int connection)
 {
   conscell *p;
   bertentry *bert;
@@ -134,11 +125,7 @@ fprintf(stderr,"incrementopen:  user = %d  tp = ",connection);dumptumbler(tp);fp
 }
 
 
-addtoopen(tp, connection, created, type)
-  tumbler *tp;
-  int /* ?? typeuser */ connection;
-  int created;
-  int type;
+int addtoopen(tumbler *tp, int connection, int created, int type)
 {
   int hash;
   conscell *consp;
@@ -164,9 +151,7 @@ fprintf(stderr,"addtoopen:  user = %d  type = %s  created = %d  tp = ", connecti
 }
 
 
-bool removefromopen(tp, connection)
-  tumbler *tp;
-  int /* typeuser */ connection;
+bool removefromopen(tumbler *tp, int connection)
 {
   int hash;
   conscell *p,*oldptr;
@@ -207,8 +192,7 @@ fprintf(stderr,"removefromopen:  user = %d  tp = ", connection);dumptumbler(tp);
 	return FALSE;
 }
 
-exitbert(connection)
-  int connection;
+int exitbert(int connection)
 {
   conscell *p,*oldptr;
   conscell *temp;
@@ -247,8 +231,7 @@ fprintf(stderr,"exitbert:  user = %d\n", connection);
 }
 
 
-int hashoftumbler(tp)
-  tumbler *tp;
+int hashoftumbler(tumbler *tp)
 {
   int ret;
   int i;
@@ -278,12 +261,7 @@ int hashoftumbler(tp)
 		write	  -1    |  -1   #  -1   |  -1   #  -1   |   -1
 
 */
-bool doopen(taskptr, tp, newtp, type, mode, connection)
-  typetask *taskptr;
-  tumbler *tp,*newtp;
-  int type;
-  int mode;
-  int /* typeuser */ connection;
+bool doopen(typetask *taskptr, tumbler *tp, tumbler *newtp, int type, int mode, int connection)
 {
   INT openState;
   bool docreatenewversion();
@@ -334,10 +312,7 @@ bool doopen(taskptr, tp, newtp, type, mode, connection)
 }
 
 
-bool doclose(taskptr, tp, connection)
-  typetask *taskptr;
-  tumbler *tp;
-  int /* typeuser */ connection;
+bool doclose(typetask *taskptr, tumbler *tp, int connection)
 {
 #ifndef DISTRIBUTION
 fprintf(stderr,"doclose: user = %d  tp = ",connection);dumptumbler(tp);fprintf(stderr,"\n");
@@ -351,8 +326,7 @@ fprintf(stderr,"doclose: user = %d  tp = ",connection);dumptumbler(tp);fprintf(s
 }
 
 
-dobertexit(connection)
-  int /* typeuser */ connection;
+int dobertexit(int connection)
 {
 #ifndef DISTRIBUTION
 fprintf(stderr, "dobertexit: user = %d\n", connection);
@@ -361,8 +335,7 @@ fprintf(stderr, "dobertexit: user = %d\n", connection);
 }
 
 
-deleteversion(tp)
-  tumbler *tp;
+int deleteversion(tumbler *tp)
 {
 #ifndef DISTRIBUTION
 fprintf(stderr,"deleteversion: tp = ");dumptumbler(tp);fprintf(stderr,"\n");

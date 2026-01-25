@@ -1,4 +1,4 @@
-/* Copyright © 1979-1999 Udanax.com. All rights reserved.
+/* Copyright ï¿½ 1979-1999 Udanax.com. All rights reserved.
 
 * This code is licensed under the terms of The Udanax Open-Source License,
 * which contains precisely the terms of the X11 License.  The full text of
@@ -32,8 +32,7 @@ extern char etext;   /* as another lower limit on valid pointers */
 long nolread;
 long nowread;
 
-foo (msg)
-  char *msg;
+int foo(char *msg)
 {
 #ifndef DISTRIBUTION
         if (debug)
@@ -41,9 +40,7 @@ foo (msg)
 #endif
 }
 
-foospan(msg,span)
-  char *msg;
-  typespan * span;
+int foospan(char *msg, typespan *span)
 {
 #ifndef DISTRIBUTION
         if(debug){
@@ -53,9 +50,7 @@ foospan(msg,span)
 #endif
 }                    
 
-foospanset(msg,spanset)
-  char *msg;
-  typespan * spanset;
+int foospanset(char *msg, typespan *spanset)
 {
 #ifndef DISTRIBUTION
         if(debug){
@@ -71,8 +66,7 @@ foospanset(msg,spanset)
 #endif
 }
 
-dumpspanset(spanset)
-  typespan * spanset;
+int dumpspanset(typespan *spanset)
 {
 #ifndef DISTRIBUTION
                 if(!spanset){
@@ -85,9 +79,7 @@ dumpspanset(spanset)
 #endif
 }
 
-foocrum(msg,crumptr)
-  char *msg;
-  typecorecrum *crumptr;
+int foocrum(char *msg, typecorecrum *crumptr)
 {
 #ifndef DISTRIBUTION
         if(debug){
@@ -97,9 +89,7 @@ foocrum(msg,crumptr)
 #endif
 }
 
-foohex (msg, num)
-  char *msg;
-  INT num;
+int foohex(char *msg, INT num)
 {
 #ifndef DISTRIBUTION
         if (debug)
@@ -107,9 +97,7 @@ foohex (msg, num)
 #endif
 }
 
-foodec (msg, num)
-  char *msg;
-  INT num;
+int foodec(char *msg, INT num)
 {
 #ifndef DISTRIBUTION
         if (debug)
@@ -117,9 +105,7 @@ foodec (msg, num)
 #endif
 }
 
-foocontext (msg, context)
-  char *msg;
-  typecontext *context;
+int foocontext(char *msg, typecontext *context)
 {
 #ifndef DISTRIBUTION
         if (debug) {
@@ -129,9 +115,7 @@ foocontext (msg, context)
 #endif
 }
 
-foocontextlist (msg, context)
-  char *msg;
-  typecontext *context;
+int foocontextlist(char *msg, typecontext *context)
 {
 #ifndef DISTRIBUTION
         if (debug) {
@@ -141,9 +125,7 @@ foocontextlist (msg, context)
 #endif
 }
 
-fooitemset (msg, iptr)
-  char *msg;
-  typeitemset iptr;
+int fooitemset(char *msg, typeitemset iptr)
 {
 #ifndef DISTRIBUTION
         if (debug) {
@@ -153,9 +135,7 @@ fooitemset (msg, iptr)
 #endif
 }
 
-fooitem (msg, iptr)
-  char *msg;
-  typeitem *iptr;
+int fooitem(char *msg, typeitem *iptr)
 {
 #ifndef DISTRIBUTION
         if (debug) {
@@ -166,9 +146,7 @@ fooitem (msg, iptr)
 #endif
 }
 
-footumbler (msg, tptr)
-  char *msg;
-  tumbler *tptr;
+int footumbler(char *msg, tumbler *tptr)
 {
 #ifndef DISTRIBUTION
         if (debug) {
@@ -182,10 +160,7 @@ footumbler (msg, tptr)
 #endif
 }
 
-foodsp (msg, dptr, enftype)
-  char *msg;
-  typedsp *dptr;
-  INT enftype;
+int foodsp(char *msg, typedsp *dptr, INT enftype)
 {
 #ifndef DISTRIBUTION
         if (debug) {
@@ -199,10 +174,7 @@ foodsp (msg, dptr, enftype)
 #endif
 }
 
-foowid (msg, wptr, enftype)
-  char *msg;
-  typewid *wptr;
-  INT enftype;
+int foowid(char *msg, typewid *wptr, INT enftype)
 {
 #ifndef DISTRIBUTION
         if (debug) {
@@ -216,8 +188,7 @@ foowid (msg, wptr, enftype)
 #endif
 }
 /* pass this the fullcrum to dump the entire (incore) enfilade */
-dumpsubtree (father)
-  typecuc *father;
+int dumpsubtree(typecuc *father)
 { 
 #ifndef DISTRIBUTION
   typecorecrum *ptr;
@@ -233,8 +204,7 @@ dumpsubtree (father)
                 dumpsubtree (ptr);
 #endif
 }
-dumpwholesubtree (father)
-  typecuc *father;
+int dumpwholesubtree(typecuc *father)
 { 
 #ifndef DISTRIBUTION
   typecorecrum *ptr;
@@ -252,9 +222,7 @@ fprintf(stderr,"dump whole subtree");
 #endif
 }
 
-assertspecisstring(specptr,string)
-  typespecset specptr;
-  char *string;
+int assertspecisstring(typespecset specptr, char *string)
 {
 #ifndef DISTRIBUTION
   typetask taskfoo;
@@ -285,8 +253,7 @@ fprintf(stderr,"assertspecisstring leaving \n");
 #endif
 }
 
-bool asserttreeisok(ptr)
-  typecorecrum *ptr;
+bool asserttreeisok(typecorecrum *ptr)
 {
 return(TRUE);
 /*fprintf(stderr,"entering asserttreeisok\n");*/
@@ -297,8 +264,7 @@ return(TRUE);
 */
 }
 
-assertsubtreeisok(ptr)
-  typecorecrum *ptr;
+int assertsubtreeisok(typecorecrum *ptr)
 {
 #ifndef DISTRIBUTION 
   typecorecrum *son;
@@ -329,8 +295,7 @@ assertsubtreeisok(ptr)
 #endif
 }
 
-assertsonswispmatchesfather(father)
-  typecuc *father;
+int assertsonswispmatchesfather(typecuc *father)
 {
 #ifndef DISTRIBUTION
   typecorecrum *son;
@@ -349,8 +314,7 @@ assertsonswispmatchesfather(father)
         }
 #endif
 }
-assertwidsarepositive(ptr)
-  typecorecrum *ptr;
+int assertwidsarepositive(typecorecrum *ptr)
 {
 #ifndef DISTRIBUTION
   INT nstreams,i;
@@ -370,8 +334,7 @@ assertwidsarepositive(ptr)
 #endif
 }
 
-dumpwholetree(ptr)
-  typecorecrum *ptr;
+int dumpwholetree(typecorecrum *ptr)
 {
 #ifndef DISTRIBUTION
 fprintf(stderr,"dump whole tree\n");
@@ -381,8 +344,7 @@ fprintf(stderr,"dump whole tree\n");
 #endif
 }
   
-checkwholesubtree (father)
-  typecuc *father;
+int checkwholesubtree(typecuc *father)
 { 
 #ifndef DISTRIBUTION
   typecorecrum *ptr;
@@ -407,8 +369,7 @@ return(0);
 #endif
 }
 
-check(ptr)
-  typecuc *ptr;
+int check(typecuc *ptr)
 {
 return(0);
 #ifdef UnDeeFiNeD
@@ -426,8 +387,7 @@ return(0);
 #endif
 }
                /* dump a core crum */
-dump (ptr)
-  typecorecrum *ptr;
+int dump(typecorecrum *ptr)
 {
 #ifndef DISTRIBUTION
     fprintf(stderr,"\n");
@@ -443,16 +403,14 @@ dump (ptr)
 #endif
 }
 
-yesdump (ptr)   /* because dbx has a builtin dump   name conflict*/
-  typecorecrum *ptr;
+int yesdump(typecorecrum *ptr)   /* because dbx has a builtin dump   name conflict*/
 {
 #ifndef DISTRIBUTION
         dump(ptr);
 #endif
 }
                  /* dump a corecrumhedr */
-dumphedr (ptr)
-  typecorecrumhedr *ptr;
+int dumphedr(typecorecrumhedr *ptr)
 {
 #ifndef DISTRIBUTION
   char *temp;
@@ -480,9 +438,7 @@ dumphedr (ptr)
 #endif
 }
 
-dumpwid (widptr, enftype)
-  typewid *widptr;
-  INT enftype;
+int dumpwid(typewid *widptr, INT enftype)
 {
 #ifndef DISTRIBUTION
   INT i, nstreams;
@@ -498,9 +454,7 @@ dumpwid (widptr, enftype)
 #endif
 }
 
-dumpdsp (dspptr, enftype)
-  typewid *dspptr;
-  INT enftype;
+int dumpdsp(typewid *dspptr, INT enftype)
 {
 #ifndef DISTRIBUTION
   INT i, nstreams;
@@ -518,9 +472,7 @@ dumpdsp (dspptr, enftype)
 #endif
 }
 
-dumpinfo (infoptr, enftype)
-  typegranbottomcruminfo *infoptr;
-  INT enftype;
+int dumpinfo(typegranbottomcruminfo *infoptr, INT enftype)
 {
 #ifndef DISTRIBUTION
         if (enftype == GRAN) {
@@ -547,8 +499,7 @@ dumpinfo (infoptr, enftype)
 #endif
 }
 
-dumptumbler(tumblerptr)
-  tumbler *tumblerptr;
+int dumptumbler(tumbler *tumblerptr)
 {
 #ifndef DISTRIBUTION
   INT i;
@@ -572,8 +523,7 @@ dumptumbler(tumblerptr)
 #endif
 }
 
-displaycutspm (knivesptr)
-  typeknives *knivesptr;
+int displaycutspm(typeknives *knivesptr)
 {
 #ifndef DISTRIBUTION
   INT i;
@@ -588,8 +538,7 @@ displaycutspm (knivesptr)
 }
 
 
-dumphint (hintptr)
-  typehint *hintptr;
+int dumphint(typehint *hintptr)
 {
 #ifndef DISTRIBUTION
         fprintf(stderr,"\nHINT\n");
@@ -602,8 +551,7 @@ dumphint (hintptr)
 #endif
 }
 
-examine (taskptr)
-  typetask *taskptr;
+int examine(typetask *taskptr)
 {
 #ifndef DISTRIBUTION
   char c;
@@ -642,8 +590,7 @@ examine (taskptr)
 }
 
 
-showorgl (taskptr)
-  typetask *taskptr;
+int showorgl(typetask *taskptr)
 {
 #ifndef DISTRIBUTION
   typeorgl orgl;
@@ -661,8 +608,7 @@ showorgl (taskptr)
 #endif
 }
 
-showsubtree (father)
-  typecorecrum *father;
+int showsubtree(typecorecrum *father)
 {
 #ifndef DISTRIBUTION
   INT temp;
@@ -673,8 +619,7 @@ showsubtree (father)
 #endif
 }
 
-showistream (granfptr)
-  typecuc *granfptr;
+int showistream(typecuc *granfptr)
 {
 #ifndef DISTRIBUTION
   INT temp;
@@ -685,8 +630,7 @@ showistream (granfptr)
 #endif
 }
 
-showspanf (spanfptr)
-  typecuc *spanfptr;
+int showspanf(typecuc *spanfptr)
 {
 #ifndef DISTRIBUTION
   typedsp offset;
@@ -700,10 +644,7 @@ showspanf (spanfptr)
 }
 
 
-doshowspanf (crumptr, offsetptr, enfheight)
-  typecorecrum *crumptr;
-  typedsp *offsetptr;
-  INT enfheight;
+int doshowspanf(typecorecrum *crumptr, typedsp *offsetptr, INT enfheight)
 { 
 #ifndef DISTRIBUTION
   typecorecrum *ptr;
@@ -717,10 +658,7 @@ doshowspanf (crumptr, offsetptr, enfheight)
 #endif
 }
 
-showspanfcrum (crumptr, offsetptr, enfheight)
-  typecorecrum *crumptr;
-  typedsp *offsetptr;
-  INT enfheight;
+int showspanfcrum(typecorecrum *crumptr, typedsp *offsetptr, INT enfheight)
 {
 #ifndef DISTRIBUTION
   INT depth;
@@ -747,9 +685,7 @@ showspanfcrum (crumptr, offsetptr, enfheight)
 #endif
 }
 
-dumpmem (loc, count)
-        char *loc;
-        unsigned count;
+int dumpmem(char *loc, unsigned count)
 {
 #ifndef DISTRIBUTION
        INT i;
@@ -767,9 +703,7 @@ dumpmem (loc, count)
 #endif
 }
 
-  bool
-dumpgranfwids (taskptr)
-  typetask *taskptr;
+bool dumpgranfwids(typetask *taskptr)
 {
 #ifndef DISTRIBUTION
   tumbler subtreewid;
@@ -792,10 +726,7 @@ dumpgranfwids (taskptr)
         return (TRUE);
 }
 
-showgranwids (crum, down, retptr)        /* down is distance from top */
-  typecorecrum *crum;
-  INT down;
-  tumbler *retptr;
+int showgranwids(typecorecrum *crum, INT down, tumbler *retptr)        /* down is distance from top */
 {
 #ifndef DISTRIBUTION
   typecorecrum *ptr;
@@ -839,8 +770,7 @@ showgranwids (crum, down, retptr)        /* down is distance from top */
 #endif
 }
 
-dumppoomwisps (orgl)
-  typecorecrum *orgl;
+int dumppoomwisps(typecorecrum *orgl)
 {
 #ifndef DISTRIBUTION
   INT fullheight;
@@ -851,9 +781,7 @@ dumppoomwisps (orgl)
 #endif
 }
 
-showpoomwisps (crum, down)        /* down is distance from top */
-  typecuc *crum;
-  INT down;
+int showpoomwisps(typecuc *crum, INT down)        /* down is distance from top */
 {
 #ifndef DISTRIBUTION
   typecorecrum *ptr;
@@ -885,8 +813,7 @@ showpoomwisps (crum, down)        /* down is distance from top */
 
 #define TABSTOP 20
 
-dumpistreamgr (crumptr)
-  typecuc *crumptr;
+int dumpistreamgr(typecuc *crumptr)
 {
 #ifndef DISTRIBUTION
  tumbler offset;
@@ -896,9 +823,7 @@ if (debug < 5) return;
 #endif
 }
 
-dodumpistreamgr (crumptr, offsetptr)
-  typecuc *crumptr;
-  tumbler *offsetptr;
+int dodumpistreamgr(typecuc *crumptr, tumbler *offsetptr)
 {
 #ifndef DISTRIBUTION
   typecorecrum *ptr;
@@ -912,9 +837,7 @@ dodumpistreamgr (crumptr, offsetptr)
 #endif
 }
 
-dumpmoleculegr (offsetptr, cbcptr)
-  tumbler *offsetptr;
-  typecbc *cbcptr;
+int dumpmoleculegr(tumbler *offsetptr, typecbc *cbcptr)
 {
 #ifndef DISTRIBUTION
  INT i;
@@ -954,8 +877,7 @@ dumpmoleculegr (offsetptr, cbcptr)
 #endif
 }
 
-dumpisagr (offsetptr)
-  tumbler *offsetptr;
+int dumpisagr(tumbler *offsetptr)
 {
 #ifndef DISTRIBUTION
  INT i, j, k;
@@ -976,10 +898,7 @@ dumpisagr (offsetptr)
 #endif
 }
 
-  typecorecrum *
-checkenftypes (father, message)
-  typecuc *father;
-  char *message;
+typecorecrum *checkenftypes(typecuc *father, char *message)
 { 
 #ifndef DISTRIBUTION
   typecorecrum *ptr;
@@ -1015,9 +934,7 @@ return((typecorecrum *)father);
 #endif
 }
 
-  typecorecrum *
-checkthebleedingcrum (crumptr)
-  typecorecrum *crumptr;
+typecorecrum *checkthebleedingcrum(typecorecrum *crumptr)
 {
 #ifndef DISTRIBUTION
 if(grimreaper == NULL)
@@ -1051,16 +968,14 @@ return(crumptr);
 #endif
 }
 
-teststack ()
+int teststack(void)
 {
   INT testloc;
 
 /*      checkalloc ("");*/
 }
 
-  char *
-enftypestring (type)
-  INT type;
+char *enftypestring(INT type)
 {
 #ifndef DISTRIBUTION
   static char errbuf[60];
@@ -1080,9 +995,7 @@ enftypestring (type)
 #endif
 }
 
-  typecorecrum *
-sonoriginok (father)
-  typecorecrum *father;
+typecorecrum *sonoriginok(typecorecrum *father)
 {
   bool goodblock();
 return (father);/*
@@ -1105,8 +1018,7 @@ getchar();
 */
 }
 
-dumpcontextlist (context)
-  typecontext *context;
+int dumpcontextlist(typecontext *context)
 {
 #ifndef DISTRIBUTION
         fprintf (stderr, "contextlist :\n");
@@ -1120,8 +1032,7 @@ dumpcontextlist (context)
 #endif
 }
 
-dumpcontext (context)
-  typecontext *context;
+int dumpcontext(typecontext *context)
 {
 #ifndef DISTRIBUTION
   char *enftypestring();
@@ -1143,8 +1054,7 @@ dumpcontext (context)
 #endif
 }
 
-dumpitemset (itemset)
-  typeitemset itemset;
+int dumpitemset(typeitemset itemset)
 {
 #ifndef DISTRIBUTION
         if (itemset == NULL)
@@ -1157,8 +1067,7 @@ dumpitemset (itemset)
 #endif
 }
 
-dumpitem (itemptr)
-  typeitem *itemptr;
+int dumpitem(typeitem *itemptr)
 {
 #ifndef DISTRIBUTION
   INT bugger = debug;
@@ -1206,8 +1115,7 @@ dumpitem (itemptr)
 #endif
 }
 
-dumpspan (spanptr)
-        typespan *spanptr;
+int dumpspan(typespan *spanptr)
 {
 #ifndef DISTRIBUTION
 if(!spanptr){
@@ -1223,17 +1131,14 @@ return;
 #endif
 }
 
-dumptext (textptr)
-        typetext *textptr;
+int dumptext(typetext *textptr)
 {
 #ifndef DISTRIBUTION
         write (2, textptr->string, textptr->length);
 #endif
 }
 
-  bool
-ioinfo(taskptr)
-  typetask *taskptr;
+bool ioinfo(typetask *taskptr)
 {
 #ifndef DISTRIBUTION
         fprintf (stderr,"Total reads = %ld,  total writes = %ld\n", nolread, nowread);
@@ -1242,9 +1147,7 @@ ioinfo(taskptr)
 }
 
 
-  bool
-showenfilades(taskptr)
-  typetask *taskptr;
+bool showenfilades(typetask *taskptr)
 {
 #ifndef DISTRIBUTION
   char c;
@@ -1270,9 +1173,7 @@ showenfilades(taskptr)
 #endif
 }
 
-  char *
-itemidstring (item)
-  typeitem *item;
+char *itemidstring(typeitem *item)
 {
 #ifndef DISTRIBUTION
         switch (((typeitemheader *)item)->itemid) {
@@ -1295,9 +1196,7 @@ itemidstring (item)
 return(NULL); /* for lint ?*/
 }
 
-checkitem (msg, ptr)
-  char *msg;
-  typeitem *ptr;
+int checkitem(char *msg, typeitem *ptr)
 {
 #ifndef DISTRIBUTION
   char buf[100];
@@ -1330,9 +1229,7 @@ checkitem (msg, ptr)
 #endif
 }
 
-checkpointer (msg, ptr)
-  char *msg;
-  char *ptr;
+int checkpointer(char *msg, char *ptr)
 {
 return;       /*
         if (!ptr) {
@@ -1363,8 +1260,7 @@ return;       /*
 */
 }
 
-dumpspanpairset ( spanpairset)
-  typespanpairset spanpairset;
+int dumpspanpairset(typespanpairset spanpairset)
 {
 #ifndef DISTRIBUTION
         for (; spanpairset; spanpairset = spanpairset->nextspanpair)
@@ -1372,8 +1268,7 @@ dumpspanpairset ( spanpairset)
 #endif
 }
 
-dumpspanpair ( spanpair)
-  typespanpair *spanpair;
+int dumpspanpair(typespanpair *spanpair)
 {
 #ifndef DISTRIBUTION
         fprintf (stderr, "stream1:  ");
@@ -1385,8 +1280,7 @@ dumpspanpair ( spanpair)
         fprintf (stderr, "\n");
 #endif
 }
-dumphexstuff(ptr)
-  char *ptr;
+int dumphexstuff(char *ptr)
 {
 #ifndef DISTRIBUTION
   int i;
@@ -1400,8 +1294,7 @@ dumphexstuff(ptr)
 #endif
 }
 
-checknumofsons(ptr)
-  typecuc *ptr;
+int checknumofsons(typecuc *ptr)
 {
 #ifndef DISTRIBUTION
   int i;
@@ -1422,8 +1315,7 @@ fprintf(stderr,"i = %d numberofsons = %d\n",i, ptr->numberofsons);
 #endif
 }
 
-nchecknumofsons(ptr)
-  typecuc *ptr;
+int nchecknumofsons(typecuc *ptr)
 {
 #ifndef DISTRIBUTION
   int i;

@@ -1,4 +1,4 @@
-/* Copyright © 1979-1999 Udanax.com. All rights reserved.
+/* Copyright ï¿½ 1979-1999 Udanax.com. All rights reserved.
 
 * This code is licensed under the terms of The Udanax Open-Source License, 
 * which contains precisely the terms of the X11 License.  The full text of 
@@ -17,8 +17,7 @@ extern FILE *interfaceinput;
 
 extern int backenddaemon;
 
-void finddocscontaining (taskptr)
-  typetask *taskptr;
+void finddocscontaining(typetask *taskptr)
 {
   typespecset specset;
   typelinkset addressset;
@@ -33,8 +32,7 @@ void finddocscontaining (taskptr)
 }
 
 
- void copy (taskptr)
-  typetask *taskptr;
+void copy(typetask *taskptr)
 {
   typeisa docisa, vsa;
   typespecset localspecset;
@@ -83,8 +81,7 @@ void copy (taskptr) /* kluged unix version for speed */
 		putrequestfailed (taskptr);
 }*/
 
-void insert (taskptr)/* cheating version for unix zzz */
-  typetask *taskptr;
+void insert(typetask *taskptr)
 {
   typeisa docisa, vsa;
   typetextset textset;
@@ -100,8 +97,7 @@ void insert (taskptr)/* cheating version for unix zzz */
 #endif
 }
 
-void createlink (taskptr)
-  typetask *taskptr;
+void createlink(typetask *taskptr)
 {
   typeisa docisa, linkisa;
   typespecset fromspecset, tospecset, threespecset;
@@ -115,8 +111,7 @@ void createlink (taskptr)
 		putrequestfailed (taskptr);
 }
 
-void followlink (taskptr)
-  typetask *taskptr;
+void followlink(typetask *taskptr)
 {
   typeisa linkisa;
   typespecset specset;
@@ -131,8 +126,7 @@ void followlink (taskptr)
 		putrequestfailed (taskptr);
 }
 
-void retrievedocvspanset (taskptr)
-  typetask *taskptr;
+void retrievedocvspanset(typetask *taskptr)
 {
   typeisa docisa;
   typevspanset vspanset;
@@ -162,8 +156,7 @@ void retrievedocvspanset (taskptr)
 }
 */
 
-void rearrange (taskptr) /* speed hack for unix */
-  typetask *taskptr;
+void rearrange(typetask *taskptr)
 {
   typeisa docisa;
   typecutseq cutseq;
@@ -179,8 +172,7 @@ void rearrange (taskptr) /* speed hack for unix */
 #endif
 }
 
-void retrievev (taskptr)
-  typetask *taskptr;
+void retrievev(typetask *taskptr)
 {
   typespecset specset;
   typevstuffset vstuffset;
@@ -194,8 +186,7 @@ void retrievev (taskptr)
 		putrequestfailed (taskptr);
 }
 
-void findlinksfromtothree (taskptr)
-  typetask *taskptr;
+void findlinksfromtothree(typetask *taskptr)
 {
   typespecset fromvspecset, tovspecset, threevspecset;
   typeispanset homeset;
@@ -210,8 +201,7 @@ void findlinksfromtothree (taskptr)
 		putrequestfailed (taskptr);
 }
 
-void findnumoflinksfromtothree (taskptr)
-  typetask *taskptr;
+void findnumoflinksfromtothree(typetask *taskptr)
 {
   typespecset fromvspecset, tovspecset, threevspecset;
   typeispanset homeset;
@@ -226,8 +216,7 @@ void findnumoflinksfromtothree (taskptr)
 		putrequestfailed (taskptr);
 }
 
-void findnextnlinksfromtothree (taskptr)
-  typetask *taskptr;
+void findnextnlinksfromtothree(typetask *taskptr)
 {
   typespecset fromvspecset, tovspecset, threevspecset;
   typeispanset homeset;
@@ -244,8 +233,7 @@ void findnextnlinksfromtothree (taskptr)
 		putrequestfailed (taskptr);
 }
 
-void navigateonht (taskptr)
-  typetask *taskptr;
+void navigateonht(typetask *taskptr)
 {
 #ifndef DISTRIBUTION
 error (taskptr, "GACK !  (historical trace)\n");
@@ -259,8 +247,7 @@ error (taskptr, "GACK !  (historical trace)\n");
 */
 }
 
-void showrelationof2versions (taskptr)
-  typetask *taskptr;
+void showrelationof2versions(typetask *taskptr)
 {
   typespecset version1, version2;
   typespanpairset relation;
@@ -274,8 +261,7 @@ void showrelationof2versions (taskptr)
 }
 
 /*
-void showrelationof2versions (taskptr)
-  typetask *taskptr;
+void showrelationof2versions(typetask *taskptr)
 {
   typeisa doc1, doc2;
   INT relation;	// temp //
@@ -287,8 +273,7 @@ void showrelationof2versions (taskptr)
 }
 */
 
-void createnewdocument (taskptr)
-  typetask *taskptr;
+void createnewdocument(typetask *taskptr)
 {
   typeisa newdocisa;
   bool docreatenewdocument();
@@ -301,8 +286,7 @@ void createnewdocument (taskptr)
 }
 
 
-void createnewversion (taskptr)
-  typetask *taskptr;
+void createnewversion(typetask *taskptr)
 {
   typeisa originaldocisa, newdocisa;
   bool getcreatenewversion(), docreatenewversion();
@@ -316,8 +300,7 @@ void createnewversion (taskptr)
 }
 
 
-void retrievedocvspan (taskptr)
-  typetask *taskptr;
+void retrievedocvspan(typetask *taskptr)
 {
   typeisa docisa;
   typevspan vspan;
@@ -347,8 +330,7 @@ void deletevspan (taskptr)
 		putrequestfailed (taskptr);
 }
 */
-void deletevspan (taskptr) /* kluged unix version for speed */
-  typetask *taskptr;
+void deletevspan(typetask *taskptr)
 {
   typeisa docisa;
   typespan vspan;
@@ -365,8 +347,7 @@ void deletevspan (taskptr) /* kluged unix version for speed */
 }
 
 
-void retrieveendsets (taskptr)
-  typetask *taskptr;
+void retrieveendsets(typetask *taskptr)
 {
   typespecset specset, fromset, toset, threeset;
   bool getretrieveendsets(), doretrieveendsets();
@@ -380,8 +361,7 @@ void retrieveendsets (taskptr)
 		putrequestfailed (taskptr);
 }
 
-void xaccount(taskptr)
-  typetask *taskptr;
+void xaccount(typetask *taskptr)
 {
   bool getxaccount();
 
@@ -392,8 +372,7 @@ void xaccount(taskptr)
 	}
 }
 
-void createnode_or_account(taskptr)
-  typetask *taskptr;
+void createnode_or_account(typetask *taskptr)
 {
   tumbler t;
   bool getcreatenode_or_account(), docreatenode_or_account();
@@ -406,8 +385,7 @@ void createnode_or_account(taskptr)
 	}
 }
 
-void myopen(taskptr)
-  typetask  *taskptr;
+void myopen(typetask *taskptr)
 {
   tumbler t, newt;
   int type, mode;
@@ -423,8 +401,7 @@ void myopen(taskptr)
 }
 
 
-void myclose(taskptr)
-  typetask  *taskptr;
+void myclose(typetask *taskptr)
 {
   tumbler t;
   bool getclose(), doclose();
@@ -439,8 +416,7 @@ void myclose(taskptr)
 }
 
 
-void quitxanadu(taskptr)
-  typetask *taskptr;
+void quitxanadu(typetask *taskptr)
 {
   void diskexit();
 

@@ -1,4 +1,4 @@
-/* Copyright © 1979-1999 Udanax.com. All rights reserved.
+/* Copyright ï¿½ 1979-1999 Udanax.com. All rights reserved.
 
 * This code is licensed under the terms of The Udanax Open-Source License, 
 * which contains precisely the terms of the X11 License.  The full text of 
@@ -12,13 +12,7 @@
 #include "enf.h"
 extern bool isxumain;
 extern bool specset2sporglset();
-  bool
-insertspanf (taskptr, spanfptr, isaptr, sporglset, spantype)
-  typetask *taskptr;
-  typespanf spanfptr;
-  typeisa *isaptr;
-  typesporglset sporglset;
-  INT spantype;
+bool insertspanf(typetask *taskptr, typespanf spanfptr, typeisa *isaptr, typesporglset sporglset, INT spantype)
 {
   typedsp crumorigin;
   typewid crumwidth;
@@ -59,15 +53,7 @@ insertspanf (taskptr, spanfptr, isaptr, sporglset, spantype)
         return (TRUE);
 }
 
-  bool
-findlinksfromtothreesp (taskptr, spanfptr, fromvspecset, tovspecset, threevspecset, orglrange, linksetptr)
-  typetask *taskptr;
-  typespanf spanfptr;
-  typespecset fromvspecset;
-  typespecset tovspecset;
-  typespecset threevspecset;
-  typeispan *orglrange;
-  typelinkset *linksetptr;
+bool findlinksfromtothreesp(typetask *taskptr, typespanf spanfptr, typespecset fromvspecset, typespecset tovspecset, typespecset threevspecset, typeispan *orglrange, typelinkset *linksetptr)
 {
   typesporglset fromsporglset;
   typesporglset tosporglset;
@@ -116,15 +102,7 @@ debug = olddebug;
         return (TRUE);
 }
 
-  bool
-findnumoflinksfromtothreesp (taskptr, spanfptr, fromvspecset, tovspecset, threevspecset, orglrange, numptr)
-  typetask *taskptr;
-  typespanf spanfptr;
-  typespecset fromvspecset;
-  typespecset tovspecset;
-  typespecset threevspecset;
-  typeispan *orglrange;
-  INT *numptr;
+bool findnumoflinksfromtothreesp(typetask *taskptr, typespanf spanfptr, typespecset fromvspecset, typespecset tovspecset, typespecset threevspecset, typeispan *orglrange, INT *numptr)
 {
   typelinkset linkset;
   INT n;
@@ -136,16 +114,7 @@ findnumoflinksfromtothreesp (taskptr, spanfptr, fromvspecset, tovspecset, threev
         return (TRUE);
 }
 
-  bool
-findnextnlinksfromtothreesp (taskptr, fromvspecset, tovspecset, threevspecset, orglrangeptr, lastlinkisaptr, nextlinksetptr, nptr)
-  typetask *taskptr;
-  typespecset fromvspecset;
-  typespecset tovspecset;
-  typespecset threevspecset;
-  typeispan *orglrangeptr;
-  typeisa *lastlinkisaptr;
-  typelinkset *nextlinksetptr;
-  INT *nptr;
+bool findnextnlinksfromtothreesp(typetask *taskptr, typespecset fromvspecset, typespecset tovspecset, typespecset threevspecset, typeispan *orglrangeptr, typeisa *lastlinkisaptr, typelinkset *nextlinksetptr, INT *nptr)
 {
   INT n;
   typelinkset linkset;
@@ -179,11 +148,7 @@ findnextnlinksfromtothreesp (taskptr, fromvspecset, tovspecset, threevspecset, o
         return (TRUE);
 }
 
-  bool
-finddocscontainingsp (taskptr, ispanset, addresssetptr)
-  typetask *taskptr;
-  typespanset ispanset;
-  typelinkset *addresssetptr;
+bool finddocscontainingsp(typetask *taskptr, typespanset ispanset, typelinkset *addresssetptr)
 {
   tumbler docid;
   typecontext *context, *c;
@@ -222,13 +187,7 @@ if(debug) fooitemset("",*headptr);
         return (TRUE);
 }
 
-  bool
-retrieveendsetsfromspanf (taskptr, specset, fromsetptr, tosetptr, threesetptr)
-  typetask *taskptr;
-  typespecset specset;
-  typespecset *fromsetptr;
-  typespecset *tosetptr;
-  typespecset *threesetptr;
+bool retrieveendsetsfromspanf(typetask *taskptr, typespecset specset, typespecset *fromsetptr, typespecset *tosetptr, typespecset *threesetptr)
 {
   typespan fromspace, tospace, threespace;
   typesporglset sporglset;
@@ -275,12 +234,7 @@ fooitemset ("", specset);
 	return(TRUE);
 }
 
-  bool
-retrievesporglsetinrange (taskptr, sporglptr, whichspace, sporglsetptr)
-  typetask *taskptr;
-  typesporglset sporglptr;
-  typespan *whichspace;
-  typesporglset *sporglsetptr;
+bool retrievesporglsetinrange(typetask *taskptr, typesporglset sporglptr, typespan *whichspace, typesporglset *sporglsetptr)
 {
   typecontext *context, *c, *tmp;
   typecontext *retrieverestricted();

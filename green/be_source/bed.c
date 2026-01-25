@@ -1,4 +1,4 @@
-/* Copyright © 1979-1999 Udanax.com. All rights reserved.
+/* Copyright ï¿½ 1979-1999 Udanax.com. All rights reserved.
 
 * This code is licensed under the terms of The Udanax Open-Source License, 
 * which contains precisely the terms of the X11 License.  The full text of 
@@ -44,7 +44,7 @@ static tumbler currentaccount;
 bool quitafteruser = FALSE;
 bool mightbeblocked = FALSE;
 
-main ()  /* inside temporary */
+int main(void)  /* inside temporary */
 {
   typetask task;
   void exit();
@@ -150,8 +150,7 @@ main ()  /* inside temporary */
 }
 
 
-xanadu(taskptr)
-  typetask *taskptr;
+int xanadu(typetask *taskptr)
 {
   typerequest request;
 
@@ -188,8 +187,7 @@ void flagquitting()
 		quitafteruser = TRUE;	/* Flag to stop backend after current request */
 }
 
-bool establishprotocol(inp, outp)
-  FILE *inp, *outp;
+bool establishprotocol(FILE *inp, FILE *outp)
 {
   metachar ch;
 
@@ -214,27 +212,28 @@ bool establishprotocol(inp, outp)
 }
 
 
-frontenddied()
+int frontenddied(void)
 {
 	longjmp(frontendeof, 1);
+	return 0;
 }
 
 
 /* for  linker until we get this cleaned up */
   bool
-setmaximumsetupsize (taskptr)
-  typetask *taskptr;
+setmaximumsetupsize(typetask *taskptr)
 {
+  return 0;
 }
 
   bool
-sourceunixcommand (taskptr)
-  typetask *taskptr;
+sourceunixcommand(typetask *taskptr)
 {
- }
+  return 0;
+}
 
   bool
-decrementusers()
+decrementusers(void)
 {
 	if(n_players >1){
 		player[user].wantsout = 1;

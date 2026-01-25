@@ -28,9 +28,7 @@ UINT lengthoflength();
 #define mlengthoflength(x) (UINT)((*(x))<128?1:lengthoflength(x))
 #define mexponentof(x) (humber)((x)+mlengthoflength(x))
 
-INT tumblerptrtofixed(p,tptr)
-  humber p;
-  tumbler *tptr;                                             
+INT tumblerptrtofixed(humber p, tumbler *tptr)
 {
   INT i;
   INT temp,temp2;
@@ -65,9 +63,7 @@ INT tumblerptrtofixed(p,tptr)
 	return(temp);
 }
 
-INT tumblerfixedtoptr(ptr,p)
-  tumbler * ptr;
-  humber p; 
+INT tumblerfixedtoptr(tumbler *ptr, humber p)
 {
   UINT tumblerlength;
   UINT lengthofexponent;
@@ -113,22 +109,17 @@ vartumbleralloc(size)
         return(fooalloc(size));
 }
 */
-  humber
-fooalloc(size)
-  UINT size;
+humber fooalloc(UINT size)
 {
         return((humber)eallocwithtag((unsigned)size, HUMBERTAG));
 }
 
-foofree(ptr)
-  humber ptr;
+int foofree(humber ptr)
 {
         efree((char *)ptr);
 }
   
- UINT
-calculatetotallength(lengthofbody) /* of tumbler ie adds length of exponent in length of body*/
- UINT lengthofbody;
+UINT calculatetotallength(UINT lengthofbody) /* of tumbler ie adds length of exponent in length of body*/
 {
         if(lengthofbody <127){
                 return(lengthofbody + 1);
@@ -143,11 +134,7 @@ calculatetotallength(lengthofbody) /* of tumbler ie adds length of exponent in l
         }else
                 gerror("difficultly large length");return(333333);
 }                        
-  humber
-humberput(i,humberfoo,lengthofhumberptr)
- /*unsigned*/ INT i;                   
-  humber humberfoo; 
- UINT*lengthofhumberptr;
+humber humberput(INT i, humber humberfoo, UINT *lengthofhumberptr)
 {
 	if((int)i == -1){
 		gerror("humberput of -1\n");
@@ -191,11 +178,7 @@ humberput(i,humberfoo,lengthofhumberptr)
         return(humberfoo);
 }
 
-  humber
-humber3put(i,humberfoo,lengthofhumberptr)
- /*unsigned*/ INT i;                   
-  humber humberfoo; 
- UINT*lengthofhumberptr;
+humber humber3put(INT i, humber humberfoo, UINT *lengthofhumberptr)
 {
 	if((int)i == -1){
 		gerror("humber3put of -1\n");
@@ -234,8 +217,7 @@ humber3put(i,humberfoo,lengthofhumberptr)
         return(humberfoo);
 }
 
- UINT functionintof(h)
-  humber h;
+UINT functionintof(humber h)
 {
   INT k;
   INT i;
@@ -281,9 +263,7 @@ humber3put(i,humberfoo,lengthofhumberptr)
         return 0 ;/* for lint */
 }
 
-  UINT
-intlengthoflength(i)
-  UINT i;
+UINT intlengthoflength(UINT i)
 {
         if (i<127) {
 		return(1);
@@ -300,9 +280,7 @@ intlengthoflength(i)
 	return(0);
 } 
 
-UINT
-lengthoflength(ptr)
-  humber ptr;
+UINT lengthoflength(humber ptr)
 {/* YUCK */int i;
 	if (*ptr < 128)
 		return 1;
@@ -331,23 +309,17 @@ lengthoflength(ptr)
         }
 } 
 
-  humber
-exponentof(ptr)
-  humber /*vartumbler */ ptr;
+humber exponentof(humber ptr)
 {
         return(ptr + mlengthoflength(ptr));
 }
  
- UINT
-lengthofexp(ptr)
-  tumbler * ptr;
+UINT lengthofexp(tumbler *ptr)
 {
         return(lengthof(mexponentof(ptr->xvartumbler))); /* ZZZ ECH 8-26-88 */
 }
  
- UINT
-functionlengthof(ptr)   /* length of humber or vartumbler */
-  humber ptr; 
+UINT functionlengthof(humber ptr)   /* length of humber or vartumbler */
 {
   int i;
 /*typedef union{char charlongchar[sizeof(INT)];INT charlonglong;} typecharlong;
@@ -384,9 +356,7 @@ functionlengthof(ptr)   /* length of humber or vartumbler */
                 return(1);
         }
 }
-  humber
-mantissaof(ptr)  /* returns a ptr to the first humber in the mantissa of the vartumbler of the tumbler*/
-  humber ptr;
+humber mantissaof(humber ptr)  /* returns a ptr to the first humber in the mantissa of the vartumbler of the tumbler*/
 {
 humber temp;
 /* this is correct but expensive

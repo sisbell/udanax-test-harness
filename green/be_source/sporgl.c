@@ -1,4 +1,4 @@
-/* Copyright © 1979-1999 Udanax.com. All rights reserved.
+/* Copyright ï¿½ 1979-1999 Udanax.com. All rights reserved.
 
 * This code is licensed under the terms of The Udanax Open-Source License, 
 * which contains precisely the terms of the X11 License.  The full text of 
@@ -11,12 +11,7 @@
 #include "xanadu.h"
 #include "enf.h"
 
-  bool
-specset2sporglset (taskptr, specset, sporglsetptr,type)
-  typetask *taskptr;
-  typespecset specset;
-  typesporglset *sporglsetptr;
-  int type;
+bool specset2sporglset(typetask *taskptr, typespecset specset, typesporglset *sporglsetptr, int type)
 {
   typesporglset *vspanset2sporglset();
 
@@ -37,13 +32,7 @@ specset2sporglset (taskptr, specset, sporglsetptr,type)
 	return (TRUE);
 }
 
-  typesporglset *
-vspanset2sporglset (taskptr, docisa, vspanset, sporglsetptr,type)
-  typetask *taskptr;
-  typeisa *docisa;
-  typevspanset vspanset;
-  typesporglset *sporglsetptr;
-  int type;
+typesporglset *vspanset2sporglset(typetask *taskptr, typeisa *docisa, typevspanset vspanset, typesporglset *sporglsetptr, int type)
 {
   typeorgl orgl;
   typesporgl *sporglset;
@@ -75,13 +64,7 @@ vspanset2sporglset (taskptr, docisa, vspanset, sporglsetptr,type)
 	return (sporglsetptr);
 }
 
-  bool
-link2sporglset (taskptr, linkisa, sporglsetptr, whichend,type)
-  typetask *taskptr;
-  typeisa *linkisa;
-  typesporglset *sporglsetptr;
-  INT whichend;
-  int type;
+bool link2sporglset(typetask *taskptr, typeisa *linkisa, typesporglset *sporglsetptr, INT whichend, int type)
 {
   typeorgl orgl;
   tumbler zero;
@@ -111,13 +94,7 @@ link2sporglset (taskptr, linkisa, sporglsetptr, whichend,type)
 	}
 }
 
-  bool
-linksporglset2specset (taskptr, homedoc, sporglset, specsetptr,type)
-  typetask *taskptr;
-  typeisa *homedoc;
-  typesporglset sporglset;
-  typespecset *specsetptr;
-  int type;
+bool linksporglset2specset(typetask *taskptr, typeisa *homedoc, typesporglset sporglset, typespecset *specsetptr, int type)
 {
   typespecset specset;
   INT *taskalloc();
@@ -147,12 +124,7 @@ linksporglset2specset (taskptr, homedoc, sporglset, specsetptr,type)
 
 /* leaves sporglsetptr on last sporgl processed, NOT next to be processed */
 
-linksporglset2vspec (taskptr, homedoc,  sporglsetptr, specptr,type)
-  typetask *taskptr;
-  typeisa *homedoc;
-  typesporglset *sporglsetptr;
-  typevspec *specptr;
-  int type;
+int linksporglset2vspec(typetask *taskptr, typeisa *homedoc, typesporglset *sporglsetptr, typevspec *specptr, int type)
 {
 /*  typesporglset sporglset;
 
@@ -166,12 +138,7 @@ linksporglset2vspec (taskptr, homedoc,  sporglsetptr, specptr,type)
 
 /* leaves sporglsetptr on last sporgl processed, NOT next to be processed */
 
-sporglset2vspanset (taskptr,homedoc, sporglsetptr, vspansetptr,type)
-  typetask *taskptr;
-  typeisa *homedoc;
-  typesporglset *sporglsetptr;
-  typevspanset *vspansetptr;
-  int type;
+int sporglset2vspanset(typetask *taskptr, typeisa *homedoc, typesporglset *sporglsetptr, typevspanset *vspansetptr, int type)
 {
   typeorgl orgl;
   typeispan ispan;
@@ -208,10 +175,7 @@ sporglset2vspanset (taskptr,homedoc, sporglsetptr, vspansetptr,type)
 	}
 }
 
-unpacksporgl (sporglptr, streamptr, widthptr, infoptr)
-  typesporglset sporglptr;
-  tumbler *streamptr, *widthptr;
-  type2dbottomcruminfo *infoptr;
+int unpacksporgl(typesporglset sporglptr, tumbler *streamptr, tumbler *widthptr, type2dbottomcruminfo *infoptr)
 {
 	if (((typeitemheader *)sporglptr)->itemid == ISPANID) {
 		movetumbler (&((typeispan *)sporglptr)->stream, streamptr);
@@ -238,11 +202,7 @@ unpacksporgl (sporglptr, streamptr, widthptr, infoptr)
 	}
 }
 
-contextintosporgl (context, linkid, sporglptr, index)
-  type2dcontext *context;
-  tumbler *linkid;
-  typesporgl *sporglptr;
-  INT index;
+int contextintosporgl(type2dcontext *context, tumbler *linkid, typesporgl *sporglptr, INT index)
 {
 	sporglptr->itemid = SPORGLID;
 	sporglptr->next = NULL;
@@ -259,13 +219,7 @@ contextintosporgl (context, linkid, sporglptr, index)
 	movetumbler (&context->contextwid.dsas[index], &sporglptr->sporglwidth);
 }
 
-sporglset2linkset (taskptr, spanfptr, sporglset, linksetptr, homeset, spantype)
-  typetask *taskptr;
-  typecuc *spanfptr;
-  typesporglset sporglset;
-  typelinkset *linksetptr;
-  typeispan *homeset;
-  INT spantype;
+int sporglset2linkset(typetask *taskptr, typecuc *spanfptr, typesporglset sporglset, typelinkset *linksetptr, typeispan *homeset, INT spantype)
 {
   typeispan nullhomeset;
 
@@ -282,13 +236,7 @@ sporglset2linkset (taskptr, spanfptr, sporglset, linksetptr, homeset, spantype)
 	}
 }
 
-sporglset2linksetinrange (taskptr, spanfptr, sporglset, linksetptr, orglrange, spantype)
-  typetask *taskptr;
-  typecuc *spanfptr;
-  typesporglset sporglset;
-  typelinkset *linksetptr;
-  typeispan *orglrange;
-  INT spantype;
+int sporglset2linksetinrange(typetask *taskptr, typecuc *spanfptr, typesporglset sporglset, typelinkset *linksetptr, typeispan *orglrange, INT spantype)
 {
   typespan range;
   type2dbottomcruminfo linfo;

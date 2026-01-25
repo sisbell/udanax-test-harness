@@ -1,4 +1,4 @@
-/* Copyright © 1979-1999 Udanax.com. All rights reserved.
+/* Copyright ï¿½ 1979-1999 Udanax.com. All rights reserved.
 
 * This code is licensed under the terms of The Udanax Open-Source License,
 * which contains precisely the terms of the X11 License.  The full text of
@@ -13,8 +13,7 @@ long noishouldbother = 0;
 long notakenephewnd = 0;
 long noeatbrosnd = 0;
 
-recombine (father)
-  typecuc *father;
+int recombine(typecuc *father)
 {
         switch (father->cenftype) {
           case GRAN:
@@ -30,8 +29,7 @@ recombine (father)
 
 /* GRANfilade recombine */
 
-recombineseq (father) /** zzz reg 1999 this recombines too much */
-  typecuc *father;
+int recombineseq(typecuc *father) /** zzz reg 1999 this recombines too much */
 { 
   typecuc *ptr;
         if (father->height < 3 || !father->modified){
@@ -63,8 +61,7 @@ recombineseq (father) /** zzz reg 1999 this recombines too much */
                 levelpull (father);
 }
 
-takeovernephewsseq (me)
-  typecorecrum *me;
+int takeovernephewsseq(typecorecrum *me)
 {
   typecuc *ptr;
   typecorecrum *next;
@@ -81,8 +78,7 @@ takeovernephewsseq (me)
         setwispupwards (me,1);
 }
 
-eatbrossubtreeseq (me)
-  typecuc *me;
+int eatbrossubtreeseq(typecuc *me)
 {
   typecuc *bro;
 
@@ -99,8 +95,7 @@ eatbrossubtreeseq (me)
 
 /* 2d recombine */
 
-recombinend (father)
-  typecuc *father;
+int recombinend(typecuc *father)
 { 
 
   typecorecrum *ptr;
@@ -128,9 +123,8 @@ recombinend (father)
         if (father->isapex)
                 levelpull (father);
 }
-  bool randomness(probability)
-    float probability;
-    {
+bool randomness(float probability)
+{
   static float i = 0;
   return(TRUE);
   /*
@@ -147,9 +141,7 @@ recombinend (father)
 }
 
 
-	bool
-ishouldbother (dest, src)
-  typecuc *dest, *src;
+bool ishouldbother(typecuc *dest, typecuc *src)
 {
         ++noishouldbother;
 	if(src->numberofsons == 0){
@@ -164,8 +156,7 @@ ishouldbother (dest, src)
         return (dest->numberofsons + src->numberofsons <= (dest->height>1 ? MAXUCINLOAF : MAX2DBCINLOAF)&&randomness(.3));
 }
 
-takeovernephewsnd (meptr, broptr)
-  typecuc **meptr, **broptr;
+int takeovernephewsnd(typecuc **meptr, typecuc **broptr)
 {
   typecorecrum *sons[MAXUCINLOAF], *ptr;
   typecuc *me, *bro;
@@ -205,8 +196,7 @@ takeovernephewsnd (meptr, broptr)
         return (ret);
 }
 
-eatbrossubtreend (me, bro)
-  typecuc *me, *bro;
+int eatbrossubtreend(typecuc *me, typecuc *bro)
 {
   typedsp offset, grasp;
   typecuc *oldfather;
@@ -236,8 +226,7 @@ setwispupwards (oldfather,1);
         /*fixincoresubtreewids(me);*/
 }
 
-takenephewnd (me, nephew)
-  typecuc *me, *nephew;
+int takenephewnd(typecuc *me, typecuc *nephew)
 {
   typecuc *bro;
   typedsp nephewsgrasp, grasp, offset;
@@ -261,8 +250,7 @@ takenephewnd (me, nephew)
         setwispupwards (me,1);
 }
 
-fixdspsofbroschildren (me, bro)
-  typecuc *me, *bro;
+int fixdspsofbroschildren(typecuc *me, typecuc *bro)
 {
   typecorecrum *nephew;
 
@@ -273,9 +261,7 @@ fixdspsofbroschildren (me, bro)
         }
 }
 
-getorderedsons (father, sons)
-  typecuc *father;
-  typecorecrum *sons[];
+int getorderedsons(typecuc *father, typecorecrum *sons[])
 {
   typecorecrum *ptr;
   INT i, comparecrumsdiagonally();
@@ -287,9 +273,7 @@ getorderedsons (father, sons)
         shellsort (sons, i);
 }
 
-shellsort (v, n)
-  typecorecrum *v[];
-  INT n;
+int shellsort(typecorecrum *v[], INT n)
 {
   typecorecrum *temp;
   INT gap, i, j;
@@ -320,9 +304,7 @@ shellsort (v, n)
                 }
 }
 
-  INT
-comparecrumsdiagonally (a, b)
-  typecorecrum *a, *b;
+INT comparecrumsdiagonally(typecorecrum *a, typecorecrum *b)
 {
   tumbler amagnitude, bmagnitude;
 
@@ -330,8 +312,7 @@ comparecrumsdiagonally (a, b)
         tumbleradd (&b->cdsp.dsas[0], &b->cdsp.dsas[1], &bmagnitude);
         return (tumblercmp (&amagnitude, &bmagnitude));
 }
-fixincoresubtreewids(ptr)
-  typecuc *ptr;
+int fixincoresubtreewids(typecuc *ptr)
 {
   typecorecrum *son;
         if(ptr->height == 0)

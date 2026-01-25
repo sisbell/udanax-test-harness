@@ -29,7 +29,7 @@ static freediskconscell *fdhashtable[FDHASHTABLESIZE];
 
 INT findandallocateinsidediskblocknumber();
 
-dumpincoretables()
+int dumpincoretables(void)
 {
 #ifndef DISTRIBUTION
 	dumpfdorderedtable();
@@ -39,7 +39,7 @@ dumpincoretables()
 
 extern void actuallywriteloaf ();
 
-dumpfdhashtable()
+int dumpfdhashtable(void)
 {
 #ifndef DISTRIBUTION
   INT i;
@@ -57,7 +57,7 @@ fprintf(stderr,"exiting dumping fdhashtable\n");
 #endif
 }
 
-dumpfdorderedtable()
+int dumpfdorderedtable(void)
 {
 #ifndef DISTRIBUTION
  INT i;
@@ -75,15 +75,14 @@ fprintf(stderr,"exiting dumping fdorderedtable\n");
 #endif
 }
 
-dumpfreediskentry(ptr)
-  freediskentry *ptr;
+int dumpfreediskentry(freediskentry *ptr)
 {
 #ifndef DISTRIBUTION
   	fprintf(stderr,"partialdiskblocknumber = %d freespaceinloaf = %d\n",ntohl(ptr->partialdiskblocknumber),ntohs(ptr->freespaceinloaf));
 #endif
 }
 
-initincorealloctables()/* since these tables are extern i.e. initialized, this
+int initincorealloctables(void)/* since these tables are extern i.e. initialized, this
 				routine is just a start at restartability */
 {
   INT i;
@@ -97,7 +96,7 @@ initincorealloctables()/* since these tables are extern i.e. initialized, this
 }
 
   typediskloafptr diskalloc();
-savepartialdiskalloctabletodisk()
+int savepartialdiskalloctabletodisk(void)
 {
   freediskarray loaf;
   INT blocknumber,i;
@@ -132,7 +131,7 @@ savepartialdiskalloctabletodisk()
 	}
 }
 
-readpartialdiskalloctablefromdisk()
+int readpartialdiskalloctablefromdisk(void)
 {
   freediskarray loaf;
   INT blocknumber,i;
@@ -158,8 +157,7 @@ gerror("FOO");
 	}
 }
 
-addtofreediskstructures(diskentry)
-  freediskentry *diskentry;
+int addtofreediskstructures(freediskentry *diskentry)
 {
   freediskconscell *newcons;
   freediskentry *newde;
@@ -187,9 +185,7 @@ addtofreediskstructures(diskentry)
 /*fprintf(stderr,"exiting addtofreediskstructures\n");*/
 }
 
-addallocatedloaftopartialallocedtables(dp, size)
-  typediskloafptr dp;
-  INT size;
+int addallocatedloaftopartialallocedtables(typediskloafptr dp, INT size)
 {
   freediskentry stuff;
 /*fprintf(stderr,"addallocatedloaftopartialallocedtables entering\n");*/
@@ -199,9 +195,7 @@ addallocatedloaftopartialallocedtables(dp, size)
 /*fprintf(stderr,"addallocatedloaftopartialallocedtables exiting\n");*/
 }
 
-changefreediskstructures(diskentry,newsize)
-  freediskentry *diskentry;
-  INT newsize;
+int changefreediskstructures(freediskentry *diskentry, INT newsize)
 {
   INT temp;
   freediskconscell *ptr,*newptr,*oldptr;
@@ -257,8 +251,7 @@ changefreediskstructures(diskentry,newsize)
 /*fprintf(stderr," X changefreediskstructures++++++++++++++++++++\n");*/
 }
 
-freediskconscell *hashfromdiskblock(diskblocknumber)
-  INT diskblocknumber;
+freediskconscell *hashfromdiskblock(INT diskblocknumber)
 {
   INT temp;
   freediskconscell *ptr;
@@ -276,15 +269,13 @@ freediskconscell *hashfromdiskblock(diskblocknumber)
 	return NULL;  /* keep lint quiet */
 }
 
-INT fdhash(diskblocknumber)
-  INT diskblocknumber;
+INT fdhash(INT diskblocknumber)
 {
 	return (abs(diskblocknumber*FDHASHMULT)%FDHASHTABLESIZE);
 }
 #define BESTFIT
 #ifdef BESTFIT
-freediskentry *findfreeenoughloafinbucket(size)
-  INT size;
+freediskentry *findfreeenoughloafinbucket(INT size)
 {
   INT i;
   freediskconscell *ptr;
@@ -299,8 +290,7 @@ freediskentry *findfreeenoughloafinbucket(size)
 	return NULL;
 }
 #else  /*worst fit*/
-freediskentry *findfreeenoughloafinbucket(size)
-  INT size;
+freediskentry *findfreeenoughloafinbucket(INT size)
 {
   INT i;
   freediskconscell *ptr;
@@ -314,9 +304,7 @@ freediskentry *findfreeenoughloafinbucket(size)
 	return NULL;
 }
 #endif
-typediskloafptr partialdiskalloc(size, newloafp)
-  INT size;
-  INT *newloafp;
+typediskloafptr partialdiskalloc(INT size, INT *newloafp)
 {
   freediskentry diskentry, *freeentry;
   typediskloafptr dlp;
@@ -366,8 +354,7 @@ if (size != 1010 && size >990) {
 }
 
 
-deletefromfreediskstructures(diskentry)
-  freediskentry *diskentry;
+int deletefromfreediskstructures(freediskentry *diskentry)
 {
   INT temp;
   freediskconscell *ptr,*newptr,*oldptr;
@@ -436,10 +423,7 @@ newpartialdiskfree(diskloaf)
 	}
 }
 #endif
-  INT
-deallocateinloaf(loafp,insidediskblocknumber)
-  typeuberdiskloaf *loafp;
-  INT insidediskblocknumber;
+INT deallocateinloaf(typeuberdiskloaf *loafp, INT insidediskblocknumber)
 {
   char *lp;
   UINTnumber, n;
@@ -471,10 +455,7 @@ deallocateinloaf(loafp,insidediskblocknumber)
   return 0;
 }
 
-findandallocateinsidediskblocknumber(diskblocknumber,size,loafp)
-  INT diskblocknumber;
-  INT size;
-  typeuberdiskloaf *loafp;
+INT findandallocateinsidediskblocknumber(INT diskblocknumber, INT size, typeuberdiskloaf *loafp)
 {
   char *lp;
   INT number;
@@ -514,9 +495,7 @@ fprintf(stderr,"lp - loafp = %d ",lp-(char*)loafp);
   return (i);
 	
 }
-  INT
-numberofliveunterloafs(loafp)
-  typeuberdiskloaf *loafp;
+INT numberofliveunterloafs(typeuberdiskloaf *loafp)
 {
   char *lp;
   UINTnumber, n;
@@ -542,10 +521,7 @@ numberofliveunterloafs(loafp)
 	return (ret);
 }
 
-  char *
-findinsideloaf(loafp,ninsideloaf)
-  typeuberdiskloaf *loafp;
-  INT ninsideloaf;
+char *findinsideloaf(typeuberdiskloaf *loafp, INT ninsideloaf)
 {
   char *lp;
   UINTnumber, n;

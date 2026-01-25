@@ -1,4 +1,4 @@
-/* Copyright © 1979-1999 Udanax.com. All rights reserved.
+/* Copyright ï¿½ 1979-1999 Udanax.com. All rights reserved.
 
 * This code is licensed under the terms of The Udanax Open-Source License, 
 * which contains precisely the terms of the X11 License.  The full text of 
@@ -14,12 +14,7 @@ int backenddaemon = 0;
 extern bool isxumain;
 
   bool
-findorgl (taskptr, granfptr, isaptr, orglptr, type)/*BERT*/
-  typetask *taskptr;
-  typegranf granfptr;
-  typeisa *isaptr;
-  typeorgl *orglptr;
-  int type;
+findorgl(typetask *taskptr, typegranf granfptr, typeisa *isaptr, typeorgl *orglptr, int type)/*BERT*/
 {
   typeorgl fetchorglgr();
   int temp;
@@ -46,22 +41,13 @@ findorgl (taskptr, granfptr, isaptr, orglptr, type)/*BERT*/
 }
 
   bool
-inserttextingranf (taskptr, granfptr, hintptr, textset, ispansetptr)
-  typetask *taskptr;
-  typegranf granfptr;
-  typehint *hintptr;
-  typetextset textset;
-  typeispanset *ispansetptr;
+inserttextingranf(typetask *taskptr, typegranf granfptr, typehint *hintptr, typetextset textset, typeispanset *ispansetptr)
 {  bool inserttextgr();
 	 return (inserttextgr (taskptr, granfptr, hintptr, textset, ispansetptr));
 }
 
   bool
-createorglingranf (taskptr, granfptr, hintptr, isaptr)
-  typetask *taskptr;
-  typegranf granfptr;
-  typehint *hintptr;
-  typeisa *isaptr;
+createorglingranf(typetask *taskptr, typegranf granfptr, typehint *hintptr, typeisa *isaptr)
 {
   bool createorglgr();
 
@@ -69,11 +55,7 @@ createorglingranf (taskptr, granfptr, hintptr, isaptr)
 }
 
   bool
-ispanset2vstuffset (taskptr, granfptr, ispanset, vstuffsetptr)
-  typetask *taskptr;
-  typegranf granfptr;
-  typeispanset ispanset;
-  typevstuffset *vstuffsetptr;
+ispanset2vstuffset(typetask *taskptr, typegranf granfptr, typeispanset ispanset, typevstuffset *vstuffsetptr)
 {
 typevstuffset *save;
   typevstuffset *ispan2vstuffset();

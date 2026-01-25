@@ -1,4 +1,4 @@
-/* Copyright © 1979-1999 Udanax.com. All rights reserved.
+/* Copyright ï¿½ 1979-1999 Udanax.com. All rights reserved.
 
 * This code is licensed under the terms of The Udanax Open-Source License, 
 * which contains precisely the terms of the X11 License.  The full text of 
@@ -32,7 +32,7 @@ extern bool firstputforrequest;
 typetask *taskptrx;
 tumbler defaultaccount = {0,0,0,0, 1,1,0,1,0,0,0,0}; /* 1.1.0.1 */
 
-main ()
+int main(void)
 {
   typetask task;
   void exit();
@@ -83,8 +83,7 @@ ntaskorcommand++;
 /*lookatalloc();*/
 }
 
-xanadu(taskptr)
-  typetask *taskptr;
+int xanadu(typetask *taskptr)
 {
   typerequest request;
 
@@ -106,8 +105,7 @@ xanadu(taskptr)
 }
 
 
-bool establishprotocol(inp, outp)
-  FILE *inp, *outp;
+bool establishprotocol(FILE *inp, FILE *outp)
 {
   char ch;
   typetask temptask;
@@ -136,28 +134,28 @@ bool establishprotocol(inp, outp)
 }
 
 
-frontenddied()
+int frontenddied(void)
 {
 	fprintf(stderr, "The frontend apparently has died.\n");
 	diskexit();
 	gerror("The frontend died");
+	return 0;
 }
 
 
 /* for  linker until we get this cleaned up */
-bool setmaximumsetupsize (taskptr) typetask *taskptr; {}
+bool setmaximumsetupsize(typetask *taskptr) { return 0; }
 
-bool sourceunixcommand (taskptr) typetask *taskptr; {}
+bool sourceunixcommand(typetask *taskptr) { return 0; }
 
 
   bool
-decrementusers()
+decrementusers(void)
 {
   return(FALSE);
 }
 
-isthisusersdocument(tp)
-  tumbler *tp;
+int isthisusersdocument(tumbler *tp)
 {
   bool result = tumbleraccounteq(tp, &taskptrx->account);
 

@@ -1,4 +1,4 @@
-/* Copyright © 1979-1999 Udanax.com. All rights reserved.
+/* Copyright ï¿½ 1979-1999 Udanax.com. All rights reserved.
 
 * This code is licensed under the terms of The Udanax Open-Source License, 
 * which contains precisely the terms of the X11 License.  The full text of 
@@ -26,9 +26,7 @@ extern bool logstuff;
 FILE *interfaceinput;
 FILE *febelog;
 
-pushc (taskptr, c)
-  typetask *taskptr;
-  char c;
+int pushc(typetask *taskptr, char c)
 {
 	if (taskptr->charinbuff)
 		error (taskptr, "charbuff occupied\n");
@@ -38,9 +36,7 @@ pushc (taskptr, c)
 	}
 }
 
-  char
-pullc (taskptr)
-  typetask *taskptr;
+char pullc(typetask *taskptr)
 {
   INT temp;
 
@@ -70,10 +66,7 @@ pullc (taskptr)
 	}
 }
 
-  bool
-gettumbler (taskptr, tumblerptr)
-  typetask *taskptr;
-  tumbler *tumblerptr;
+bool gettumbler(typetask *taskptr, tumbler *tumblerptr)
 {
   char c;
   bool gettdigit();
@@ -94,10 +87,7 @@ gettumbler (taskptr, tumblerptr)
 	return ((c = pullc (taskptr)) == WORDELIM || c == '\n');
 }
 
-  bool
-gettdigit (taskptr, valueptr)
-  typetask *taskptr;
-  INT *valueptr;
+bool gettdigit(typetask *taskptr, INT *valueptr)
 {
   char c;
   bool getnum();
@@ -108,10 +98,7 @@ gettdigit (taskptr, valueptr)
 	return (getnum (taskptr, valueptr));
 }
 
-  bool
-getnum (taskptr, numptr)
-  typetask *taskptr;
-  INT *numptr;
+bool getnum(typetask *taskptr, INT *numptr)
 {
   char c;
   INT num;
@@ -129,10 +116,7 @@ getnum (taskptr, numptr)
 	return (flag);
 }
 
-  bool
-getnumber (taskptr, numptr)
-  typetask *taskptr;
-  INT *numptr;
+bool getnumber(typetask *taskptr, INT *numptr)
 {
   char c;
   INT num;
@@ -148,10 +132,7 @@ getnumber (taskptr, numptr)
 	return (flag && (c == WORDELIM || c == '\n'));
 }
 
-  bool
-eatchar (taskptr, c)
-  typetask *taskptr;
-  char c;
+bool eatchar(typetask *taskptr, char c)
 {
   metachar m;
 
@@ -163,10 +144,7 @@ eatchar (taskptr, c)
 	}
 }
 
-  bool
-getspecset (taskptr, specsetptr)
-  typetask *taskptr;
-  typespecset *specsetptr;
+bool getspecset(typetask *taskptr, typespecset *specsetptr)
 {
   INT num;
   char c, c1;
@@ -202,10 +180,7 @@ getspecset (taskptr, specsetptr)
 	return (TRUE);
 }
 
-  bool
-getvspec (taskptr, vspecptr)
-  typetask *taskptr;
-  typevspec *vspecptr;
+bool getvspec(typetask *taskptr, typevspec *vspecptr)
 {
   bool getspanset();
 /*fprintf (logfile, " vspec"); fprintf (taskptr->errp, "X getvspec\n"); */
@@ -216,11 +191,7 @@ getvspec (taskptr, vspecptr)
 	&& getspanset (taskptr, &vspecptr->vspanset, VSPANID));
 }
 
-  bool
-getspanset (taskptr, spansetptr, id)
-  typetask *taskptr;
-  typespanset *spansetptr;
-  char id;
+bool getspanset(typetask *taskptr, typespanset *spansetptr, char id)
 {
   typespanset spanset;
   INT num;
@@ -242,11 +213,7 @@ getspanset (taskptr, spansetptr, id)
 }
 
 
-  bool
-getspan (taskptr, spanptr, id)
-  typetask *taskptr;
-  typespan *spanptr;
-  char id;
+bool getspan(typetask *taskptr, typespan *spanptr, char id)
 {
 /*fprintf (logfile, " span"); fprintf (taskptr->errp, "X getspan\n"); */
 	spanptr->itemid = id;
@@ -257,10 +224,7 @@ getspan (taskptr, spanptr, id)
 }
 
 
-  bool
-getcutseq (taskptr, cutseqptr)
-  typetask *taskptr;
-  typecutseq *cutseqptr;
+bool getcutseq(typetask *taskptr, typecutseq *cutseqptr)
 {
   INT ncuts, i;
   tumbler cutaddress;
@@ -280,10 +244,7 @@ getcutseq (taskptr, cutseqptr)
 }
 
 
-  bool
-gettextset (taskptr, textsetptr)
-  typetask *taskptr;
-  typetextset *textsetptr;
+bool gettextset(typetask *taskptr, typetextset *textsetptr)
 {
   typetextset textset;
   INT num;
@@ -304,10 +265,7 @@ gettextset (taskptr, textsetptr)
 	return (TRUE);
 }
 
-  bool
-gettext (taskptr, textptr)
-  typetask *taskptr;
-  typetext *textptr;
+bool gettext(typetask *taskptr, typetext *textptr)
 {
   INT i;
 /* fprintf (taskptr->errp, "X gettext\n"); */
@@ -339,10 +297,7 @@ fprintf (taskptr->errp, "read failed\n");
 	return (i != -1 && i != 0);
 }
 
-  bool
-getrequest (taskptr, requestptr)
-  typetask *taskptr;
-  typerequest *requestptr;
+bool getrequest(typetask *taskptr, typerequest *requestptr)
 {
   bool validrequest();
 char c;
@@ -369,10 +324,7 @@ bool flag;
 	return (flag && (c == WORDELIM || c == '\n') && validrequest (taskptr, *requestptr));
 }
 
-  bool
-validrequest (taskptr, request)
-  typetask *taskptr;
-  typerequest request;
+bool validrequest(typetask *taskptr, typerequest request)
 {
 	if (
 	   request >= 0
@@ -386,10 +338,7 @@ validrequest (taskptr, request)
 }
 
 
-  bool
-validaccount (taskptr, accountptr)
-  typetask *taskptr;
-  typeisa *accountptr;
+bool validaccount(typetask *taskptr, typeisa *accountptr)
 {
 	return (TRUE);
 }

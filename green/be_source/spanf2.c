@@ -1,4 +1,4 @@
-/* Copyright © 1979-1999 Udanax.com. All rights reserved.
+/* Copyright ï¿½ 1979-1999 Udanax.com. All rights reserved.
 
 * This code is licensed under the terms of The Udanax Open-Source License, 
 * which contains precisely the terms of the X11 License.  The full text of 
@@ -13,9 +13,7 @@
 #include "enf.h"
 
   bool
-isinlinklist (linkset, linkisaptr)
-  typelinkset linkset;
-  typeisa *linkisaptr;
+isinlinklist(typelinkset linkset, typeisa *linkisaptr)
 {
         for (; linkset; linkset = linkset->next) {
                 if (tumblereq (&linkset->address, linkisaptr))
@@ -25,10 +23,7 @@ isinlinklist (linkset, linkisaptr)
 }
 
   bool
-onlinklist (taskptr, linksetptr, linkisaptr)
-  typetask *taskptr;
-  typelinkset *linksetptr;
-  typeisa *linkisaptr;
+onlinklist(typetask *taskptr, typelinkset *linksetptr, typeisa *linkisaptr)
 {
   typelink *linkset, *temp, *nextlink;
   typelink *makelinkitem();
@@ -48,12 +43,7 @@ onlinklist (taskptr, linksetptr, linkisaptr)
         temp->next = linkset;
 }
 
-intersectlinksets (taskptr, linkset1, linkset2, linkset3, linkset4ptr)
-  typetask *taskptr;
-  typelinkset linkset1;
-  typelinkset linkset2;
-  typelinkset linkset3;
-  typelinkset *linkset4ptr;
+int intersectlinksets(typetask *taskptr, typelinkset linkset1, typelinkset linkset2, typelinkset linkset3, typelinkset *linkset4ptr)
 {
   typelinkset linkset4;
   typelinkset temp1;
@@ -130,9 +120,7 @@ debug = olddebug;
 }
 
   typelink *
-makelinkitem (taskptr, linkisa)
-  typetask *taskptr;
-  typeisa *linkisa;
+makelinkitem(typetask *taskptr, typeisa *linkisa)
 {
   INT *taskalloc();
   typelink *link;

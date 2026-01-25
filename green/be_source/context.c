@@ -1,4 +1,4 @@
-/* Copyright © 1979-1999 Udanax.com. All rights reserved.
+/* Copyright ï¿½ 1979-1999 Udanax.com. All rights reserved.
 
 * This code is licensed under the terms of The Udanax Open-Source License,
 * which contains precisely the terms of the X11 License.  The full text of
@@ -13,9 +13,7 @@ INT contextnum = 0;
 INT c2dontextnum = 0;
 INT crumcontextnum = 0;
 
-  typecontext *
-createcontext (type)
-  SINT type;
+typecontext *createcontext(SINT type)
 {
   typecontext *ret;
   INT *eallocwithtag();
@@ -33,8 +31,7 @@ createcontext (type)
 	return (ret);
 }
 
-contextfree (context)
-  typecontext *context;
+int contextfree(typecontext *context)
 {
   typecontext *c;
 
@@ -50,10 +47,7 @@ contextfree (context)
 	}
 }
 
-  typecrumcontext *
-createcrumcontext (crumptr, offsetptr)
-  typecorecrum *crumptr;
-  typedsp *offsetptr;
+typecrumcontext *createcrumcontext(typecorecrum *crumptr, typedsp *offsetptr)
 {
   typecrumcontext *ret;
   INT *eallocwithtag();
@@ -67,8 +61,7 @@ createcrumcontext (crumptr, offsetptr)
 	return (ret);
 }
 
-crumcontextfree (context)
-  typecrumcontext *context;
+int crumcontextfree(typecrumcontext *context)
 {
   typecrumcontext *c;
 
@@ -79,10 +72,7 @@ crumcontextfree (context)
 }
 
 /* put c on clist in index order */
-incontextlistnd (clistptr, c, index)
-  typecontext **clistptr;
-  typecontext *c;
-  INT index;
+int incontextlistnd(typecontext **clistptr, typecontext *c, INT index)
 {
   typecontext *clist, *nextc;
   typedsp grasp;
@@ -120,9 +110,7 @@ incontextlistnd (clistptr, c, index)
 	clist->nextcontext = c;
 }
 
-oncontextlistseq (clistptr, c)/* add to list of context */
-  typecontext **clistptr;
-  typecontext *c;
+int oncontextlistseq(typecontext **clistptr, typecontext *c)
 {
 	c->nextcontext = NULL;
 	if (!*clistptr) { /* 1st insertion */
@@ -133,11 +121,7 @@ oncontextlistseq (clistptr, c)/* add to list of context */
 		(*clistptr)->lastcontext = c; 
 	}
 }
-  INT
-whereoncontext (ptr, address, index)
-  register typecontext *ptr;
-  tumbler *address;
-  INT index;   /* used when enftype == SPAN or POOM */
+INT whereoncontext(register typecontext *ptr, tumbler *address, INT index)
 {
   tumbler left, right;
 
@@ -164,10 +148,7 @@ whereoncontext (ptr, address, index)
 	return (intervalcmp (&left, &right, address));
 }
 
-  typecontext *
-makecontextfromcbc (crumptr, offsetptr)
-  typecbc *crumptr;
-  typewid *offsetptr;
+typecontext *makecontextfromcbc(typecbc *crumptr, typewid *offsetptr)
 {
   typecontext *context;
 
@@ -192,10 +173,7 @@ if (debug) { dumpcontext (context); }
 	return (context);
 }
 
-context2span (context, restrictionspanptr, idx1, foundspanptr, idx2)
-  typecontext *context;
-  typespan *restrictionspanptr, *foundspanptr;
-  INT idx1, idx2;
+int context2span(typecontext *context, typespan *restrictionspanptr, INT idx1, typespan *foundspanptr, INT idx2)
 {
   tumbler upperbound, lowerbound;
   typedsp grasp, reach;
@@ -235,19 +213,14 @@ context2span (context, restrictionspanptr, idx1, foundspanptr, idx2)
 
 /* sets grasp & reach from ptr */
 /*  reach may be NULL so that we won't set it */
-prologuecontextnd (ptr, grasp, reach)
-  typecontext *ptr;
-  typedsp *grasp, *reach;
+int prologuecontextnd(typecontext *ptr, typedsp *grasp, typedsp *reach)
 {
 	movewisp (&ptr->totaloffset, grasp);
 	if (reach)
 		dspadd (grasp, &ptr->contextwid, reach, ptr->contexttype);
 }
 
-  INT
-index2itemid (index, context)
-  INT index;
-  typecontext *context;
+INT index2itemid(INT index, typecontext *context)
 {
 	switch (context->contexttype) {
 	  case POOM :
@@ -264,12 +237,7 @@ index2itemid (index, context)
 	}
 }
 
-  bool
-context2vstuff (taskptr, context, ispanptr, vstuffsetptr)
-  typetask *taskptr;
-  typecontext *context;
-  typeispan *ispanptr;
-  typevstuffset *vstuffsetptr;
+bool context2vstuff(typetask *taskptr, typecontext *context, typeispan *ispanptr, typevstuffset *vstuffsetptr)
 {
   typevstuffset vstuffset;
   INT contextinfotype;
@@ -306,10 +274,7 @@ foocontext ("context after item= ", context);
 	return (TRUE);
 }
 
-context2vtext (context, ispanptr, vstuffset)
-  typecontext *context;
-  typeispan *ispanptr;
-  typevstuffset vstuffset;
+int context2vtext(typecontext *context, typeispan *ispanptr, typevstuffset vstuffset)
 {
   typeisa crumistart, crumiend, ispanstart, ispanend;
   INT i, vtlength;

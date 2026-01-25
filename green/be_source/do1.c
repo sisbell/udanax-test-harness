@@ -1,4 +1,4 @@
-/* Copyright © 1979-1999 Udanax.com. All rights reserved.
+/* Copyright ï¿½ 1979-1999 Udanax.com. All rights reserved.
 
 * This code is licensed under the terms of The Udanax Open-Source License, 
 * which contains precisely the terms of the X11 License.  The full text of 
@@ -12,11 +12,7 @@
 #include "players.h"
 
 
-  bool
-dofinddocscontaining (taskptr, specset, addresssetptr)
-  typetask *taskptr;
-  typespecset specset;
-  typelinkset *addresssetptr;
+bool dofinddocscontaining(typetask *taskptr, typespecset specset, typelinkset *addresssetptr)
 {
   typeispanset ispanset;
   bool specset2ispanset(), finddocscontainingsp();
@@ -26,11 +22,7 @@ dofinddocscontaining (taskptr, specset, addresssetptr)
 	&& finddocscontainingsp (taskptr, ispanset, addresssetptr));
 }
 
-  bool
-doappend (taskptr, docptr, textset)
-  typetask *taskptr;
-  typeisa *docptr;
-  typetextset textset;
+bool doappend(typetask *taskptr, typeisa *docptr, typetextset textset)
 {
   bool appendpm(),insertspanf(); /*zzz dies this put in granf?*/
 
@@ -39,11 +31,7 @@ doappend (taskptr, docptr, textset)
 	);
 }
 
-  bool
-dorearrange (taskptr, docisaptr, cutseqptr)
-  typetask *taskptr;
-  typeisa *docisaptr;
-  typecutseq *cutseqptr;
+bool dorearrange(typetask *taskptr, typeisa *docisaptr, typecutseq *cutseqptr)
 {
   typeorgl docorgl;
   bool findorgl(), rearrangepm();;
@@ -54,12 +42,7 @@ dorearrange (taskptr, docisaptr, cutseqptr)
 	/*&& TRUE*/ /* ht stuff */  );
 }
 
-  bool
-docopy (taskptr, docisaptr, vsaptr, specset)
-  typetask *taskptr;
-  typeisa *docisaptr;
-  tumbler *vsaptr;
-  typespecset specset;
+bool docopy(typetask *taskptr, typeisa *docisaptr, tumbler *vsaptr, typespecset specset)
 {
   typeispanset ispanset;
 /*  typeisa htisa;      */
@@ -80,12 +63,7 @@ docopy (taskptr, docisaptr, vsaptr, specset)
 	&& asserttreeisok(docorgl)
 /*      &&  ht stuff */ );
 }
-  bool
-docopyinternal (taskptr, docisaptr, vsaptr, specset)
-  typetask *taskptr;
-  typeisa *docisaptr;
-  tumbler *vsaptr;
-  typespecset specset;
+bool docopyinternal(typetask *taskptr, typeisa *docisaptr, tumbler *vsaptr, typespecset specset)
 {
   typeispanset ispanset;
 /*  typeisa htisa;      */
@@ -110,12 +88,7 @@ docopyinternal (taskptr, docisaptr, vsaptr, specset)
   typespec spec,spec2,spec3;
   typevstuffset uppervstuffset;
 tumbler fivetumbler = {0,0,0,0,500/*100*/,0,0,0,0,0,0,0};
-  bool
-doinsert (taskptr, docisaptr, vsaptr, textset)
-  typetask *taskptr;
-  typeisa *docisaptr;
-  tumbler *vsaptr;
-  typetextset textset;
+bool doinsert(typetask *taskptr, typeisa *docisaptr, tumbler *vsaptr, typetextset textset)
 {
   typehint hint;
   typespanset ispanset;
@@ -153,15 +126,13 @@ debug = TRUE;
 	return(ret);
 }
 
-checkspecandstringbefore()
+int checkspecandstringbefore(void)
 {
 return;
 /*if(debug){ assertspecisstring(&spec2,uppervstuffset->xxtest.string); }*/
 }
 
-copyspecset (taskptr,specptr, newptr)
-  typetask *taskptr;
-  typespec *specptr, *newptr;
+int copyspecset(typetask *taskptr, typespec *specptr, typespec *newptr)
 {
   typespec  *this;
   INT *talloc();
@@ -175,9 +146,7 @@ copyspecset (taskptr,specptr, newptr)
 	((typeitemheader *)this) -> next = NULL;
 }
 
-copyspanset (taskptr,spanptr, newptrptr)
-  typetask *taskptr;
-  typespan *spanptr, **newptrptr;
+int copyspanset(typetask *taskptr, typespan *spanptr, typespan **newptrptr)
 {
   typespan  *this;
   INT *talloc();
@@ -190,11 +159,7 @@ copyspanset (taskptr,spanptr, newptrptr)
 	this ->next = NULL;
 }
  
-  bool
-dodeletevspan(taskptr, docisaptr, vspanptr)
-  typetask *taskptr;
-  typeisa *docisaptr;
-  typevspan *vspanptr;
+bool dodeletevspan(typetask *taskptr, typeisa *docisaptr, typevspan *vspanptr)
 {
   typeorgl docorgl;
   bool findorgl(), deletevspanpm();
@@ -205,13 +170,7 @@ dodeletevspan(taskptr, docisaptr, vspanptr)
 	/*&& TRUE*/ /* ht stuff */ );
 }
 
-  bool
-domakelink (taskptr, docisaptr, fromspecset, tospecset, linkisaptr)
-  typetask *taskptr;
-  typeisa *docisaptr;
-  typespecset fromspecset;
-  typespecset tospecset;
-  typeisa *linkisaptr;
+bool domakelink(typetask *taskptr, typeisa *docisaptr, typespecset fromspecset, typespecset tospecset, typeisa *linkisaptr)
 {
   typehint hint;
   tumbler linkvsa, fromvsa, tovsa;
@@ -237,14 +196,7 @@ domakelink (taskptr, docisaptr, fromspecset, tospecset, linkisaptr)
 	);
 }
 
-  bool
-docreatelink (taskptr, docisaptr, fromspecset, tospecset, threespecset, linkisaptr)
-  typetask *taskptr;
-  typeisa *docisaptr;
-  typespecset fromspecset;
-  typespecset tospecset;
-  typespecset threespecset;
-  typeisa *linkisaptr;
+bool docreatelink(typetask *taskptr, typeisa *docisaptr, typespecset fromspecset, typespecset tospecset, typespecset threespecset, typeisa *linkisaptr)
 {
   typehint hint;
   tumbler linkvsa, fromvsa, tovsa, threevsa;
@@ -272,12 +224,7 @@ docreatelink (taskptr, docisaptr, fromspecset, tospecset, threespecset, linkisap
 	);
 }
 
-  bool
-dofollowlink (taskptr, linkisaptr, specsetptr, whichend)
-  typetask *taskptr;
-  typeisa *linkisaptr;
-  typespecset *specsetptr;
-  INT whichend;
+bool dofollowlink(typetask *taskptr, typeisa *linkisaptr, typespecset *specsetptr, INT whichend)
 {
   typesporglset sporglset;
   bool link2sporglset(), linksporglset2specset();
@@ -288,10 +235,7 @@ dofollowlink (taskptr, linkisaptr, specsetptr, whichend)
 
 }
 
-  bool
-docreatenewdocument (taskptr, isaptr)
-  typetask *taskptr;
-  typeisa *isaptr;
+bool docreatenewdocument(typetask *taskptr, typeisa *isaptr)
 {
   typehint hint;
   bool createorglingranf();
@@ -300,10 +244,7 @@ docreatenewdocument (taskptr, isaptr)
 	return (createorglingranf (taskptr, granf, &hint, isaptr));
 }
 
-  bool
-docreatenode_or_account (taskptr, isaptr)
-  typetask *taskptr;
-  typeisa *isaptr;
+bool docreatenode_or_account(typetask *taskptr, typeisa *isaptr)
 {
   typeisa isa;
   typehint hint;
@@ -314,10 +255,7 @@ docreatenode_or_account (taskptr, isaptr)
 	return createorglingranf (taskptr, granf, &hint, &isa);
 }
 
-  bool
-docreatenewversion (taskptr, isaptr, wheretoputit, newisaptr)
-  typetask *taskptr;
-  typeisa *isaptr, *wheretoputit, *newisaptr;
+bool docreatenewversion(typetask *taskptr, typeisa *isaptr, typeisa *wheretoputit, typeisa *newisaptr)
 {
   typehint hint;
   typevspan vspan;
@@ -364,11 +302,7 @@ fprintf(stderr,"\nnewtp: ");dumptumbler(&newtp);
 	return (TRUE);
 }
 
-  bool
-doretrievedocvspanfoo (taskptr, docisaptr, vspanptr) /* Internal routine, no open required */
-  typetask *taskptr;
-  typeisa *docisaptr;
-  typevspan *vspanptr;
+bool doretrievedocvspanfoo(typetask *taskptr, typeisa *docisaptr, typevspan *vspanptr)
 {/* this routine is a kluge not yet kluged*/
   typeorgl docorgl;
   bool findorgl(), retrievedocumentpartofvspanpm();
@@ -379,11 +313,7 @@ doretrievedocvspanfoo (taskptr, docisaptr, vspanptr) /* Internal routine, no ope
 }
 
 
-  bool
-doretrievedocvspan (taskptr, docisaptr, vspanptr)
-  typetask *taskptr;
-  typeisa *docisaptr;
-  typevspan *vspanptr;
+bool doretrievedocvspan(typetask *taskptr, typeisa *docisaptr, typevspan *vspanptr)
 {
   typeorgl docorgl;
   bool findorgl(), retrievevspanpm();
@@ -393,11 +323,7 @@ doretrievedocvspan (taskptr, docisaptr, vspanptr)
 	&& retrievevspanpm (taskptr, docorgl, vspanptr);
 }
 
-  bool
-doretrievedocvspanset (taskptr, docisaptr, vspansetptr)
-  typetask *taskptr;
-  typeisa *docisaptr;
-  typevspanset *vspansetptr;
+bool doretrievedocvspanset(typetask *taskptr, typeisa *docisaptr, typevspanset *vspansetptr)
 {
   typeorgl docorgl;
   bool findorgl(), isemptyorgl(), retrievevspansetpm();
@@ -408,11 +334,7 @@ doretrievedocvspanset (taskptr, docisaptr, vspansetptr)
 	&& retrievevspansetpm (taskptr, docorgl, vspansetptr);
 }
 
-  bool
-doretrievev (taskptr, specset, vstuffsetptr)
-  typetask *taskptr;
-  typespecset specset;
-  typevstuffset *vstuffsetptr;
+bool doretrievev(typetask *taskptr, typespecset specset, typevstuffset *vstuffsetptr)
 {
   typeispanset ispanset;
   bool specset2ispanset(), ispanset2vstuffset();
@@ -422,57 +344,28 @@ doretrievev (taskptr, specset, vstuffsetptr)
 	&& ispanset2vstuffset (taskptr, granf, ispanset, vstuffsetptr);
 }
 
-  bool
-dofindlinksfromtothree (taskptr, fromvspecset, tovspecset, threevspecset, orglrangeptr, linksetptr)
-  typetask *taskptr;
-  typespecset fromvspecset;
-  typespecset tovspecset;
-  typespecset threevspecset;
-  typeispan *orglrangeptr;
-  typelinkset *linksetptr;
+bool dofindlinksfromtothree(typetask *taskptr, typespecset fromvspecset, typespecset tovspecset, typespecset threevspecset, typeispan *orglrangeptr, typelinkset *linksetptr)
 {
   bool findlinksfromtothreesp();
 
 	return findlinksfromtothreesp(taskptr, spanf, fromvspecset, tovspecset, threevspecset, orglrangeptr, linksetptr);
 }
 
-  bool
-dofindnumoflinksfromtothree (taskptr, fromvspecset, tovspecset, threevspecset, orglrangeptr, numptr)
-  typetask *taskptr;
-  typespecset *fromvspecset;
-  typespecset *tovspecset;
-  typespecset *threevspecset;
-  typeispan *orglrangeptr;
-  INT *numptr;
+bool dofindnumoflinksfromtothree(typetask *taskptr, typespecset *fromvspecset, typespecset *tovspecset, typespecset *threevspecset, typeispan *orglrangeptr, INT *numptr)
 {
   bool findnumoflinksfromtothreesp();
 
 	return findnumoflinksfromtothreesp (taskptr, spanf, fromvspecset, tovspecset, threevspecset, orglrangeptr, numptr);
 }
 
-  bool
-dofindnextnlinksfromtothree (taskptr, fromvspecptr, tovspecptr, threevspecptr, orglrangeptr, lastlinkisaptr, nextlinksetptr, nptr)
-  typetask *taskptr;
-  typevspec *fromvspecptr;
-  typevspec *tovspecptr;
-  typevspec *threevspecptr;
-  typeispan *orglrangeptr;
-  typeisa *lastlinkisaptr;
-  typelinkset *nextlinksetptr;
-  INT *nptr;
+bool dofindnextnlinksfromtothree(typetask *taskptr, typevspec *fromvspecptr, typevspec *tovspecptr, typevspec *threevspecptr, typeispan *orglrangeptr, typeisa *lastlinkisaptr, typelinkset *nextlinksetptr, INT *nptr)
 {
   bool findnextnlinksfromtothreesp();
 
 	return findnextnlinksfromtothreesp (taskptr, fromvspecptr, tovspecptr, threevspecptr, orglrangeptr, lastlinkisaptr, nextlinksetptr, nptr);
 }
 
-  bool
-doretrieveendsets(taskptr, specset, fromsetptr, tosetptr, threesetptr)
-  typetask *taskptr;
-  typespecset specset;
-  typespecset *fromsetptr;
-  typespecset *tosetptr;
-  typespecset *threesetptr;
+bool doretrieveendsets(typetask *taskptr, typespecset specset, typespecset *fromsetptr, typespecset *tosetptr, typespecset *threesetptr)
 {
   bool retrieveendsetsfromspanf();
 
@@ -480,12 +373,7 @@ doretrieveendsets(taskptr, specset, fromsetptr, tosetptr, threesetptr)
 }
 
 
-  bool
-doshowrelationof2versions(taskptr, version1, version2, relation)
-  typetask *taskptr;
-  typespecset version1;
-  typespecset version2;
-  typespanpairset *relation;
+bool doshowrelationof2versions(typetask *taskptr, typespecset version1, typespecset version2, typespanpairset *relation)
 {
   typeispanset version1ispans = NULL;
   typeispanset version2ispans = NULL;

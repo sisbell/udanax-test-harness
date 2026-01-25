@@ -1,4 +1,4 @@
-/* Copyright © 1979-1999 Udanax.com. All rights reserved.
+/* Copyright ï¿½ 1979-1999 Udanax.com. All rights reserved.
 
 * This code is licensed under the terms of The Udanax Open-Source License, 
 * which contains precisely the terms of the X11 License.  The full text of 
@@ -27,7 +27,7 @@ bool logstuff;
 typetask *taskptrx;
 FILE *interfaceinput = NULL;
 
-main ()  /* inside temporary */
+int main(void)  /* inside temporary */
 {
   typetask task;
   FILE *fd;
@@ -64,8 +64,7 @@ fprintf(stderr,"%d ",i++);
 }
 
 /* "xanadu" is the backend request dispatcher */
-xanadu(taskptr)
-  typetask *taskptr;
+int xanadu(typetask *taskptr)
 {
   typerequest request;
 
@@ -80,9 +79,7 @@ xanadu(taskptr)
         tfree (taskptr);
 }
 
-  bool
-setmaximumsetupsize (taskptr)
-  typetask *taskptr;
+bool setmaximumsetupsize(typetask *taskptr)
 {
   char buff[100];
 
@@ -91,9 +88,7 @@ setmaximumsetupsize (taskptr)
         return (TRUE);
 }
 
-  bool
-sourceunixcommand (taskptr)
-  typetask *taskptr;
+bool sourceunixcommand(typetask *taskptr)
 {
   char unixcommand[132];
   char file[64];
@@ -159,13 +154,10 @@ if (debug)fprintf (stderr,"line # %d\n", lines);
         return (TRUE);
 }
 
-  bool
-getmuchtext (taskptr, textptr)   /*
+bool getmuchtext(typetask *taskptr, typetext *textptr)   /*
                                         this code stolen from get2.d which could use some improvement
                                         but be careful
                                 */
-  typetask *taskptr;
-  typetext *textptr;
 {           
   INT numinstring = 0; 
   INT temp;
@@ -197,15 +189,13 @@ getmuchtext (taskptr, textptr)   /*
         return(TRUE);
 }
 
-  bool
-decrementusers()
+bool decrementusers(void)
 {
   return(FALSE);
 }
 
 
-isthisusersdocument(tp)
-  tumbler *tp;
+int isthisusersdocument(tumbler *tp)
 {
 	return tumbleraccounteq(tp,&taskptrx->account);
 }

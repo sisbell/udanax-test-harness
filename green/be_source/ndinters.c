@@ -1,4 +1,4 @@
-/* Copyright © 1979-1999 Udanax.com. All rights reserved.
+/* Copyright ï¿½ 1979-1999 Udanax.com. All rights reserved.
 
 * This code is licensed under the terms of The Udanax Open-Source License, 
 * which contains precisely the terms of the X11 License.  The full text of 
@@ -35,11 +35,7 @@
 	*ptrptr = ptr;
 	// offset is already set appropriately //
 }*/
-newfindintersectionnd (fullcrumptr, knives, ptrptr, offset)
-  typecuc *fullcrumptr;
-  typeknives *knives;
-  typecuc **ptrptr;
-  typewid *offset;
+int newfindintersectionnd(typecuc *fullcrumptr, typeknives *knives, typecuc **ptrptr, typewid *offset)
 {
 	*ptrptr = fullcrumptr;
 	clear (offset,sizeof(*offset));
@@ -79,10 +75,7 @@ findthecutsonnd (father, offset, knives)
 ** is ONLY satisfied by cuts within
 */
   bool
-cutinthiscrumnd (ptr, offset, knives)
-  typecorecrum *ptr;
-  typewid *offset;
-  typeknives *knives;
+cutinthiscrumnd(typecorecrum *ptr, typewid *offset, typeknives *knives)
 {
   INT i;
 
@@ -114,10 +107,7 @@ allcutswiththiscrumnd (ptr, offset, knives)
 }*/	       
 
   bool     /* old version*/
-allcutswiththiscrumnd (ptr, offset, knives)
-  typecorecrum *ptr;
-  typewid *offset;
-  typeknives *knives;
+allcutswiththiscrumnd(typecorecrum *ptr, typewid *offset, typeknives *knives)
 {
   tumbler cut;
   INT i,cmp;

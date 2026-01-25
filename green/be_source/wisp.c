@@ -1,4 +1,4 @@
-/* Copyright © 1979-1999 Udanax.com. All rights reserved.
+/* Copyright ï¿½ 1979-1999 Udanax.com. All rights reserved.
 
 * This code is licensed under the terms of The Udanax Open-Source License, 
 * which contains precisely the terms of the X11 License.  The full text of 
@@ -12,21 +12,13 @@
 #include "enf.h"
 
 /* GRAN dsps across, POOM and SPAN dsp down */
-dspadd (a, b, c, enftype)
-  typedsp *a;   /* adds a dsp */
-  typewisp *b;  /* to either a wid or a dsp */
-  typedsp *c;   /* to get another dsp */
-  INT enftype;
+int dspadd(typedsp *a, typewisp *b, typedsp *c, INT enftype)
 {
         lockadd (a->dsas, b->dsas, c->dsas, (unsigned)dspsize(enftype));
 }
 
 
-dspsub (a, b, c, enftype)
-  typedsp *a;
-  typewisp *b;
-  typedsp *c;
-  INT enftype;
+int dspsub(typedsp *a, typewisp *b, typedsp *c, INT enftype)
 {
         locksubtract (a->dsas, b->dsas, c->dsas, (unsigned)dspsize(enftype));
 }
@@ -88,9 +80,7 @@ widsize (enftype)
 /* Should be called whenever the wisp of a crum may need to
 **   be recalculated by looking at its son.
 */
-setwispupwards (ptr,testflag)
-  typecuc *ptr;
-  INT testflag;
+int setwispupwards(typecuc *ptr, INT testflag)
 {
   typecuc *father, *findfather(),*oldptr;
   bool setwisp();
@@ -120,8 +110,7 @@ asserttreeisok(oldptr);
 	return /**/(0!=ntimeschanged)/**/;
 }
 
-setwispsofsons(ptr)
-  typecuc *ptr;
+int setwispsofsons(typecuc *ptr)
 {
 	for(ptr = (typecuc *)findleftmostbro((typecorecrum*)ptr); ptr; ptr = (typecuc *)getrightbro((typecorecrum*)ptr)){
 		 setwisp ((typecorecrum*)ptr);
@@ -129,9 +118,7 @@ setwispsofsons(ptr)
 }
 
 /* the widditive operation in general */
-  bool  /* return whether wisp of ptr has changed */
-setwisp (ptr)
-  typecorecrum *ptr;
+bool setwisp(typecorecrum *ptr)  /* return whether wisp of ptr has changed */
 {
   bool setwidseq(),setwispnd();
         if(ptr->height == 0)
@@ -160,9 +147,7 @@ setwisp (ptr)
 }*/
 #define widopseq(a,b,c) lockadd((a)->dsas,(b)->dsas,(c)->dsas,widsize(GRAN))
 /* the widditive operation in sequential enfilades */
-  bool
-setwidseq (father)
-  typecuc *father;
+bool setwidseq(typecuc *father)
 {
   typecorecrum *ptr;
   typewid sum;
@@ -183,9 +168,7 @@ setwidseq (father)
 }
 
 /* the widditive operation for nd */                                     
-  bool
-setwispnd (father)
-  typecuc *father;
+bool setwispnd(typecuc *father)
 {
   typecorecrum *ptr;
   typedsp newdsp, mindsp;
@@ -248,13 +231,12 @@ gerror("in setwispnd null findleftson\n");
         return (TRUE);
 }
 
-didntchangewisps()
+int didntchangewisps(void)
 {
 }
 
 /* reset father's wid but leave dsp alone */
-setwidnd (father)
-  typecuc *father;
+int setwidnd(typecuc *father)
 {
   typecorecrum *ptr;
   typewid newwid;
@@ -272,10 +254,7 @@ setwidnd (father)
 /* --------- lock routines deal with full lock ------------- */
 /* a lock is an array of loxize tumblers */
 
-  bool
-iszerolock (lock, loxize)
-  tumbler *lock;
-  unsigned loxize;
+bool iszerolock(tumbler *lock, unsigned loxize)
 {
         while (loxize--)
                if (!iszerotumbler (lock++))
@@ -283,10 +262,7 @@ iszerolock (lock, loxize)
         return(TRUE);
 }
 
-  bool
-lockeq (lock1, lock2, loxize)
-  tumbler *lock1, *lock2;
-  register unsigned loxize;
+bool lockeq(tumbler *lock1, tumbler *lock2, unsigned loxize)
 {
         while (loxize--)
                if (!tumblereq (lock1++, lock2++))
@@ -294,25 +270,19 @@ lockeq (lock1, lock2, loxize)
         return(TRUE);
 }
 
-lockadd (lock1, lock2, lock3, loxize)
-  register tumbler *lock1, *lock2, *lock3; /* arrays of tumblers */
-  register unsigned loxize;
+int lockadd(tumbler *lock1, tumbler *lock2, tumbler *lock3, unsigned loxize)
 {
         while (loxize--)
                 tumbleradd (lock1++, lock2++, lock3++);
 }
 
-locksubtract (lock1, lock2, lock3, loxize)
-  tumbler *lock1, *lock2, *lock3;
-  unsigned loxize;
+int locksubtract(tumbler *lock1, tumbler *lock2, tumbler *lock3, unsigned loxize)
 {
         while (loxize--)
                 tumblersub (lock1++, lock2++, lock3++);
 }
 
-lockmin (lock1, lock2, lock3, loxize)
-  tumbler *lock1, *lock2, *lock3;
-  unsigned loxize;
+int lockmin(tumbler *lock1, tumbler *lock2, tumbler *lock3, unsigned loxize)
 {
         while (loxize--){
                 macrotumblermin (lock1, lock2, lock3);
@@ -320,9 +290,7 @@ lockmin (lock1, lock2, lock3, loxize)
 	}
 }
 
-lockmax (lock1, lock2, lock3, loxize)
-  tumbler *lock1, *lock2, *lock3;
-  unsigned loxize;
+int lockmax(tumbler *lock1, tumbler *lock2, tumbler *lock3, unsigned loxize)
 {
         while (loxize--){
                 macrotumblermax (lock1, lock2, lock3);
@@ -331,10 +299,7 @@ lockmax (lock1, lock2, lock3, loxize)
 }
 
 /* Returns whether ALL the lock is 1 story */
-  bool
-lockis1story (lock, loxize)
-  tumbler *lock;
-  unsigned loxize;
+bool lockis1story(tumbler *lock, unsigned loxize)
 {
         while (loxize--)
                 if (!is1story (lock++))

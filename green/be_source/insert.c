@@ -1,4 +1,4 @@
-/* Copyright © 1979-1999 Udanax.com. All rights reserved.
+/* Copyright ï¿½ 1979-1999 Udanax.com. All rights reserved.
 
 * This code is licensed under the terms of The Udanax Open-Source License,
 * which contains precisely the terms of the X11 License.  The full text of
@@ -14,10 +14,7 @@
 
 /* use with GRAN */
 
-insertseq (fullcrumptr, address, info)
-  typecuc *fullcrumptr;
-  tumbler *address;
-  typegranbottomcruminfo *info;
+int insertseq(typecuc *fullcrumptr, tumbler *address, typegranbottomcruminfo *info)
 {
   typecrumcontext *context, *retrievecrums();
   typecorecrum  *new, *createcrum();
@@ -71,14 +68,11 @@ insertseq (fullcrumptr, address, info)
 		recombine (fullcrumptr);
 	}
 }
- static foocounter(){}
- static barcounter(){}
+ static int foocounter(void){ return 0; }
+ static int barcounter(void){ return 0; }
   
   bool
-fillupcbcseq (ptr, crumboundary, info) 
-  typecbc *ptr;
-  tumbler *crumboundary;
-  typegranbottomcruminfo *info;
+fillupcbcseq(typecbc *ptr, tumbler *crumboundary, typegranbottomcruminfo *info)
 {
   char temp[GRANTEXTLENGTH];
   INT  crumlength, remainingroom, textlength;

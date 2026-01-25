@@ -1,4 +1,4 @@
-/* Copyright © 1979-1999 Udanax.com. All rights reserved.
+/* Copyright ï¿½ 1979-1999 Udanax.com. All rights reserved.
 
 * This code is licensed under the terms of The Udanax Open-Source License, 
 * which contains precisely the terms of the X11 License.  The full text of 
@@ -12,8 +12,7 @@
 
 extern INT errno;
 
-inittask (taskptr)
-  typetask *taskptr;
+int inittask(typetask *taskptr)
 {
   FILE /**fd,*/ *fopen();
 
@@ -26,9 +25,7 @@ inittask (taskptr)
 }
 
 
-bool getaccount (taskptr, accountptr)
-  typetask *taskptr;
-  typeisa *accountptr;
+bool getaccount(typetask *taskptr, typeisa *accountptr)
 {
   bool validaccount();
 tumblerclear (accountptr);
@@ -46,9 +43,7 @@ return (TRUE);
 
 
   INT *
-taskalloc (taskptr, nbytes)
-  typetask *taskptr;
-  INT nbytes;
+taskalloc(typetask *taskptr, INT nbytes)
 {
   INT *talloc();
 
@@ -57,9 +52,7 @@ taskalloc (taskptr, nbytes)
 
 /* lint will go crazy */
   INT *
-talloc (taskptr, nbytes)
-  typetask *taskptr;
-  INT nbytes;
+talloc(typetask *taskptr, INT nbytes)
 {
   typetthingheader *this, *head;
   INT *ealloc();
@@ -79,8 +72,7 @@ talloc (taskptr, nbytes)
         return ((INT *)this);
 }
 
-tfree (taskptr)
-  typetask *taskptr;
+int tfree(typetask *taskptr)
 {
   typetthingheader *ptr;
   typetthingheader *p;
@@ -95,9 +87,7 @@ tfree (taskptr)
         taskptr->tempspacehead = NULL;
 }
 
-tfreeexplicit (taskptr, ptr)
-  typetask *taskptr;
-  char *ptr;
+int tfreeexplicit(typetask *taskptr, char *ptr)
 {
   typetthingheader *header;
 
@@ -117,9 +107,7 @@ checkpointer ("tfreeexplicit: ", ptr);
         efree((char*)header);
 }
 
-tfreeitemset (taskptr, itemset)
-  typetask *taskptr;
-  typeitemset itemset;
+int tfreeitemset(typetask *taskptr, typeitemset itemset)
 {
   typeitem *nextitem;
         

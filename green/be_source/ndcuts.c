@@ -1,4 +1,4 @@
-/* Copyright © 1979-1999 Udanax.com. All rights reserved.
+/* Copyright ï¿½ 1979-1999 Udanax.com. All rights reserved.
 
 * This code is licensed under the terms of The Udanax Open-Source License, 
 * which contains precisely the terms of the X11 License.  The full text of 
@@ -12,9 +12,7 @@
    bool crumiscut(),sonsarecut(),crumiscutbyithknife();
 
  
-makecutsnd(fullcrumptr, knives)
-  typecuc *fullcrumptr;
-  typeknives *knives;
+int makecutsnd(typecuc *fullcrumptr, typeknives *knives)
 {
   typewid offset; 
 
@@ -32,10 +30,7 @@ asserttreeisok(fullcrumptr);
 #endif
 } 
 
-makecutsdownnd (fullcrumptr,offset, knives)
-  typecuc *fullcrumptr;
-  typewid *offset;
-  typeknives *knives;
+int makecutsdownnd(typecuc *fullcrumptr, typewid *offset, typeknives *knives)
 {	      
   typecuc *ptr;
   typecorecrum *sonptr,*son;
@@ -71,10 +66,7 @@ makecutsdownnd (fullcrumptr,offset, knives)
 	}
 }
 		
-makecutsbackuptohere(ptr,offset, knives)
-  typecuc *ptr;
-  typewid *offset;
-  typeknives *knives;
+int makecutsbackuptohere(typecuc *ptr, typewid *offset, typeknives *knives)
 { 
   typewid grasp;
   INT i;
@@ -147,10 +139,7 @@ fprintf(stderr,"setwispupwards 4\n",1);
 	/**/setwispupwards(ptr,1);/**/
 }  
 
-cutsons(ptr,offset,knives)
-  typecuc *ptr;
-  typewid *offset;
-  typeknives *knives;
+int cutsons(typecuc *ptr, typewid *offset, typeknives *knives)
 {
   typewid grasp;
   typecorecrum *son,*nextson,*findleftson();
@@ -168,11 +157,7 @@ cutsons(ptr,offset,knives)
 	}
 }    
 
-makeithcutonson(ptr,offset,son,grasp,knives,i)
-  typecorecrum *ptr,*son;
-  typewid *offset,*grasp;
-  typeknives *knives;
-  INT i;
+int makeithcutonson(typecorecrum *ptr, typewid *offset, typecorecrum *son, typewid *grasp, typeknives *knives, INT i)
 {
   INT temp;
 	if (!crumiscutbyithknife((typecuc*)ptr, offset, knives, i)) {
@@ -220,11 +205,7 @@ fprintf(stderr,"foo return in makeithcutonson\n");
 }
 
 	  
-peelsoncorrectly(ptr,offset,son,grasp,knives,i)
-  typecorecrum *ptr,*son;
-  typewid *offset,*grasp;
-  typeknives *knives;
-  INT i;
+int peelsoncorrectly(typecorecrum *ptr, typewid *offset, typecorecrum *son, typewid *grasp, typeknives *knives, INT i)
 {  /* put son in leftest uncle with room that  is less than cut*/
   typecuc *uncle;
   bool crumleftofithcut();
@@ -248,12 +229,7 @@ peelsoncorrectly(ptr,offset,son,grasp,knives,i)
 	newpeelcrumoffnd((typecorecrum*)son,(typecorecrum*)uncle);
 }
 
-  bool
-crumleftofithcut(ptr,offset,knives,i)
-  typecorecrum *ptr;
-  typewid *offset;
-  typeknives *knives;
-  INT i;
+bool crumleftofithcut(typecorecrum *ptr, typewid *offset, typeknives *knives, INT i)
 {
 	if (whereoncrum(ptr,offset,&knives->blades[i],knives->dimension)>THRUME) {
 		return(FALSE);
@@ -262,9 +238,7 @@ crumleftofithcut(ptr,offset,knives,i)
 	}
 }
 
-peeloffcorrectson(ptr,knives)
-  typecorecrum *ptr;
-  typeknives *knives;
+int peeloffcorrectson(typecorecrum *ptr, typeknives *knives)
 {
   typecorecrum *bro, *uncle, *createcrum(), *findleftson();
 
@@ -285,8 +259,7 @@ peeloffcorrectson(ptr,knives)
 
 	   
 
-newpeelcrumoffnd (ptr,newuncle)
-  typecorecrum *ptr,*newuncle;
+int newpeelcrumoffnd(typecorecrum *ptr, typecorecrum *newuncle)
 {
   typedsp temp;
   typecuc *father;
@@ -363,11 +336,7 @@ dump(ptr);
 
 
 
-  bool
-crumiscut(ptr,offset,knives)
-  typecuc *ptr;
-  typewid *offset;
-  typeknives *knives;
+bool crumiscut(typecuc *ptr, typewid *offset, typeknives *knives)
 {
   INT i;
 
@@ -379,12 +348,7 @@ crumiscut(ptr,offset,knives)
 	return(FALSE);
 }
 
-  bool
-crumiscutbyithknife(ptr, offset, knives, i)
-  typecuc *ptr;
-  typewid *offset;
-  typeknives *knives;
-  INT i;
+bool crumiscutbyithknife(typecuc *ptr, typewid *offset, typeknives *knives, INT i)
 {
 	if (whereoncrum((typecorecrum*)ptr, offset, &knives->blades[i], knives->dimension) == THRUME) {
 		return(TRUE);
@@ -392,11 +356,7 @@ crumiscutbyithknife(ptr, offset, knives, i)
 	return(FALSE);
 }
   
-  bool
-sonsarecut (ptr,offset, knives)
-  typecuc *ptr;
-  typewid *offset;
-  typeknives *knives;
+bool sonsarecut(typecuc *ptr, typewid *offset, typeknives *knives)
 {	      
   typecuc *son;
   bool crumiscut();
@@ -410,12 +370,7 @@ sonsarecut (ptr,offset, knives)
 	return(FALSE);
 }
 
-slicecbcpm (ptr, offset, new, cut, index)
-  typecorecrum  *ptr;
-  typecorecrum  *new;
-  typewid *offset;
-  tumbler *cut;
-  INT index;
+int slicecbcpm(typecorecrum *ptr, typewid *offset, typecorecrum *new, tumbler *cut, INT index)
 {
   typedsp grasp/*, reach*/;
   tumbler localcut;
@@ -495,12 +450,7 @@ fprintf(stderr,"\nin slicecbcpm wholedamn tree  \n");
 }
 
 /*  // old code 3/5/85  //
-slicecbcpm (ptr, offset, new, cut, index)
-  typecorecrum  *ptr;
-  typecorecrum  *new;
-  typewid *offset;
-  tumbler *cut;
-  INT index;
+int slicecbcpm(typecorecrum *ptr, typewid *offset, typecorecrum *new, tumbler *cut, INT index)
 {
   typedsp grasp//, reach//;
   tumbler localcut;

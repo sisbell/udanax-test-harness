@@ -1,4 +1,4 @@
-/* Copyright © 1979-1999 Udanax.com. All rights reserved.
+/* Copyright ï¿½ 1979-1999 Udanax.com. All rights reserved.
 
 * This code is licensed under the terms of The Udanax Open-Source License, 
 * which contains precisely the terms of the X11 License.  The full text of 
@@ -15,9 +15,7 @@ static INT abscmp();
 
 /* ---------------- Routines to test tumblers -------------- */
 
-  bool
-tumblereq (a,b)
-  tumbler *a,*b;
+bool tumblereq(tumbler *a, tumbler *b)
 {
   register char *aptr = (char *) a; /*char * for cheating in compare loop*/
   register char *bptr = (char *) b;
@@ -32,9 +30,7 @@ tumblereq (a,b)
 	return (TRUE);
 }
 
-  bool
-tumbleraccounteq (aptr, bptr)
-  tumbler  *aptr,*bptr;
+bool tumbleraccounteq(tumbler *aptr, tumbler *bptr)
 {
   INT i, j;
 
@@ -52,9 +48,7 @@ tumbleraccounteq (aptr, bptr)
 	return (TRUE);
 }
 
-  INT
-tumblercmp (aptr, bptr)
-  register tumbler *aptr, *bptr;
+INT tumblercmp(tumbler *aptr, tumbler *bptr)
 {
 	if (iszerotumbler(aptr)){
 		if (iszerotumbler(bptr))
@@ -69,9 +63,7 @@ tumblercmp (aptr, bptr)
 	return (aptr->sign ? LESS : GREATER);
 }
 #ifndef ExPeriMental
-static INT
-abscmp(aptr,bptr)
-  tumbler *aptr, *bptr;
+static INT abscmp(tumbler *aptr, tumbler *bptr)
 {
   register INT *a, *b;
   register INT i, cmp;
@@ -97,9 +89,7 @@ abscmp(aptr,bptr)
 	return (EQUAL);
 }
 #else
-static INT
-abscmp(aptr,bptr)
-  tumbler *aptr, *bptr;
+static INT abscmp(tumbler *aptr, tumbler *bptr)
 {
   register INT *a, *b;
   register INT i, cmp;
@@ -130,9 +120,7 @@ abscmp(aptr,bptr)
 
 #endif
 
-  INT
-intervalcmp (left, right, address)
-  tumbler *left, *right, *address;
+INT intervalcmp(tumbler *left, tumbler *right, tumbler *address)
 {
   register INT cmp;
 
@@ -157,10 +145,7 @@ iszerotumbler(tumblerptr)
 	return(!(tumblerptr -> mantissa[0]));
 } */
 
-  bool
-tumblercheckptr (ptr,crumptr)
-  tumbler *ptr;
-  INT /*typecrum*/ *crumptr;
+bool tumblercheckptr(tumbler *ptr, INT *crumptr)
 {
   bool wrong;
   INT i;
@@ -220,9 +205,7 @@ tumblercheckptr (ptr,crumptr)
 	return (TRUE);
 }
 
-  bool
-tumblercheck(ptr)
-  tumbler *ptr;
+bool tumblercheck(tumbler *ptr)
 {
 	return(tumblercheckptr(ptr, (INT*) NULL));
 }
@@ -230,9 +213,7 @@ tumblercheck(ptr)
 /* says whether there is no more than a single non-zero
 **  digit in mantissa
 */
-  bool
-is1story (tumblerptr)
-  tumbler *tumblerptr;
+bool is1story(tumbler *tumblerptr)
 {
   INT i;
 
@@ -244,9 +225,7 @@ is1story (tumblerptr)
 	return (TRUE);
 }
 
-  INT
-nstories(tumblerptr)
-  tumbler *tumblerptr;
+INT nstories(tumbler *tumblerptr)
 {
   INT i;
 
@@ -256,9 +235,7 @@ nstories(tumblerptr)
 	return (i + 1);
 }
 
-  INT
-tumblerlength (tumblerptr)
-  tumbler *tumblerptr;
+INT tumblerlength(tumbler *tumblerptr)
 {
 	return (nstories (tumblerptr) - tumblerptr->exp);
 }
@@ -277,9 +254,7 @@ nzeroesintumbler (tumblerptr)
 	return (count);
 }*/
 
-  INT
-lastdigitintumbler (tumblerptr)
-  tumbler *tumblerptr;
+INT lastdigitintumbler(tumbler *tumblerptr)
 {
   INT n, digit;
 
@@ -290,8 +265,7 @@ lastdigitintumbler (tumblerptr)
 
 /* --------- Routines below set and change tumblers -------- */
 
-tumblerjustify (tumblerptr)
- register tumbler *tumblerptr;
+int tumblerjustify(tumbler *tumblerptr)
 {
   register INT i, j;
   INT shift;
@@ -317,8 +291,7 @@ tumblerjustify (tumblerptr)
 		qerror ();
 */}
 
-partialtumblerjustify (tumblerptr)
- register tumbler *tumblerptr;
+int partialtumblerjustify(tumbler *tumblerptr)
 {
   register INT i, j;
   INT shift;
@@ -345,8 +318,7 @@ partialtumblerjustify (tumblerptr)
 		qerror ();
 */}
 
-tumblercopy (fromptr, toptr)
-  tumbler *fromptr, *toptr;
+int tumblercopy(tumbler *fromptr, tumbler *toptr)
 {
 	/*movmem (fromptr, toptr, sizeof(tumbler));  */
 	movetumbler(fromptr,toptr); 
@@ -361,8 +333,7 @@ tumblercopy (fromptr, toptr)
 		movetumbler (bptr, cptr);
 }*/
 
-tumblermax (aptr, bptr, cptr)
- register tumbler *aptr, *bptr, *cptr;
+int tumblermax(tumbler *aptr, tumbler *bptr, tumbler *cptr)
 {
 	if (tumblercmp (aptr, bptr) == GREATER)
 		movetumbler (aptr, cptr);
@@ -370,9 +341,8 @@ tumblermax (aptr, bptr, cptr)
 		movetumbler (bptr, cptr);
 }
 
-functiontumbleradd (aptr, bptr, cptr)  /* tumbler add is ~50% of cpu so has been */
+int functiontumbleradd(tumbler *aptr, tumbler *bptr, tumbler *cptr)  /* tumbler add is ~50% of cpu so has been */
 			       /*tightened somewhat */
- register tumbler *aptr, *bptr, *cptr;
 {
 	if (iszerotumbler(bptr)){
 		movetumbler (aptr, cptr);
@@ -412,8 +382,7 @@ functiontumbleradd (aptr, bptr, cptr)  /* tumbler add is ~50% of cpu so has been
 	}
 */}
 
-tumblersub (aptr, bptr, cptr)
- register tumbler *aptr, *bptr, *cptr;
+int tumblersub(tumbler *aptr, tumbler *bptr, tumbler *cptr)
 {
   tumbler temp;
 /*
@@ -451,9 +420,7 @@ tumblersub (aptr, bptr, cptr)
 #ifndef ExPeRiMENATL
 #endif
 
-absadd (aptr, bptr, cptr)
-  tumbler *aptr, *bptr;
-  tumbler *cptr;
+int absadd(tumbler *aptr, tumbler *bptr, tumbler *cptr)
 {
   register INT i, j;
   INT place;
@@ -497,9 +464,7 @@ absadd (aptr, bptr, cptr)
 }
 
 #ifdef  OlDVeRsIon
-absadd (aptr, bptr, cptr)
-  tumbler *aptr, *bptr;
-  tumbler *cptr;
+int absadd(tumbler *aptr, tumbler *bptr, tumbler *cptr)
 {
   register INT i, j;
   INT place;
@@ -545,9 +510,7 @@ absadd (aptr, bptr, cptr)
 
 
 
-strongsub (aptr, bptr, cptr)
-  register tumbler *aptr, *bptr;
-  tumbler *cptr;
+int strongsub(tumbler *aptr, tumbler *bptr, tumbler *cptr)
 {
   tumbler answer;
   register INT i, j;
@@ -580,9 +543,7 @@ strongsub (aptr, bptr, cptr)
 	return;
 }
 
-weaksub (aptr, bptr, cptr)
- register tumbler *aptr, *bptr;
-  tumbler *cptr;
+int weaksub(tumbler *aptr, tumbler *bptr, tumbler *cptr)
 {
    tumbler answer;
   register INT i;
@@ -606,9 +567,7 @@ weaksub (aptr, bptr, cptr)
 	movetumbler (&answer, cptr);
 }
 
- INT
-tumblerintdiff (aptr, bptr)
-  tumbler *aptr, *bptr;
+INT tumblerintdiff(tumbler *aptr, tumbler *bptr)
 {
   tumbler c;
 
@@ -616,9 +575,7 @@ tumblerintdiff (aptr, bptr)
 	return (c.mantissa[0]);
 }
 
-tumblerincrement (aptr, rightshift, bint, cptr)
-  register tumbler *aptr, *cptr;
-  INT bint, rightshift;
+int tumblerincrement(tumbler *aptr, INT rightshift, INT bint, tumbler *cptr)
 {
   register INT idx;
 
@@ -644,9 +601,7 @@ tumblerincrement (aptr, rightshift, bint, cptr)
 	tumblerjustify (cptr);
 }
 
-tumblertruncate (aptr, bint, cptr)
-  tumbler *aptr, *cptr;
-  INT bint;
+int tumblertruncate(tumbler *aptr, INT bint, tumbler *cptr)
 {
   tumbler answer;
   INT i;
@@ -662,9 +617,7 @@ tumblertruncate (aptr, bint, cptr)
 	movetumbler (&answer, cptr);
 }
 
-prefixtumbler (aptr, bint, cptr)
-  tumbler *aptr, *cptr;
-  INT bint;
+int prefixtumbler(tumbler *aptr, INT bint, tumbler *cptr)
 {
   tumbler temp1, temp2;
 
@@ -677,8 +630,7 @@ prefixtumbler (aptr, bint, cptr)
 }
 
 /*
-beheadtumbler (aptr, bptr)
-  tumbler *aptr, *bptr;
+int beheadtumbler(tumbler *aptr, tumbler *bptr)
 {
   tumbler temp;
   INT i;
@@ -697,8 +649,7 @@ beheadtumbler (aptr, bptr)
 */
 
 
-beheadtumbler (aptr, bptr)
-  tumbler *aptr, *bptr;
+int beheadtumbler(tumbler *aptr, tumbler *bptr)
 {
   tumbler temp;
 
@@ -710,10 +661,7 @@ beheadtumbler (aptr, bptr)
 	movetumbler (&temp, bptr);
 }
 
-docidandvstream2tumbler (docid, vstream, tumbleptr)
-  tumbler *docid;
-  tumbler *vstream;
-  tumbler *tumbleptr;
+int docidandvstream2tumbler(tumbler *docid, tumbler *vstream, tumbler *tumbleptr)
 {
   INT i, j;
 

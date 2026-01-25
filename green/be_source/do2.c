@@ -1,4 +1,4 @@
-/* Copyright © 1979-1999 Udanax.com. All rights reserved.
+/* Copyright ï¿½ 1979-1999 Udanax.com. All rights reserved.
 
 * This code is licensed under the terms of The Udanax Open-Source License, 
 * which contains precisely the terms of the X11 License.  The full text of 
@@ -11,12 +11,7 @@
 
 #include "xanadu.h"
 
-  bool
-specset2ispanset (taskptr, specset, ispansetptr,type)
-  typetask *taskptr;
-  typespec *specset;
-  typeispanset *ispansetptr;
-  int type;
+bool specset2ispanset(typetask *taskptr, typespec *specset, typeispanset *ispansetptr, int type)
 {
   typeorgl docorgl;
   typeispanset *vspanset2ispanset();
@@ -50,11 +45,7 @@ fooitemset ("specset2ispanset\nISPANSET\n", *save);
 	return (TRUE);
 }
 
-  bool
-tumbler2spanset (taskptr, tumblerptr, spansetptr)
-  typetask *taskptr;
-  typeisa *tumblerptr;
-  typespanset *spansetptr;
+bool tumbler2spanset(typetask *taskptr, typeisa *tumblerptr, typespanset *spansetptr)
 {
   typespan *spanptr;
   INT *taskalloc();
@@ -84,10 +75,7 @@ spanset2tumbler (taskptr, spanset, tmblptr)
 	return (TRUE);
 }*/
 
-makehint (typeabove, typebelow, typeofatom, isaptr, hintptr)
-  INT typeabove, typebelow, typeofatom;
-  typeisa *isaptr;
-  typehint *hintptr;
+int makehint(INT typeabove, INT typebelow, INT typeofatom, typeisa *isaptr, typehint *hintptr)
 {
 	hintptr->supertype = typeabove;
 	hintptr->subtype = typebelow;
@@ -95,8 +83,7 @@ makehint (typeabove, typebelow, typeofatom, isaptr, hintptr)
 	movetumbler (isaptr, &hintptr->hintisa);
 }
 
-validhint (hintptr)
-  typehint *hintptr;
+int validhint(typehint *hintptr)
 {
 	if (
 	      (hintptr->supertype < NODE)
@@ -120,23 +107,13 @@ validhint (hintptr)
 	}
 }
 
-  bool  /* vsa 1 if zenf, else w/in vspan of fullcrum */
-acceptablevsa (vsaptr, orglptr)
-  tumbler *vsaptr;
-  typeorgl orglptr;
+bool acceptablevsa(tumbler *vsaptr, typeorgl orglptr)
 {
 	return (TRUE);
 }
 
 
-  bool
-insertendsetsinspanf (taskptr, spanfptr, linkisaptr, fromsporglset, tosporglset, threesporglset)
-  typetask *taskptr;
-  typespanf spanfptr;
-  typeisa *linkisaptr;
-  typesporglset fromsporglset;
-  typesporglset tosporglset;
-  typesporglset threesporglset;
+bool insertendsetsinspanf(typetask *taskptr, typespanf spanfptr, typeisa *linkisaptr, typesporglset fromsporglset, typesporglset tosporglset, typesporglset threesporglset)
 {  bool insertspanf();
   if (!(
 	insertspanf(taskptr,spanfptr,linkisaptr,fromsporglset,LINKFROMSPAN)
@@ -150,15 +127,7 @@ insertendsetsinspanf (taskptr, spanfptr, linkisaptr, fromsporglset, tosporglset,
   return(TRUE);
 }
 
-  bool
-insertendsetsinorgl (taskptr, linkisaptr, link, fromvsa, fromsporglset, tovsa, tosporglset, threevsa, threesporglset)
-  typetask *taskptr;
-  tumbler *linkisaptr;
-  typeorgl link;
-  typesporglset fromsporglset;
-  typesporglset tosporglset;
-  typesporglset threesporglset;
-  tumbler *fromvsa, *tovsa, *threevsa;
+bool insertendsetsinorgl(typetask *taskptr, tumbler *linkisaptr, typeorgl link, tumbler *fromvsa, typesporglset fromsporglset, tumbler *tovsa, typesporglset tosporglset, tumbler *threevsa, typesporglset threesporglset)
 {  bool insertpm();
 	if (!( insertpm(taskptr, linkisaptr, link, fromvsa, fromsporglset)
 		&& insertpm(taskptr, linkisaptr, link, tovsa, tosporglset))) {
@@ -179,11 +148,7 @@ insertendsetsinorgl (taskptr, linkisaptr, link, fromvsa, fromsporglset, tovsa, t
 
 }
 
-  bool
-findnextlinkvsa (taskptr, docisaptr, vsaptr)
-  typetask *taskptr;
-  typeisa *docisaptr;
-  tumbler *vsaptr;
+bool findnextlinkvsa(typetask *taskptr, typeisa *docisaptr, tumbler *vsaptr)
 {
   tumbler vspanreach, firstlink;
   typevspan vspan;
@@ -201,9 +166,7 @@ findnextlinkvsa (taskptr, docisaptr, vsaptr)
 	return (TRUE);
 }
 
-  bool
-setlinkvsas (fromvsaptr, tovsaptr, threevsaptr)
-  tumbler *fromvsaptr, *tovsaptr, *threevsaptr;
+bool setlinkvsas(tumbler *fromvsaptr, tumbler *tovsaptr, tumbler *threevsaptr)
 {
 	tumblerclear (fromvsaptr);
 	tumblerincrement (fromvsaptr, 0, 1, fromvsaptr);
@@ -219,13 +182,7 @@ setlinkvsas (fromvsaptr, tovsaptr, threevsaptr)
 	return (TRUE);
 }
 
-  bool
-ispansetandspecsets2spanpairset (taskptr, ispanset, specset1, specset2, pairsetptr)
-  typetask *taskptr;
-  typeispanset ispanset;
-  typespecset specset1;
-  typespecset specset2;
-  typespanpairset *pairsetptr;
+bool ispansetandspecsets2spanpairset(typetask *taskptr, typeispanset ispanset, typespecset specset1, typespecset specset2, typespanpairset *pairsetptr)
 {
 #ifndef DISTRIBUTION
 fprintf(stderr,"entering ispansetandspecsets2spanpairset\n");

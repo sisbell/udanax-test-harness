@@ -1,4 +1,4 @@
-/* Copyright © 1979-1999 Udanax.com. All rights reserved.
+/* Copyright ï¿½ 1979-1999 Udanax.com. All rights reserved.
 
 * This code is licensed under the terms of The Udanax Open-Source License, 
 * which contains precisely the terms of the X11 License.  The full text of 
@@ -13,23 +13,17 @@
 
 #define MINEXP  -10
 
-prompt (taskptr, string)
-  typetask *taskptr;
-  char *string;
+int prompt(typetask *taskptr, char *string)
 {
         fprintf(taskptr->outp, "%s", string);
 }
 
-error (taskptr, string)
-  typetask *taskptr;
-  char *string;
+int error(typetask *taskptr, char *string)
 {
         fprintf(taskptr->errp, "%s", string);
 }
 
-puttumbler(outfile, tumblerptr)
-  FILE *outfile;
-  tumbler *tumblerptr;
+int puttumbler(FILE *outfile, tumbler *tumblerptr)
 {
   INT i, place;
 
@@ -51,25 +45,19 @@ puttumbler(outfile, tumblerptr)
         }
 }
 
-putnum(outfile, num)
-  FILE *outfile;
-  INT num;
+int putnum(FILE *outfile, INT num)
 {
         fprintf(outfile, "%d", num);
 }
 
 
-putisa(taskptr, isaptr)
-  typetask *taskptr;
-  typeisa *isaptr;
+int putisa(typetask *taskptr, typeisa *isaptr)
 {
         puttumbler(taskptr->outp, isaptr);
 }
 
 
-putitemset (taskptr, itemset)
-  typetask *taskptr;
-  typeitemset itemset;
+int putitemset(typetask *taskptr, typeitemset itemset)
 {
         if (itemset == NULL){
                 fprintf (taskptr->outp, "  \nitemset empty\n");
@@ -82,9 +70,7 @@ putitemset (taskptr, itemset)
         }
 }
 
-putitem (taskptr, itemptr)
-  typetask *taskptr;
-  typeitem *itemptr;
+int putitem(typetask *taskptr, typeitem *itemptr)
 {
         switch (((typeitemheader *)itemptr)->itemid) {
           case ISPANID:
@@ -126,9 +112,7 @@ putitem (taskptr, itemptr)
 }
 
 
-putspan (taskptr, spanptr)
-        typetask *taskptr;
-        typespan *spanptr;
+int putspan(typetask *taskptr, typespan *spanptr)
 {
         fprintf(taskptr->outp, "   span address: ");
         puttumbler(taskptr->outp, &spanptr->stream);
@@ -136,16 +120,12 @@ putspan (taskptr, spanptr)
         puttumbler(taskptr->outp, &spanptr->width);
 }
 
-puttext (taskptr, textptr)
-        typetask *taskptr;
-        typetext *textptr;
+int puttext(typetask *taskptr, typetext *textptr)
 {
         write (fileno(taskptr->outp), textptr->string, textptr->length);
 }
 
-putspanpairset (taskptr, spanpairset)
-  typetask *taskptr;
-  typespanpairset spanpairset;
+int putspanpairset(typetask *taskptr, typespanpairset spanpairset)
 {
 	if (!spanpairset)
 		fprintf(taskptr->outp, "NULL relationship\n");
@@ -154,9 +134,7 @@ putspanpairset (taskptr, spanpairset)
                 putspanpair (taskptr, spanpairset);
 }
 
-putspanpair (taskptr, spanpair)
-  typetask *taskptr;
-  typespanpair *spanpair;
+int putspanpair(typetask *taskptr, typespanpair *spanpair)
 {
         fprintf (taskptr->outp, "start1:  ");
         puttumbler (taskptr->outp, &spanpair->stream1);
@@ -167,110 +145,81 @@ putspanpair (taskptr, spanpair)
         fprintf (taskptr->outp, "\n");
 }
 
-putcreatelink (taskptr, istreamptr)
-  typetask *taskptr;
-  typeisa *istreamptr;
+int putcreatelink(typetask *taskptr, typeisa *istreamptr)
 {
         fprintf(taskptr->outp, "\nlink made: ");
         putisa(taskptr, istreamptr);
         fprintf(taskptr->outp, "\n");
 }
 
-putfollowlink (taskptr, specset)
-  typetask *taskptr;
-  typespecset specset;
+int putfollowlink(typetask *taskptr, typespecset specset)
 {
         fprintf(taskptr->outp, "link endset is:\n");
         putitemset (taskptr, specset);
 }
 
-putretrievedocvspanset (taskptr, spansetptr)
-        typetask *taskptr;
-        typespanset *spansetptr;
+int putretrievedocvspanset(typetask *taskptr, typespanset *spansetptr)
 {
         fprintf(taskptr->outp, "docvspans are:\n");
         putitemset(taskptr, *spansetptr);
 }
 
-putretrievedocvspan (taskptr, vspanptr)
-        typetask *taskptr;
-        typespan *vspanptr;
+int putretrievedocvspan(typetask *taskptr, typespan *vspanptr)
 {
         fprintf(taskptr->outp, "docvspan is:\n");
         putspan(taskptr, vspanptr);
 }
 
-putretrievev (taskptr, vstuffsetptr)
-  typetask *taskptr;
-  typevstuffset *vstuffsetptr;
+int putretrievev(typetask *taskptr, typevstuffset *vstuffsetptr)
 {
         fprintf (taskptr->outp, "\nvstuff is:\n");
         putitemset (taskptr, *vstuffsetptr);
 }
 
-putfindlinksfromtothree (taskptr, linkset)
-  typetask *taskptr;
-  typelinkset linkset;
+int putfindlinksfromtothree(typetask *taskptr, typelinkset linkset)
 {
         fprintf (taskptr->outp, "\nlinks\n");
         putitemset (taskptr, linkset);
 }
 
-putfindnumoflinksfromtothree (taskptr, num)
-  typetask *taskptr;
-  INT num;
+int putfindnumoflinksfromtothree(typetask *taskptr, INT num)
 {
         fprintf(taskptr->outp, "\nnumber of links: %d\n", num);
 }
 
-putfindnextnlinksfromtothree (taskptr, n, nextlinkset)
-  typetask *taskptr;
-  INT n;
-  typelinkset nextlinkset;
+int putfindnextnlinksfromtothree(typetask *taskptr, INT n, typelinkset nextlinkset)
 {
         fprintf(taskptr->outp, "next number of links: %d\n", n);
         putitemset(taskptr, nextlinkset);
 }
 
-putshowrelationof2versions (taskptr, relation)
-  typetask *taskptr;
-  typespanpairset relation;
+int putshowrelationof2versions(typetask *taskptr, typespanpairset relation)
 {
         fprintf(taskptr->outp, "relation between versions:\n");
         putspanpairset (taskptr, relation);
 }
 
-putcreatenewdocument (taskptr, newdocisaptr)
-  typetask *taskptr;
-  typeisa *newdocisaptr;
+int putcreatenewdocument(typetask *taskptr, typeisa *newdocisaptr)
 {
         fprintf(taskptr->outp, "new document: ");
         putisa(taskptr, newdocisaptr);
         fprintf(taskptr->outp,"\n\n");
 }
 
-putcreatenewversion (taskptr, newdocisaptr)
-  typetask *taskptr;
-  typeisa *newdocisaptr;
+int putcreatenewversion(typetask *taskptr, typeisa *newdocisaptr)
 {
         fprintf(taskptr->outp, "new version: ");
         putisa(taskptr, newdocisaptr);
         fprintf (taskptr->outp, "\n");
 }
 
-putfinddocscontaining (taskptr, addressset)
-  typetask *taskptr;
-  typeitemset addressset;
+int putfinddocscontaining(typetask *taskptr, typeitemset addressset)
 {
         fprintf(taskptr->outp, "\ndocuments\n");
         putitemset (taskptr, addressset);
 }
 
-putretrieveendsets (taskptr, fromset, toset, threeset)
-  typetask *taskptr;
-  typespecset fromset;
-  typespecset toset;
-  typespecset threeset;
+int putretrieveendsets(typetask *taskptr, typespecset fromset, typespecset toset, typespecset threeset)
 {
         fprintf (taskptr->outp, "\nfromset\n");
         putitemset (taskptr, fromset);
@@ -280,65 +229,52 @@ putretrieveendsets (taskptr, fromset, toset, threeset)
         putitemset (taskptr, toset);
 }
 
-putinsert (taskptr)
-  typetask *taskptr;
+int putinsert(typetask *taskptr)
 {
 }
 
-putcopy (taskptr)
-  typetask *taskptr;
+int putcopy(typetask *taskptr)
 {
 }
 
-putdeletevspan (taskptr)
-  typetask *taskptr;
+int putdeletevspan(typetask *taskptr)
 {
 }
 
-putrearrange (taskptr)
-  typetask *taskptr;
+int putrearrange(typetask *taskptr)
 {
 }
 
-putrequestfailed (taskptr)
-  typetask *taskptr;
+int putrequestfailed(typetask *taskptr)
 {
         fprintf (taskptr->outp,"?\n");
 }
-kluge()
+int kluge(void)
 {
 }
-putxaccount(taskptr)
-  typetask *taskptr;
+int putxaccount(typetask *taskptr)
 {
 return(TRUE);
 }
-putcreatenode_or_account(taskptr,tp)
-  typetask *taskptr;
-  tumbler *tp;
+int putcreatenode_or_account(typetask *taskptr, tumbler *tp)
 {
   puttumbler(taskptr->outp,tp);
 return(TRUE);
 
 }
 
-putopen(taskptr,tp)
-  typetask *taskptr;
-  tumbler *tp;
-
+int putopen(typetask *taskptr, tumbler *tp)
 {
   puttumbler(taskptr->outp,tp);
 return(TRUE);
 	
 }
-putclose(taskptr)
-  typetask *taskptr;
+int putclose(typetask *taskptr)
 {
 return(TRUE);
 }
 
-putquitxanadu(taskptr)
-  typetask *taskptr;
+int putquitxanadu(typetask *taskptr)
 {
   fprintf(taskptr->outp, "Good Bye.\n");
   return(TRUE);

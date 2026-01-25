@@ -1,4 +1,4 @@
-/* Copyright © 1979-1999 Udanax.com. All rights reserved.
+/* Copyright ï¿½ 1979-1999 Udanax.com. All rights reserved.
 
 * This code is licensed under the terms of The Udanax Open-Source License, 
 * which contains precisely the terms of the X11 License.  The full text of 
@@ -13,10 +13,7 @@
 #include "ndenf.h"
 
 /* use with GRAN */
-deleteseq (fullcrumptr, address, index)
-  typecuc *fullcrumptr;
-  tumbler *address;
-  INT index;
+int deleteseq(typecuc *fullcrumptr, tumbler *address, INT index)
 {
   typecrumcontext *context;
   typecbc *ptr;
@@ -31,10 +28,7 @@ deleteseq (fullcrumptr, address, index)
 }
 
 /* use with SPAN and POOM */
-deletend (fullcrumptr, origin, width, index)
-  typecuc *fullcrumptr;
-  tumbler *origin, *width;
-  INT index;
+int deletend(typecuc *fullcrumptr, tumbler *origin, tumbler *width, INT index)
 {
   typeknives knives;
   typewid offset, grasp, reach;
@@ -81,10 +75,7 @@ deletend (fullcrumptr, origin, width, index)
 	recombine (father);
 }
 
-rearrangend (fullcrumptr, cutseqptr, index)
-  typecuc *fullcrumptr;
-  typecutseq *cutseqptr;
-  INT index;
+int rearrangend(typecuc *fullcrumptr, typecutseq *cutseqptr, INT index)
 {
   typecuc *father, *ptr;
   typewid foffset, fgrasp;
@@ -170,9 +161,7 @@ rearrangend (fullcrumptr, cutseqptr, index)
 
 /* Prepares offsets for both 3 and 4 cut rearranges */
 
-makeoffsetsfor3or4cuts (knives, diff)
-  typeknives *knives;
-  tumbler diff[];
+int makeoffsetsfor3or4cuts(typeknives *knives, tumbler diff[])
 {
   tumbler a, b;
 
@@ -199,11 +188,7 @@ makeoffsetsfor3or4cuts (knives, diff)
 ** Each editting routine requires a slightly different version of
 **   this function.
 */
-  INT
-rearrangecutsectionnd (ptr, offset, knives)
-  typecorecrum *ptr;
-  typewid *offset;
-  typeknives *knives;
+INT rearrangecutsectionnd(typecorecrum *ptr, typewid *offset, typeknives *knives)
 {
   INT i, cmp;
 
@@ -219,11 +204,7 @@ rearrangecutsectionnd (ptr, offset, knives)
 }  
 
 
-  INT
-insertcutsectionnd (ptr, offset, knives)
-  typecorecrum *ptr;
-  typewid *offset;
-  typeknives *knives;
+INT insertcutsectionnd(typecorecrum *ptr, typewid *offset, typeknives *knives)
 {
   INT i, cmp;		       /*hacked from delete*/
 
@@ -251,11 +232,7 @@ insertcutsectionnd (ptr, offset, knives)
 	return (0);
 }   
    
-  INT
-deletecutsectionnd (ptr, offset, knives)
-  typecorecrum *ptr;
-  typewid *offset;
-  typeknives *knives;
+INT deletecutsectionnd(typecorecrum *ptr, typewid *offset, typeknives *knives)
 {
   INT i, cmp;
 
@@ -270,8 +247,7 @@ deletecutsectionnd (ptr, offset, knives)
 	return (0);
 }   
 
-sortknives (knifeptr)
-  typeknives *knifeptr;
+int sortknives(typeknives *knifeptr)
 {
   tumbler temp;
   INT i;

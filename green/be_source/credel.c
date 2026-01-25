@@ -1,4 +1,4 @@
-/* Copyright © 1979-1999 Udanax.com. All rights reserved.
+/* Copyright ï¿½ 1979-1999 Udanax.com. All rights reserved.
 
 * This code is licensed under the terms of The Udanax Open-Source License, 
 * which contains precisely the terms of the X11 License.  The full text of 
@@ -36,10 +36,7 @@ etag(ptr, tag)
 } 
 */
 
-  INT *
-eallocwithtag(nbytes, tag)
-  unsigned nbytes;
-  tagtype tag;
+INT *eallocwithtag(unsigned nbytes, tagtype tag)
 {
   INT * ealloc();		    
   char * ret;
@@ -54,9 +51,7 @@ eallocwithtag(nbytes, tag)
     return((INT *)ret);
 }
 				   
-  INT *
-ealloc (nbytes)   /* with tag*/
-  unsigned nbytes;
+INT *ealloc(unsigned nbytes)
 {
   char *ret;
 /*fprintf(stderr,"ealloc called with %d\n",nbytes);*/
@@ -80,8 +75,7 @@ ealloc (nbytes)   /* with tag*/
      }
 }
 
-void efree (ptr)  /* with tag */
-  char *ptr;
+void efree(char *ptr)
 {
 
       /*  ffree(ptr);   */
@@ -108,7 +102,7 @@ void initgrimreaper()
 	grimreaper = NULL;
 }
 
-grimlyreap ()
+int grimlyreap(void)
 {
   typecorecrum *ptr;
   bool isreapable();
@@ -166,10 +160,7 @@ if(reaplevel ==1){
 	ingrimreaper = FALSE;
 }
 
-  bool
-isreapable (fuckinap,localreaper)
-  int *fuckinap;
-  typecorecrum *localreaper;
+bool isreapable(int *fuckinap, typecorecrum *localreaper)
 {
   register typecorecrum *p;
   typecuc *father;
@@ -297,8 +288,7 @@ isreapable (fuckinap,localreaper)
 }
 
 
-reap(localreaper)
-  typecorecrum *localreaper;
+int reap(typecorecrum *localreaper)
 {
   typecuc *temp;
 
@@ -338,8 +328,7 @@ reap(localreaper)
 	subtreewrite(temp);
 }
 
-testforrejuvinate(ptr)
-   register typecorecrum *ptr;
+int testforrejuvinate(register typecorecrum *ptr)
 {
 	if (ptr->age == RESERVED) {
 		if (!reservnumber)
@@ -353,8 +342,7 @@ testforrejuvinate(ptr)
 }
 
 
-funcrejuvinate(ptr)  /* inner if is testing very useful test */
-   register typecorecrum *ptr;
+int funcrejuvinate(register typecorecrum *ptr)
 {
 	if (ptr->age == RESERVED) {
 		if (!reservnumber) {
@@ -372,8 +360,7 @@ funcrejuvinate(ptr)  /* inner if is testing very useful test */
 
 
 /* protect a crum and its ancestors from being grimly reaped */
-void reserve(ptr)
-  typecorecrum *ptr;
+void reserve(typecorecrum *ptr)
 {
 #ifndef DISTRIBUTION
 foohex( "reserve\n",ptr);
@@ -390,8 +377,7 @@ foohex( "reserve\n",ptr);
 	ptr->age = RESERVED;
 }
 
-void testforreservedness(msg)/* test to see if any reserved flags linger in the memory.  if they do is a gross error in crum stuff */
-  char *msg;
+void testforreservedness(char *msg)
 {
   typecorecrum *ptr;
   INT numreserved = 0;
@@ -423,8 +409,7 @@ void testforreservedness(msg)/* test to see if any reserved flags linger in the 
 }
 
 /* assumes crum is disowned */
-void subtreefree (ptr)
-  typecorecrum *ptr;
+void subtreefree(typecorecrum *ptr)
 {
   typecorecrum *p, *right;
 
@@ -445,8 +430,7 @@ void subtreefree (ptr)
 	freecrum (ptr);
 }
 
-void freecrum (ptr)
-  typecorecrum *ptr;
+void freecrum(typecorecrum *ptr)
 {
 	if (ptr->age == RESERVED)
 #ifndef DISTRIBUTION
@@ -467,8 +451,7 @@ void freecrum (ptr)
 	efree ((char*)ptr);
 }
 
-void loaffree (father)
-  typecuc *father;
+void loaffree(typecuc *father)
 {
   typecorecrum *ptr, *next;
 
@@ -483,8 +466,7 @@ void loaffree (father)
 	father->modified = FALSE;
 }
 
-void orglfree (ptr)
-  typecuc *ptr;
+void orglfree(typecuc *ptr)
 {
 #ifndef DISTRIBUTION
 	if (!ptr)
@@ -506,9 +488,7 @@ void orglfree (ptr)
 	subtreefree ((typecorecrum*)ptr);
 }
 
-  typecuc *
-createenf (enftype)
-  INT enftype;
+typecuc *createenf(INT enftype)
 {
   typecuc *fullcrumptr;
   typecorecrum *ptr;
@@ -534,10 +514,7 @@ createenf (enftype)
 	return (fullcrumptr);
 }
 
-  typecorecrum *
-createcrum(crumheight, enftype)
-  INT crumheight;
-  INT enftype;
+typecorecrum *createcrum(INT crumheight, INT enftype)
 {
   typecorecrum *createcruminternal(),*ptr;
 
@@ -553,21 +530,14 @@ createcrum(crumheight, enftype)
 	return(ptr);
 }
 
-void initcrum(crumheight, enftype, ptr)
-  INT crumheight;
-  INT enftype;
-  typecorecrum *ptr;
+void initcrum(INT crumheight, INT enftype, typecorecrum *ptr)
 {
   typecorecrum *createcruminternal();
 
 	createcruminternal(crumheight, enftype, ptr);
 }
 
-  typecorecrum *
-createcruminternal(crumheight, enftype, allocated)
-  INT crumheight;
-  INT enftype;
-  typecorecrum *allocated;
+typecorecrum *createcruminternal(INT crumheight, INT enftype, typecorecrum *allocated)
 {
   typecorecrum *ptr;
   INT *eallocwithtag();
@@ -628,7 +598,7 @@ createcruminternal(crumheight, enftype, allocated)
 #define MAXALLOCQUEUEARRAY 500
 struct queue allocqueuearray[MAXALLOCQUEUEARRAY];
 
-initqueues()
+int initqueues(void)
 {
   INT i;
   INT num;
@@ -647,7 +617,7 @@ initqueues()
 		qpush(&allocqueuearray[(sizeof(type2dcbc)+sizeof(tagtype)+sizeof(HEADER) -1)/sizeof(HEADER)],falloc(sizeof(type2dcbc)+sizeof(tagtype)));
 	}
 }
-dumptable()
+int dumptable(void)
 {
   INT i;
   INT tmp;
@@ -658,15 +628,13 @@ dumptable()
 	    }
     }
 }
-char * allocfromqueue(n)
-  INT n;
+char *allocfromqueue(INT n)
 {
 /*fprintf(stderr,"allocfromqueue called with %x %d\n",n,((n+sizeof(HEADER) -1)/sizeof(HEADER)));*/
     return((char*)qremove(&allocqueuearray[((n+sizeof(HEADER) -1)/sizeof(HEADER))]));
 }
 
-void freetoqueue(ptr)
-  char * ptr;
+void freetoqueue(char *ptr)
 {
   INT n;
 /* back before the tag is the sizeof the block in align uints includint the
@@ -680,7 +648,7 @@ void freetoqueue(ptr)
 }
 
 
-xgrabmorecore()
+int xgrabmorecore(void)
 {
   char* malloc(), *tmp;
      tmp = (char *)sbrk(incrementalallocsize);

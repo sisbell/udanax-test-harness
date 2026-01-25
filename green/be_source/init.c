@@ -1,4 +1,4 @@
-/* Copyright © 1979-1999 Udanax.com. All rights reserved.
+/* Copyright ï¿½ 1979-1999 Udanax.com. All rights reserved.
 
 * This code is licensed under the terms of The Udanax Open-Source License, 
 * which contains precisely the terms of the X11 License.  The full text of 
@@ -16,15 +16,13 @@ extern FILE *febelog;
 extern bool isxumain;
 void (*requestfns[NREQUESTS])();
 
-void nullfun(taskptr)
-  typetask *taskptr;
+void nullfun(typetask *taskptr)
 {
 	putrequestfailed(taskptr);
 }
 
 
-init (safe)
-  bool safe;
+int init(bool safe)
 {
        INT i;
        void copy(), insert(), makelink(), retrievedocvspanset(), rearrange(), retrievev(),

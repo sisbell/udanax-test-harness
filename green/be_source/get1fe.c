@@ -1,4 +1,4 @@
-/* Copyright © 1979-1999 Udanax.com. All rights reserved.
+/* Copyright ï¿½ 1979-1999 Udanax.com. All rights reserved.
 
 * This code is licensed under the terms of The Udanax Open-Source License, 
 * which contains precisely the terms of the X11 License.  The full text of 
@@ -18,11 +18,7 @@ FILE *reallog;
 extern bool logstuff;
 FILE *interfaceinput;
 
-  bool
-getinsert (taskptr, docisaptr, vsaptr, textsetptr)
-  typetask *taskptr;
-  tumbler *docisaptr, *vsaptr;
-  typetextset *textsetptr;
+bool getinsert(typetask *taskptr, tumbler *docisaptr, tumbler *vsaptr, typetextset *textsetptr)
 {
 /*logfile = reallog;
 fprintf (logfile, "\nINSERT\n");
@@ -49,20 +45,13 @@ fprintf(interfaceinput, "%d~",INSERT);
 */
 }
 
-  bool
-getretrievedocvspanset (taskptr, docisaptr)
-  typetask *taskptr;
-  typeisa *docisaptr;
+bool getretrievedocvspanset(typetask *taskptr, typeisa *docisaptr)
 {
 /*fprintf (logfile, "\nRETRIEVEDOCVSPANSET\n"); */
 	return (gettumbler (taskptr, docisaptr));
 }
 
-  bool
-getcopy (taskptr, docisaptr, vsaptr, localspecsetptr)
-  typetask *taskptr;
-  typeisa *docisaptr, *vsaptr;
-  typespecset *localspecsetptr;
+bool getcopy(typetask *taskptr, typeisa *docisaptr, typeisa *vsaptr, typespecset *localspecsetptr)
 {
 /*logfile = reallog; fprintf (logfile, "\nCOPY\n"); */
 logstuff = TRUE; 
@@ -73,11 +62,7 @@ fprintf(interfaceinput, "%d~",COPY);
 	&& getspecset(taskptr, localspecsetptr));
 }
 
-  bool
-getrearrange (taskptr, docisaptr, cutseqptr)
-  typetask *taskptr;
-  typeisa *docisaptr;
-  typecutseq *cutseqptr;
+bool getrearrange(typetask *taskptr, typeisa *docisaptr, typecutseq *cutseqptr)
 {
 /*logfile = reallog; fprintf (logfile, "\nREARRANGE\n"); */
 logstuff = TRUE; 
@@ -87,13 +72,7 @@ fprintf(interfaceinput, "%d~",REARRANGE);
 	&& getcutseq (taskptr, cutseqptr));
 }
 
-  bool
-getcreatelink (taskptr, docisaptr, fromspecsetptr, tospecsetptr, threespecsetptr)
-  typetask *taskptr;
-  typeisa *docisaptr;
-  typespecset *fromspecsetptr;
-  typespecset *tospecsetptr;
-  typespecset *threespecsetptr;
+bool getcreatelink(typetask *taskptr, typeisa *docisaptr, typespecset *fromspecsetptr, typespecset *tospecsetptr, typespecset *threespecsetptr)
 {
 logstuff = TRUE;
 fprintf(interfaceinput, "%d~",CREATELINK);
@@ -104,10 +83,7 @@ fprintf(interfaceinput, "%d~",CREATELINK);
 	&& getspecset (taskptr, threespecsetptr));
 }
 
-  bool
-getretrievev (taskptr, specsetptr)
-  typetask *taskptr;
-  typespecset *specsetptr;
+bool getretrievev(typetask *taskptr, typespecset *specsetptr)
 {
 /*fprintf (logfile, "\nRETRIEVEV\n"); */
 
@@ -118,26 +94,14 @@ getretrievev (taskptr, specsetptr)
 	}
 }
 
-  bool
-getfindnumoflinksfromtothree (taskptr, fromvspecsetptr, tovspecsetptr, threevspecsetptr, homesetptr)
-  typetask *taskptr;
-  typespecset *fromvspecsetptr;
-  typespecset *tovspecsetptr;
-  typespecset *threevspecsetptr;
-  typeispanset *homesetptr;
+bool getfindnumoflinksfromtothree(typetask *taskptr, typespecset *fromvspecsetptr, typespecset *tovspecsetptr, typespecset *threevspecsetptr, typeispanset *homesetptr)
 {
   bool getfindlinksfromtothree();
 
 	return (getfindlinksfromtothree (taskptr, fromvspecsetptr, tovspecsetptr, threevspecsetptr, homesetptr));
 }
 
-  bool
-getfindlinksfromtothree (taskptr, fromvspecsetptr, tovspecsetptr, threevspecsetptr, homesetptr)
-  typetask *taskptr;
-  typespecset *fromvspecsetptr;
-  typespecset *tovspecsetptr;
-  typespecset *threevspecsetptr;
-  typeispanset *homesetptr;
+bool getfindlinksfromtothree(typetask *taskptr, typespecset *fromvspecsetptr, typespecset *tovspecsetptr, typespecset *threevspecsetptr, typeispanset *homesetptr)
 {
   bool kluge();
 
@@ -148,15 +112,7 @@ getfindlinksfromtothree (taskptr, fromvspecsetptr, tovspecsetptr, threevspecsetp
 	&& getspanset (taskptr, homesetptr, ISPANID) && kluge());
 }
 
-  bool
-getfindnextnlinksfromtothree (taskptr, fromvspecsetptr, tovspecsetptr, threevspecsetptr, homesetptr, lastlinkptr, nptr)
-  typetask *taskptr;
-  typespecset *fromvspecsetptr;
-  typespecset *tovspecsetptr;
-  typespecset *threevspecsetptr;
-  typeispanset *homesetptr;
-  typeisa *lastlinkptr;
-  INT *nptr;
+bool getfindnextnlinksfromtothree(typetask *taskptr, typespecset *fromvspecsetptr, typespecset *tovspecsetptr, typespecset *threevspecsetptr, typeispanset *homesetptr, typeisa *lastlinkptr, INT *nptr)
 {
 	return
 	   getfindlinksfromtothree (taskptr, fromvspecsetptr, tovspecsetptr, threevspecsetptr, homesetptr)
@@ -165,11 +121,7 @@ getfindnextnlinksfromtothree (taskptr, fromvspecsetptr, tovspecsetptr, threevspe
 }
 
 
-  bool
-getshowrelationof2versions (taskptr, version1ptr, version2ptr)
-  typetask *taskptr;
-  typespecset *version1ptr;
-  typespecset  *version2ptr;
+bool getshowrelationof2versions(typetask *taskptr, typespecset *version1ptr, typespecset *version2ptr)
 {
 	return (
 	   getspecset (taskptr, version1ptr)
@@ -177,17 +129,13 @@ getshowrelationof2versions (taskptr, version1ptr, version2ptr)
 }
 
 /* createnewdocument - no get routine */
-getcreatenewdocument()
+int getcreatenewdocument(void)
 {
 logstuff = TRUE; 
 fprintf(interfaceinput, "%d~",CREATENEWDOCUMENT);  
 }
 
-  bool
-getdeletevspan (taskptr, docisaptr, vspanptr)
-  typetask *taskptr;
-  typeisa *docisaptr;
-  typevspan *vspanptr;
+bool getdeletevspan(typetask *taskptr, typeisa *docisaptr, typevspan *vspanptr)
 {
 /*logfile = reallog; fprintf (logfile, "\nDELETEVSPAN\n"); */
 logstuff = TRUE; 
@@ -197,10 +145,7 @@ fprintf(interfaceinput, "%d~",DELETEVSPAN);
 	&& getspan (taskptr, vspanptr, VSPANID));
 }
 
-  bool
-getcreatenewversion (taskptr,docisaptr)
-  typetask *taskptr;
-  typeisa *docisaptr;
+bool getcreatenewversion(typetask *taskptr, typeisa *docisaptr)
 {
 /*logfile = reallog; fprintf (logfile, "\nCREATENEWVERSION\n"); */
 logstuff = TRUE; 
@@ -208,18 +153,13 @@ fprintf(interfaceinput, "%d~",CREATENEWVERSION);
 	   return (gettumbler (taskptr, docisaptr));
 }
 
-  bool
-getretrievedocvspan (taskptr, docisaptr)
-  typetask *taskptr;
-  typeisa *docisaptr;
+bool getretrievedocvspan(typetask *taskptr, typeisa *docisaptr)
 {
 /*fprintf (logfile, "\nRETRIEVEDOCVSPAN\n"); */
 	return (gettumbler (taskptr, docisaptr));
 }
 
-  bool
-setdebug (taskptr)
-  typetask *taskptr;
+bool setdebug(typetask *taskptr)
 {
 	return (getnumber (taskptr, &debug));
 }
@@ -231,11 +171,7 @@ setdebug (taskptr)
 /* show enfilades */
 
 
-  bool
-getfollowlink (taskptr, linkisaptr, whichendptr)
-  typetask *taskptr;
-  typeisa *linkisaptr;
-  INT *whichendptr;
+bool getfollowlink(typetask *taskptr, typeisa *linkisaptr, INT *whichendptr)
 {
 /*fprintf (logfile, "\nFOLLOWLINK\n"); */
 	return (
@@ -247,34 +183,26 @@ getfollowlink (taskptr, linkisaptr, whichendptr)
 
 /* source unix command */
 
-  bool
-getfinddocscontaining (taskptr, specsetptr)
-  typetask *taskptr;
-  typespecset *specsetptr;
+bool getfinddocscontaining(typetask *taskptr, typespecset *specsetptr)
 {
 /*fprintf (logfile, "\nFINDDOCSCONTAINING\n"); */
 	return (getspecset (taskptr, specsetptr));
 }
 
-  bool
-getretrieveendsets (taskptr, specsetptr)
-  typetask *taskptr;
-  typespecset *specsetptr;
+bool getretrieveendsets(typetask *taskptr, typespecset *specsetptr)
 {
 /*fprintf (logfile, "\nRETRIEVEENDSETS\n"); */
 	return (getspecset (taskptr, specsetptr));
 }
 
-  bool
-kluge()
+bool kluge(void)
 {
 /*	fclose (reallog);
 	reallog = fopen("xueditlog","a");
 */	return (TRUE);
 }
 
-playwithalloc(taskptr)
-  typetask * taskptr;
+int playwithalloc(typetask *taskptr)
 {		     
 	prompt(taskptr,"playwithalloc\n");
 	lookatalloc();
@@ -282,10 +210,7 @@ playwithalloc(taskptr)
 
 #include "players.h"
 
-  bool
-getxaccount(taskptr,accountptr)
-  typetask *taskptr;
-  typeisa *accountptr;
+bool getxaccount(typetask *taskptr, typeisa *accountptr)
 {
   bool validaccount();
 
@@ -300,9 +225,7 @@ getxaccount(taskptr,accountptr)
 	return(TRUE);
 }
 
-getcreatenode_or_account(taskptr,tp)
-  typetask *taskptr;
-  tumbler *tp;
+int getcreatenode_or_account(typetask *taskptr, tumbler *tp)
 {
 	logstuff = TRUE;
 	if (interfaceinput)
@@ -312,8 +235,7 @@ getcreatenode_or_account(taskptr,tp)
 
 }
 
-logaccount(tp)
-  tumbler *tp;
+int logaccount(tumbler *tp)
 {
 	if (interfaceinput) {
 		fprintf(interfaceinput, "%d~",XACCOUNT);  
@@ -321,9 +243,7 @@ logaccount(tp)
 	}
 }
 
-getclose(taskptr,tp)
-  typetask *taskptr;
-  tumbler *tp;
+int getclose(typetask *taskptr, tumbler *tp)
 {
 	logstuff = TRUE;
 	if (interfaceinput)
@@ -332,13 +252,7 @@ getclose(taskptr,tp)
 	return(TRUE);
 }
 
-getopen(taskptr,tp,typep,modep)
-  typetask *taskptr;
-  tumbler *tp;
-
-  int *typep;
-  int *modep;
-  
+int getopen(typetask *taskptr, tumbler *tp, int *typep, int *modep)
 {
 	logstuff = TRUE;
 	if (interfaceinput)

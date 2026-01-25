@@ -1,4 +1,4 @@
-/* Copyright © 1979-1999 Udanax.com. All rights reserved.
+/* Copyright ï¿½ 1979-1999 Udanax.com. All rights reserved.
 
 * This code is licensed under the terms of The Udanax Open-Source License, 
 * which contains precisely the terms of the X11 License.  The full text of 
@@ -11,10 +11,7 @@
 
 #include "xanadu.h"
 
-  bool
-getnum (taskptr, numptr)  /* inside temporary */
-  typetask *taskptr;
-  INT *numptr;
+bool getnum(typetask *taskptr, INT *numptr)  /* inside temporary */
 {
   metachar c;
   INT num;
@@ -41,10 +38,7 @@ getnum (taskptr, numptr)  /* inside temporary */
 	return (flag);
 }
 
-  bool
-eatchar (taskptr, c)
-  typetask *taskptr;
-  char c;
+bool eatchar(typetask *taskptr, char c)
 {
   metachar m;
 
@@ -56,10 +50,7 @@ eatchar (taskptr, c)
 		return (TRUE);
 }
 
-  bool
-needchar (taskptr, c)
-  typetask *taskptr;
-  char c;
+bool needchar(typetask *taskptr, char c)
 {
 	if (!eatchar (taskptr, c)) {
 		fprintf (taskptr->errp, "needed a ");
@@ -72,18 +63,12 @@ needchar (taskptr, c)
 	return(TRUE);
 }
 
-  bool
-getnumber (taskptr, numptr)
-  typetask *taskptr;
-  INT *numptr;
+bool getnumber(typetask *taskptr, INT *numptr)
 {
 	return (getnum (taskptr, numptr) && needchar (taskptr, '\n'));
 }
 
-  bool
-gettumbler (taskptr, tumblerptr)
-  typetask *taskptr;
-  tumbler *tumblerptr;
+bool gettumbler(typetask *taskptr, tumbler *tumblerptr)
 {
   INT i;
 
@@ -111,10 +96,7 @@ gettumbler (taskptr, tumblerptr)
 	return (needchar (taskptr, '\n'));
 }
 
-  bool
-getbool (taskptr, boolptr)
-  typetask *taskptr;
-  bool *boolptr;
+bool getbool(typetask *taskptr, bool *boolptr)
 {
   int c;
 
@@ -135,26 +117,17 @@ getbool (taskptr, boolptr)
 	}
 }
 
-  bool
-getisa (taskptr, isaptr)
-  typetask *taskptr;
-  typeisa *isaptr;
+bool getisa(typetask *taskptr, typeisa *isaptr)
 {
 	return (gettumbler (taskptr, isaptr));
 }
 
-  bool
-getvsa (taskptr, vsaptr)
-  typetask *taskptr;
-  tumbler *vsaptr;
+bool getvsa(typetask *taskptr, tumbler *vsaptr)
 {
 	return (gettumbler (taskptr, vsaptr));
 }
 
-  bool
-getrequest (taskptr, requestptr)
-  typetask *taskptr;
-  typerequest *requestptr;
+bool getrequest(typetask *taskptr, typerequest *requestptr)
 {
   bool validrequest();
   int c;
@@ -173,10 +146,7 @@ getrequest (taskptr, requestptr)
 		validrequest (taskptr, *requestptr) );
 }
 
-  bool
-validrequest (taskptr, request)
-  typetask *taskptr;
-  typerequest request;
+bool validrequest(typetask *taskptr, typerequest request)
 {
 	if (request >= 0 && request < NREQUESTS && requestfns[request] != NULL)
 		return (TRUE);
@@ -184,18 +154,12 @@ validrequest (taskptr, request)
 	return (FALSE);
 }
 
-  bool
-validaccount(taskptr, accountptr)
-  typetask *taskptr;
-  typeisa *accountptr;
+bool validaccount(typetask *taskptr, typeisa *accountptr)
 {
 	return(TRUE);
 }
 
-  bool
-getspecset (taskptr, specsetptr)
-  typetask *taskptr;
-  typespecset *specsetptr;
+bool getspecset(typetask *taskptr, typespecset *specsetptr)
 {
   bool any, type;
   bool getvspec(),getbool(),getspan(),gettext();
@@ -227,10 +191,7 @@ getspecset (taskptr, specsetptr)
 	}
 }
 
-  bool
-getvspec (taskptr, vspecptr)
-  typetask *taskptr;
-  typevspec *vspecptr;
+bool getvspec(typetask *taskptr, typevspec *vspecptr)
 {
   bool getspanset();
 	vspecptr->itemid = VSPECID;
@@ -242,11 +203,7 @@ getvspec (taskptr, vspecptr)
 	return(TRUE);
 }
 
-  bool
-getspanset(taskptr, spansetptr,id)
-  typetask *taskptr;
-  typespanset *spansetptr;
-  char id;
+bool getspanset(typetask *taskptr, typespanset *spansetptr, char id)
 {
   bool any;
   typespan *spanset;
@@ -270,11 +227,7 @@ getspanset(taskptr, spansetptr,id)
 }
 
 
-  bool
-getspan (taskptr, spanptr, id)
-  typetask *taskptr;
-  typespan *spanptr;
-  char id;
+bool getspan(typetask *taskptr, typespan *spanptr, char id)
 {
 	prompt(taskptr, "enter span\n       start=> ");
 	if (!getisa(taskptr, &spanptr->stream))
@@ -287,10 +240,7 @@ getspan (taskptr, spanptr, id)
 }
 
 
-  bool
-gettextset (taskptr, textsetptr)
-  typetask *taskptr;
-  typetextset *textsetptr;
+bool gettextset(typetask *taskptr, typetextset *textsetptr)
 {
   typetext *textset;
   INT *taskalloc();
@@ -308,10 +258,7 @@ gettextset (taskptr, textsetptr)
 	return(TRUE);
 }
 
-  bool
-gettext (taskptr, textptr)
-  typetask *taskptr;
-  typetext *textptr;
+bool gettext(typetask *taskptr, typetext *textptr)
 {
 	if (!fgets (textptr->string, GRANTEXTLENGTH, taskptr->inp)) {
 		textptr->length = 0;
@@ -330,10 +277,7 @@ gettext (taskptr, textptr)
 }
 
 
-  bool
-getcutseq(taskptr, cutseqptr)
-  typetask *taskptr;
-  typecutseq *cutseqptr;
+bool getcutseq(typetask *taskptr, typecutseq *cutseqptr)
 {
   INT i;
   bool anycuts;
@@ -357,10 +301,7 @@ getcutseq(taskptr, cutseqptr)
 }
 
 
-  bool
-getboolset(taskptr, boolsetptr)
-  typetask *taskptr;
-  typeboolsetnode **boolsetptr;
+bool getboolset(typetask *taskptr, typeboolsetnode **boolsetptr)
 {
   bool disjunct;
   typeboolsetnode * boolset;

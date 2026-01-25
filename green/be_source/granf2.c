@@ -1,4 +1,4 @@
-/* Copyright © 1979-1999 Udanax.com. All rights reserved.
+/* Copyright ï¿½ 1979-1999 Udanax.com. All rights reserved.
 
 * This code is licensed under the terms of The Udanax Open-Source License, 
 * which contains precisely the terms of the X11 License.  The full text of 
@@ -19,11 +19,7 @@ static klugefindisatoinsertnonmolecule();
 static findisatoinsertmolecule();
 
 
-  typeorgl
-fetchorglgr(taskptr, fullcrumptr, address)
-  typetask *taskptr;
-  typegranf fullcrumptr;
-  typeisa *address;
+typeorgl fetchorglgr(typetask *taskptr, typegranf fullcrumptr, typeisa *address)
 {
   typecrumcontext *context, *retrievecrums();
   typecuc *ret;
@@ -84,13 +80,7 @@ if (debug) {fprintf(stderr,"fetchorglgr ");dumptumbler(address);fprintf(stderr,"
 	return ((typeorgl)ret);
 }
 
-  bool
-inserttextgr (taskptr, fullcrumptr, hintptr, textset, ispansetptr)
-  typetask *taskptr;
-  typegranf fullcrumptr;
-  typehint *hintptr;
-  typetextset textset;
-  typeispanset *ispansetptr;
+bool inserttextgr(typetask *taskptr, typegranf fullcrumptr, typehint *hintptr, typetextset textset, typeispanset *ispansetptr)
 {
   tumbler lsa, spanorigin;
   typegranbottomcruminfo locinfo;
@@ -118,12 +108,7 @@ inserttextgr (taskptr, fullcrumptr, hintptr, textset, ispansetptr)
 	return (TRUE);
 }
 
-  bool
-createorglgr (taskptr, fullcrumptr, hintptr, isaptr)
-  typetask *taskptr;
-  typegranf fullcrumptr;
-  typehint *hintptr;
-  typeisa *isaptr;
+bool createorglgr(typetask *taskptr, typegranf fullcrumptr, typehint *hintptr, typeisa *isaptr)
 {
   typegranbottomcruminfo locinfo;
   bool findisatoinsertgr();
@@ -142,11 +127,7 @@ createorglgr (taskptr, fullcrumptr, hintptr, isaptr)
 	  return (TRUE);
 }
 
-  bool
-findisatoinsertgr (fullcrumptr, hintptr, isaptr)
-  typecuc *fullcrumptr;
-  typehint *hintptr;
-  typeisa *isaptr;
+bool findisatoinsertgr(typecuc *fullcrumptr, typehint *hintptr, typeisa *isaptr)
 {
   bool isaexistsgr();
 
@@ -172,10 +153,7 @@ findisatoinsertgr (fullcrumptr, hintptr, isaptr)
 	  return (TRUE);
 }
 
-static findisatoinsertmolecule (fullcrumptr, hintptr, isaptr)
-  typecuc *fullcrumptr;
-  typehint *hintptr;
-  typeisa *isaptr;
+static int findisatoinsertmolecule(typecuc *fullcrumptr, typehint *hintptr, typeisa *isaptr)
 {
   typeisa upperbound, lowerbound;
 
@@ -200,10 +178,7 @@ static findisatoinsertmolecule (fullcrumptr, hintptr, isaptr)
 #endif
 }
 
-static klugefindisatoinsertnonmolecule (fullcrumptr, hintptr, isaptr)
-  typecuc *fullcrumptr;
-  typehint *hintptr;
-  typeisa *isaptr;
+static int klugefindisatoinsertnonmolecule(typecuc *fullcrumptr, typehint *hintptr, typeisa *isaptr)
 {
 /*  typeisa upperbound, lowerbound;
   INT depth, hintlength;
@@ -223,10 +198,7 @@ static klugefindisatoinsertnonmolecule (fullcrumptr, hintptr, isaptr)
 
 }
 
-static findisatoinsertnonmolecule (fullcrumptr, hintptr, isaptr)
-  typecuc *fullcrumptr;
-  typehint *hintptr;
-  typeisa *isaptr;
+static int findisatoinsertnonmolecule(typecuc *fullcrumptr, typehint *hintptr, typeisa *isaptr)
 {
   typeisa upperbound, lowerbound;
   INT depth, hintlength;
@@ -246,10 +218,7 @@ static findisatoinsertnonmolecule (fullcrumptr, hintptr, isaptr)
    tumblerincrement(isaptr,tumblerlength(isaptr)==hintlength?depth:0,1,isaptr);
 }
 
-  bool
-isaexistsgr (crumptr, isaptr)
-  typecuc *crumptr;
-  typeisa *isaptr;
+bool isaexistsgr(typecuc *crumptr, typeisa *isaptr)
 {
   typecontext *context, *retrieve();
   bool ret;
@@ -260,9 +229,7 @@ isaexistsgr (crumptr, isaptr)
 	  return (ret);
 }
 
-findpreviousisagr (crumptr, upperbound, offset)
-  typecorecrum *crumptr;
-  typeisa *upperbound, *offset;
+int findpreviousisagr(typecorecrum *crumptr, typeisa *upperbound, typeisa *offset)
 { RECURSIVE    /* findpreviousisagr*/
   INT tmp;
   typecorecrum *ptr, *findleftson();
@@ -287,20 +254,13 @@ findpreviousisagr (crumptr, upperbound, offset)
 	}
 }
 
-findlastisaincbcgr (ptr, offset)
-  typecbc *ptr;
-  typeisa *offset;   /* offset is last isa if non-text or one char */
+int findlastisaincbcgr(typecbc *ptr, typeisa *offset)   /* offset is last isa if non-text or one char */
 {
 	if (ptr->cinfo.infotype == GRANTEXT)
 		tumblerincrement (offset, 0, (INT) ptr->cinfo.granstuff.textstuff.textlength - 1, offset);
 }
 
-  typevstuffset *
-ispan2vstuffset (taskptr, fullcrumptr, ispanptr, vstuffsetptr)
-  typetask *taskptr;
-  typegranf fullcrumptr;
-  typeispan *ispanptr;
-  typevstuffset *vstuffsetptr;
+typevstuffset *ispan2vstuffset(typetask *taskptr, typegranf fullcrumptr, typeispan *ispanptr, typevstuffset *vstuffsetptr)
 {
   typevstuffset vstuffset;
   typeisa lowerbound, upperbound;

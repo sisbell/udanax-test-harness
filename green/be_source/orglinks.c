@@ -1,4 +1,4 @@
-/* Copyright © 1979-1999 Udanax.com. All rights reserved.
+/* Copyright ï¿½ 1979-1999 Udanax.com. All rights reserved.
 
 * This code is licensed under the terms of The Udanax Open-Source License, 
 * which contains precisely the terms of the X11 License.  The full text of 
@@ -14,11 +14,7 @@
 #include "players.h"
 
 
-  bool
-appendpm(taskptr, docisaptr, textset)
-  typetask *taskptr;
-  typeisa *docisaptr;
-  typetextset textset;
+bool appendpm(typetask *taskptr, typeisa *docisaptr, typetextset textset)
 {
   typeorgl orglptr;
   tumbler vsa;
@@ -30,9 +26,7 @@ appendpm(taskptr, docisaptr, textset)
 	return (doinsert(taskptr, docisaptr, &vsa, textset));
 }
 
-findvsatoappend (ptr, vsaptr)
-  typecorecrum *ptr;
-  tumbler *vsaptr;
+int findvsatoappend(typecorecrum *ptr, tumbler *vsaptr)
 {
   tumbler linkspacevstart;
   typewid offset, grasp, reach;
@@ -54,10 +48,7 @@ findvsatoappend (ptr, vsaptr)
 	}
 }
 
-findnextaddressinvspace (crumptr, offsetptr, nextvspacestartptr, vsaptr)
-  typecorecrum *crumptr;
-  typewid *offsetptr;
-  tumbler *nextvspacestartptr, *vsaptr;
+int findnextaddressinvspace(typecorecrum *crumptr, typewid *offsetptr, tumbler *nextvspacestartptr, tumbler *vsaptr)
 {
   typecorecrum *ptr;
   typewid reach, grasp;
@@ -81,13 +72,7 @@ findnextaddressinvspace (crumptr, offsetptr, nextvspacestartptr, vsaptr)
 }
 
 
-  bool
-insertpm (taskptr, orglisa, orgl, vsaptr, sporglset)
-  typetask *taskptr;
-  tumbler *orglisa;
-  typeorgl orgl;
-  tumbler *vsaptr;
-  typesporglset sporglset;
+bool insertpm(typetask *taskptr, tumbler *orglisa, typeorgl orgl, tumbler *vsaptr, typesporglset sporglset)
 {
   tumbler lstream, lwidth;
   type2dbottomcruminfo linfo;
@@ -149,12 +134,7 @@ if (debug) {fprintf(stderr,"    crumorigin: ");dumpwid(&crumorigin,POOM);fprintf
 }
 
 
-  bool
-rearrangepm (taskptr, docisaptr, docorgl, cutseqptr)
-  typetask *taskptr;
-  tumbler *docisaptr;
-  typeorgl docorgl;
-  typecutseq *cutseqptr;
+bool rearrangepm(typetask *taskptr, tumbler *docisaptr, typeorgl docorgl, typecutseq *cutseqptr)
 {
 	rearrangend((typecuc*)docorgl, cutseqptr, V);
 	logbertmodified(docisaptr, user);
@@ -162,12 +142,7 @@ rearrangepm (taskptr, docisaptr, docorgl, cutseqptr)
 }
 
 
-  bool
-deletevspanpm(taskptr, docisaptr, docorgl, vspanptr)
-  typetask *taskptr;
-  tumbler *docisaptr;
-  typeorgl docorgl;
-  typevspan *vspanptr;
+bool deletevspanpm(typetask *taskptr, tumbler *docisaptr, typeorgl docorgl, typevspan *vspanptr)
 {
 	if (iszerotumbler(&vspanptr->width))
 		return (FALSE);
@@ -177,11 +152,7 @@ deletevspanpm(taskptr, docisaptr, docorgl, vspanptr)
 }
 
 
-  bool
-retrievedocumentpartofvspanpm (taskptr, orgl, vspanptr)
-  typetask *taskptr;
-  typeorgl orgl;
-  typevspan *vspanptr;
+bool retrievedocumentpartofvspanpm(typetask *taskptr, typeorgl orgl, typevspan *vspanptr)
 { /* this is a kluge*/
 	vspanptr->next = NULL;
 	vspanptr->itemid = VSPANID;
@@ -191,11 +162,7 @@ retrievedocumentpartofvspanpm (taskptr, orgl, vspanptr)
 }
 
 
-  bool
-retrievevspanpm (taskptr, orgl, vspanptr)
-  typetask *taskptr;
-  typeorgl orgl;
-  typevspan *vspanptr;
+bool retrievevspanpm(typetask *taskptr, typeorgl orgl, typevspan *vspanptr)
 {
 	vspanptr->next = NULL;
 	vspanptr->itemid = VSPANID;
@@ -203,11 +170,7 @@ retrievevspanpm (taskptr, orgl, vspanptr)
 	movetumbler (&((typecuc *) orgl)->cwid.dsas[V], &vspanptr->width);
 	return (TRUE);
 }
-  bool
-retrievevspansetpm (taskptr, orgl, vspansetptr)/* return spans  for doc and link part */
-  typetask *taskptr;
-  typeorgl orgl;
-  typevspanset *vspansetptr;
+bool retrievevspansetpm(typetask *taskptr, typeorgl orgl, typevspanset *vspansetptr) /* return spans  for doc and link part */
 {
   tumbler voffset;
   tumbler maxwid;
@@ -258,11 +221,7 @@ retrievevspansetpm (taskptr, orgl, vspansetptr)/* return spans  for doc and link
 }
 bool istextcrum();
 bool islinkcrum();
-maxtextwid (taskptr, crumptr, voffset, maxwidptr)
-  typetask *taskptr;
-  typecorecrum *crumptr;
-  tumbler *voffset;
-  typevspanset *maxwidptr;
+int maxtextwid(typetask *taskptr, typecorecrum *crumptr, tumbler *voffset, typevspanset *maxwidptr)
 { 
   typecorecrum *ptr, *findleftson();
   typevspan vspan;
@@ -284,8 +243,7 @@ maxtextwid (taskptr, crumptr, voffset, maxwidptr)
 		}
 	}
 }
-bool istextcrum(crumptr)
-  typecorecrum *crumptr;
+bool istextcrum(typecorecrum *crumptr)
 {
 	if(crumptr->cdsp.dsas[V].mantissa[1] == 0  && is1story(&crumptr->cwid.dsas[V])){ 
 
@@ -294,8 +252,7 @@ bool istextcrum(crumptr)
 	return FALSE;
 }
 
-bool islinkcrum(crumptr)
-  typecorecrum *crumptr;
+bool islinkcrum(typecorecrum *crumptr)
 {
 	if(crumptr->cdsp.dsas[V].mantissa[0] == 1 && crumptr->cdsp.dsas[V].mantissa[1] != 0){ /* if the whold crum is displaced into link space it is a link crum this is true if the tumbler is a 1.n tumbler where n!= 0*/ 
 		return TRUE;
@@ -306,11 +263,7 @@ bool islinkcrum(crumptr)
 #ifdef UnDEFined
 
 
-  bool
-retrievevspansetpm (taskptr, orgl, vspansetptr)/* return spans  for doc and link part */
-  typetask *taskptr;
-  typeorgl orgl;
-  typevspanset *vspansetptr;
+bool retrievevspansetpm(typetask *taskptr, typeorgl orgl, typevspanset *vspansetptr) /* return spans  for doc and link part */
 {
   tumbler voffset;
 
@@ -321,11 +274,7 @@ retrievevspansetpm (taskptr, orgl, vspansetptr)/* return spans  for doc and link
 	return (TRUE);
 }
 
-walkorglonvpm (taskptr, crumptr, voffset, vspansetptr)
-  typetask *taskptr;
-  typecorecrum *crumptr;
-  tumbler *voffset;
-  typevspanset *vspansetptr;
+int walkorglonvpm(typetask *taskptr, typecorecrum *crumptr, tumbler *voffset, typevspanset *vspansetptr)
 { 
   typecorecrum *ptr, *findleftson();
   typevspan vspan;
@@ -345,9 +294,7 @@ walkorglonvpm (taskptr, crumptr, voffset, vspansetptr)
 		}
 	}
 }
-cleanupvspanlist (taskptr, vspansetptr)
-  typetask *taskptr;
-  typevspanset *vspansetptr;
+int cleanupvspanlist(typetask *taskptr, typevspanset *vspansetptr)
 {
   typevspan *ptr;
   tumbler spanend;
@@ -365,10 +312,7 @@ cleanupvspanlist (taskptr, vspansetptr)
 }
 #endif
 
-  typevspan *
-makevspan (taskptr, spanptr, nextspan)
-  typetask *taskptr;
-  typevspan *spanptr, *nextspan;
+typevspan *makevspan(typetask *taskptr, typevspan *spanptr, typevspan *nextspan)
 {
   typevspan *ret;
   INT *taskalloc();
@@ -382,10 +326,7 @@ makevspan (taskptr, spanptr, nextspan)
 }
 
 
-putvspaninlist (taskptr, spanptr, spansetptr)
-  typetask *taskptr;
-  typevspan *spanptr;
-  typevspanset *spansetptr;
+int putvspaninlist(typetask *taskptr, typevspan *spanptr, typevspanset *spansetptr)
 {
   typevspan *ptr, *last, *makevspan();
   tumbler newspanend, oldspanend;
@@ -445,12 +386,7 @@ putvspaninlist (taskptr, spanptr, spansetptr)
 	last->next = makevspan (taskptr, spanptr, (typevspan*)NULL);
 }
 
-  typevspanset *
-ispan2vspanset (taskptr, orgl, ispanptr, vspansetptr)
-  typetask *taskptr;
-  typeorgl orgl;
-  typeispan *ispanptr;
-  typevspanset *vspansetptr;
+typevspanset *ispan2vspanset(typetask *taskptr, typeorgl orgl, typeispan *ispanptr, typevspanset *vspansetptr)
 {
   typespanset *permute();
 
@@ -458,25 +394,14 @@ ispan2vspanset (taskptr, orgl, ispanptr, vspansetptr)
 }
 
 
- typeispanset *
-vspanset2ispanset (taskptr, orgl, vspanptr, ispansetptr)
-  typetask *taskptr;
-  typeorgl orgl;
-  typevspanset vspanptr;
-  typeispanset *ispansetptr;
+typeispanset *vspanset2ispanset(typetask *taskptr, typeorgl orgl, typevspanset vspanptr, typeispanset *ispansetptr)
 {
   typespanset *permute();
 
 	return permute(taskptr, orgl, vspanptr, V, ispansetptr, I);
 }
 
-  typespanset *
-permute(taskptr,orgl,restrictionspanset,restrictionindex,targspansetptr,targindex)
-  typetask *taskptr;
-  typeorgl orgl;
-  typespanset restrictionspanset;
-  typespanset *targspansetptr;
-  INT restrictionindex, targindex;
+typespanset *permute(typetask *taskptr, typeorgl orgl, typespanset restrictionspanset, INT restrictionindex, typespanset *targspansetptr, INT targindex)
 {
   typespanset *span2spanset();
   typespanset *save;
@@ -497,13 +422,7 @@ foospanset("leaving permute\n",*save);
 }
 
 
-  typespanset *
-span2spanset (taskptr, orgl, restrictionspanptr, restrictionindex, targspansetptr, targindex)
-  typetask *taskptr;
-  typeorgl orgl;
-  typespanset restrictionspanptr;
-  typespanset *targspansetptr;
-  INT restrictionindex, targindex;
+typespanset *span2spanset(typetask *taskptr, typeorgl orgl, typespanset restrictionspanptr, INT restrictionindex, typespanset *targspansetptr, INT targindex)
 {
   typecontext *context, *c, *retrieverestricted();
   typespan foundspan;
@@ -542,11 +461,7 @@ consolidatespanset(spanset);
 	}
 }*/
 
-  typeitem *
-onitemlist (taskptr, itemptr, itemsetptr)
-  typetask *taskptr;
-  typeitem *itemptr;
-  typeitemset *itemsetptr;
+typeitem *onitemlist(typetask *taskptr, typeitem *itemptr, typeitemset *itemsetptr)
 {
   typeitem *temp, *newitem;
 /*foo("entering onitemlist\n");*/
@@ -621,9 +536,7 @@ onitemlist (taskptr, itemptr, itemsetptr)
 	return (newitem);
 }
 
-  bool
-isemptyorgl (fullcrumptr)
-  typeorgl fullcrumptr;
+bool isemptyorgl(typeorgl fullcrumptr)
 {
 	return (
 	   iszerolock ((tumbler*)&((typecuc*)fullcrumptr)->cwid, widsize(POOM))

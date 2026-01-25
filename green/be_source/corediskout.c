@@ -29,7 +29,7 @@ void diskexit()
 
 
 /* make sure file is up to date when exitting program */
-static indiskexit ()
+static int indiskexit(void)
 {
 /*  FILE *record;*/bool decrementusers();
 
@@ -50,7 +50,7 @@ static indiskexit ()
 
 
 /* Update disk copy of all enfilades, and reset core versions for multiuser */
-diskflush ()
+int diskflush(void)
 {
   void initkluge();
 
@@ -60,7 +60,7 @@ diskflush ()
 
 
 /* Write entire granfilade and spanfilade to disk and flag as unmodified in core */
-writeenfilades()
+int writeenfilades(void)
 {
   typecbc temporgl;
 
@@ -86,10 +86,7 @@ writeenfilades()
 #define hputinloaf(hp,lp,tp) ((void)humberput((INT)(hp),(humber)(lp),(UINT*)(tp)),(lp)=((char*)lp)+*(tp))
 /*#define hputwisp(wp,lp,tp) ((tp)=tumblerfixedtoptr((lp),&(wp.dsas[0])),((char*)lp)+=(tp),(tp)=tumblerfixedtoptr((lp),&(wp.dsas[1])),((char *)lp)+=(tp))*/
 
-  static
-hputwiddsp(ptr,loafptrptr)
-  typecuc *ptr;
-  char **loafptrptr;
+static int hputwiddsp(typecuc *ptr, char **loafptrptr)
 {
   int i,nstreams;
   UINTtemp;
@@ -123,12 +120,7 @@ hputwiddsp(ptr,loafptrptr)
 }
 */
 
-  static int
-varpackloaf (father, xloafptr, refcount,flag)
-  typecuc *father;
-  typediskloaf *xloafptr;
-  int refcount;
-  int flag;
+static int varpackloaf(typecuc *father, typediskloaf *xloafptr, int refcount, int flag)
 {
   typecorecrum *ptr;
   INT ret;
@@ -230,9 +222,7 @@ varpackloaf (father, xloafptr, refcount,flag)
 #define hputinloaf(hp,lp,tp) (humberput((hp),(lp),(tp)),(lp)=((char*)lp)+*(tp))
 */
 
-hputinfo(ptr,loafptrptr)
-  typecbc *ptr;
-  char **loafptrptr;
+int hputinfo(typecbc *ptr, char **loafptrptr)
 {
   UINTtemp;
 
@@ -275,18 +265,12 @@ hputinfo(ptr,loafptrptr)
 	}
 }
 
-  static int
-packloaf (father, loafptr,refcount,flag)
-  typecuc *father;
-  typediskloaf *loafptr;
-  int refcount;
-  int flag;
+static int packloaf(typecuc *father, typediskloaf *loafptr, int refcount, int flag)
 {
 	return(varpackloaf (father, loafptr,refcount,flag));
 }
 
-orglwrite (orglcbcptr)
-  typecbc *orglcbcptr;
+int orglwrite(typecbc *orglcbcptr)
 {
   typetask task;
   static orglwritepart2();
@@ -305,10 +289,8 @@ orglwrite (orglcbcptr)
 
 typediskloaf zzzeroloaf;
 
-  typediskloafptr partialdiskalloc(),diskalloc();
-static orglwritepart2 (taskptr, orglcbcptr)
-  typetask *taskptr;
-  typecbc *orglcbcptr;
+typediskloafptr partialdiskalloc(),diskalloc();
+static int orglwritepart2(typetask *taskptr, typecbc *orglcbcptr)
 {
   typegranbottomcruminfo *infoptr;
   typediskloafptr partialdiskalloc(),diskalloc();
@@ -367,11 +349,7 @@ static orglwritepart2 (taskptr, orglcbcptr)
 	}
 }
 
-deletefullcrumandgarbageddescendents(diskptr,deletefullcrumflag,loafp,newdiskptr)
-  typediskloafptr diskptr;
-  bool deletefullcrumflag;
-  typediskloaf *loafp;
-  typediskloafptr newdiskptr;
+int deletefullcrumandgarbageddescendents(typediskloafptr diskptr, bool deletefullcrumflag, typediskloaf *loafp, typediskloafptr newdiskptr)
 {
   typecbc *tempcbc;
   typecbc crum;
@@ -401,10 +379,7 @@ deletefullcrumandgarbageddescendents(diskptr,deletefullcrumflag,loafp,newdiskptr
 /*kluge SKIMP reserve and rejuvinate added 11-23-86*/
 }
 
-deletewithgarbageddescendents(diskptr,father,deletefullcrumflag)
-  typediskloafptr diskptr;
-  typecuc *  father;
-  bool deletefullcrumflag;
+int deletewithgarbageddescendents(typediskloafptr diskptr, typecuc *father, bool deletefullcrumflag)
 {
   typecbc *ptr;
   typediskloafptr ignoreddiskptr;
@@ -430,8 +405,7 @@ deletewithgarbageddescendents(diskptr,father,deletefullcrumflag)
 }
 
 
-subtreewrite (father)
-  typecuc *father;
+int subtreewrite(typecuc *father)
 {
   typetask task;
   static subtreewriterecurs();
@@ -442,9 +416,7 @@ subtreewrite (father)
 }
 
 
-static subtreewriterecurs (taskptr, father)
-  typetask *taskptr;
-  typecuc *father;
+static int subtreewriterecurs(typetask *taskptr, typecuc *father)
 {
   typecbc *ptr;
   static uniqueoutloaf();
@@ -515,9 +487,7 @@ static subtreewriterecurs (taskptr, father)
 	loaffree (father);
 }
 
-checkmodifiednotthere(father,string)
-  typecuc *father;
-  char *string;
+int checkmodifiednotthere(typecuc *father, char *string)
 {
 return;
 #ifndef DISTRIBUTION
@@ -532,9 +502,7 @@ return;
 }
 typeuberdiskloaf zzzerouberloaf;
 
-static uniqueoutloaf (father,refcount)
-  typecuc *father;
-  int refcount;
+static int uniqueoutloaf(typecuc *father, int refcount)
 {
   typeuberdiskloaf loaf;
   typediskloafptr diskalloc();

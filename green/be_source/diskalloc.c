@@ -1,4 +1,4 @@
-/* Copyright © 1979-1999 Udanax.com. All rights reserved.
+/* Copyright ï¿½ 1979-1999 Udanax.com. All rights reserved.
 
 * This code is licensed under the terms of The Udanax Open-Source License, 
 * which contains precisely the terms of the X11 License.  The full text of 
@@ -18,13 +18,12 @@ INT maximumsetupsize = 0;
 char mask[8] = { 1, 2, 4, 8, 16, 32, 64, 128 };
 
   INT
-isalloced(n)
-  INT n;
+isalloced(INT n)
 {
 	return (diskheader.bitmap[n/8]|mask[n%8]);
 }
   typediskloafptr
-diskalloc ()
+diskalloc(void)
 /*  Find an unallocated loaf on the the disk,
 *       allocate it (take it off the free list), and
 *       return something thru which I can deal with it.
@@ -56,8 +55,7 @@ diskalloc ()
 /* Return the named piece of disk to free space,
 *       i.e. de-allocate it
 */
-diskfree (loafptr)
-  typediskloafptrdigit loafptr;
+int diskfree(typediskloafptrdigit loafptr)
 {
   bool goodblock();
 
@@ -69,8 +67,7 @@ diskfree (loafptr)
 	diskheader.bitmap[loafptr/8] = diskheader.bitmap[loafptr/8] | mask[loafptr%8];
 }
 
-diskset (loafptr)
-  typediskloafptrdigit loafptr;
+int diskset(typediskloafptrdigit loafptr)
 {
   bool goodblock();
 
@@ -83,8 +80,7 @@ diskset (loafptr)
 }
 
   bool /* FALSE is not good enfilade file */
-readallocinfo (fd)
-  INT fd;
+readallocinfo(INT fd)
 {
   bool ret;
 
@@ -108,7 +104,7 @@ readallocinfo (fd)
 	return (ret);
 }
 
-initheader ()
+int initheader(void)
 {
 	setmem (diskheader.bitmap, sizeof (diskheader.bitmap), 0xff);   /* free all */
 	clear (diskheader.bitmap, (NUMDISKLOAFSINHEADER+3)/8+1); 
@@ -120,16 +116,14 @@ initheader ()
 	initincorealloctables();
 }
 
-diskallocexit (fd)
-  INT fd;
+int diskallocexit(INT fd)
 {
 	diskheader.hasenftops = TRUE;
 	savepartialdiskalloctabletodisk();
 	writeallocinfo (fd);
 }
 
-writeallocinfo (fd)
-  INT fd;
+int writeallocinfo(INT fd)
 {
 	if (lseek (fd, 0L, 0) < 0) {
 		perror("lseek in writeallocinfo");
@@ -149,8 +143,7 @@ isalloced (loafptr)
 }
 */
   bool
-goodblock (diskptr)
-  typediskloafptrdigit diskptr;
+goodblock(typediskloafptrdigit diskptr)
 {
 	if (diskptr == 0) return(FALSE);
 	return ( ! (diskheader.bitmap[diskptr/8] & mask[diskptr%8]));

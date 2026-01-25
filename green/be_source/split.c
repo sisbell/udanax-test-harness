@@ -1,4 +1,4 @@
-/* Copyright © 1979-1999 Udanax.com. All rights reserved.
+/* Copyright ï¿½ 1979-1999 Udanax.com. All rights reserved.
 
 * This code is licensed under the terms of The Udanax Open-Source License, 
 * which contains precisely the terms of the X11 License.  The full text of 
@@ -13,9 +13,7 @@
 /* Should be called whenever a crum may have too many sons
 **  if it does, it is split, and its father is checked, etc...
 */
-  bool
-splitcrumupwards(father)
-  typecuc *father;
+bool splitcrumupwards(typecuc *father)
 {
   bool splitsomething;
         
@@ -46,8 +44,7 @@ asserttreeisok(father);
 }
 
 /* splits an individual crum */
-splitcrum(father)
-  typecuc *father;
+int splitcrum(typecuc *father)
 {
        switch (father->cenftype) {
           case GRAN:
@@ -70,8 +67,7 @@ splitcrum(father)
 }
 
 /* splits a crum for sequential enfilades */
-splitcrumseq(father)
-  typecuc *father;
+int splitcrumseq(typecuc *father)
 {
   typecorecrum *new, *ptr, *next;
   typecorecrum *createcrum();
@@ -96,8 +92,7 @@ splitcrumseq(father)
         setwispupwards((typecuc*)new,0);
 }
 
-splitcrumsp(father)
-  typecuc *father;
+int splitcrumsp(typecuc *father)
 {
   typecorecrum *ptr, *correctone;
   typecorecrum *createcrum();
@@ -110,8 +105,7 @@ splitcrumsp(father)
         peelcrumoffnd(correctone);
 }
 
-splitcrumpminthiscrum(father)
-  typecuc *father;
+int splitcrumpminthiscrum(typecuc *father)
 {
         for(; father; father = (typecuc *)findrightbro((typecorecrum*)father)) {
                 while (toomanysons(father)) {
@@ -120,8 +114,7 @@ splitcrumpminthiscrum(father)
         }
 }
 
-splitcrumpm(father)
-  typecuc *father;
+int splitcrumpm(typecuc *father)
 {
   typecorecrum *ptr, *correctone;
   typecorecrum *createcrum();
@@ -134,8 +127,7 @@ splitcrumpm(father)
         peelcrumoffnd(correctone);
 }
            
-peelcrumoffnd(ptr)
-  typecorecrum *ptr;
+int peelcrumoffnd(typecorecrum *ptr)
 {
   typecuc *father;
   typecorecrum *new;

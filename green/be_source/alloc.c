@@ -1,4 +1,4 @@
-/* Copyright © 1979-1999 Udanax.com. All rights reserved.
+/* Copyright ï¿½ 1979-1999 Udanax.com. All rights reserved.
 
 * This code is licensed under the terms of The Udanax Open-Source License, 
 * which contains precisely the terms of the X11 License.  The full text of 
@@ -24,14 +24,14 @@ static HEADER * weresurethatthisisourmorecore();
   static char *zzalloctop=0,*zzallocbot=0;
   static INT alloccount=0;
  
-lookatalloc()
+int lookatalloc(void)
 {
 	lookatalloc2(&baseallocated);
+	return 0;
 }
 
   INT
-checkalloc(c)
-  char *c;
+checkalloc(char *c)
 {
   HEADER *r,*oldr;
   unsigned size,oldsize;
@@ -60,9 +60,7 @@ if(!flag){
 
 }
 
-checkallocedptr(ptr,string)
-  char * ptr;
-  char *string;
+int checkallocedptr(char *ptr, char *string)
 {
 	if (((HEADER *) (ptr - sizeof(HEADER) -sizeof(tagtype)))->s.size == 0) {
 		fprintf(stderr,"checkallocedptr %s \n",string);
@@ -71,8 +69,7 @@ checkallocedptr(ptr,string)
 
 }
   INT
-validallocthinge(ptr)
-  char *ptr;
+validallocthinge(char *ptr)
 {
   HEADER *p;
 return(1); 
@@ -95,8 +92,7 @@ statusofalloc("");
 */
 }
   INT *
-falloc(nbytes)
-  unsigned nbytes;
+falloc(unsigned nbytes)
 {
   register HEADER *p, *q;
   register unsigned nunits;
@@ -148,7 +144,7 @@ alloccount++;
 }
 
   static HEADER *
-weresurethatthisisourmorecore()
+weresurethatthisisourmorecore(void)
 {
   char *cp;
   HEADER *up;
@@ -182,8 +178,7 @@ if( temp == 0){
 	return(allocp);
 }
 
-ffree(ap)
-  char *ap;
+int ffree(char *ap)
 {
   register HEADER *p, *q;
 
@@ -226,8 +221,7 @@ if(flag){
 }
 
  INT
-statusofalloc(c)
-  char *c;
+statusofalloc(char *c)
 {
   HEADER *r;
   unsigned number,maxsize,cumsize;

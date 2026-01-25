@@ -1,4 +1,4 @@
-/* Copyright © 1979-1999 Udanax.com. All rights reserved.
+/* Copyright ï¿½ 1979-1999 Udanax.com. All rights reserved.
 
 * This code is licensed under the terms of The Udanax Open-Source License, 
 * which contains precisely the terms of the X11 License.  The full text of 
@@ -10,10 +10,7 @@
 #include "crum.h"
 #include "ndenf.h"
 
-makeroomonleftnd (father, offset, origin, grasp)
-  typecuc *father;
-  typedsp *offset, *grasp;
-  typewid *origin;
+int makeroomonleftnd(typecuc *father, typedsp *offset, typewid *origin, typedsp *grasp)
 {
   typedsp newdsp;
   tumbler base;
@@ -52,10 +49,7 @@ debug = savedebug;
 }
 
 
-expandcrumleftward (crumptr, newdsp, base, index)
-  typecorecrum *crumptr;
-  tumbler *newdsp, *base;
-  INT index;
+int expandcrumleftward(typecorecrum *crumptr, tumbler *newdsp, tumbler *base, INT index)
 {
   typecorecrum *ptr,  *findleftson();
 #ifndef DISTRIBUTION

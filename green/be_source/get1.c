@@ -1,4 +1,4 @@
-/* Copyright © 1979-1999 Udanax.com. All rights reserved.
+/* Copyright ï¿½ 1979-1999 Udanax.com. All rights reserved.
 
 * This code is licensed under the terms of The Udanax Open-Source License, 
 * which contains precisely the terms of the X11 License.  The full text of 
@@ -11,20 +11,13 @@
 
 #include "xanadu.h"
 
-  bool
-getfinddocscontaining (taskptr, specsetptr)
-  typetask *taskptr;
-  typespecset *specsetptr;
+bool getfinddocscontaining(typetask *taskptr, typespecset *specsetptr)
 {
 	return (getspecset (taskptr, specsetptr));
 }
 
 
-  bool
-getcopy (taskptr, docisaptr, vsaptr, localspecsetptr)
-  typetask *taskptr;
-  typeisa *docisaptr, *vsaptr;
-  typespecset *localspecsetptr;
+bool getcopy(typetask *taskptr, typeisa *docisaptr, typeisa *vsaptr, typespecset *localspecsetptr)
 {
 	prompt(taskptr, "copy to this document=> ");
 	if (!getisa(taskptr, docisaptr))
@@ -36,11 +29,7 @@ getcopy (taskptr, docisaptr, vsaptr, localspecsetptr)
 	return(TRUE);
 }
 
-  bool
-getinsert (taskptr, docisaptr, vsaptr, textsetptr)
-  typetask *taskptr;
-  tumbler *docisaptr, *vsaptr;
-  typetextset *textsetptr;
+bool getinsert(typetask *taskptr, tumbler *docisaptr, tumbler *vsaptr, typetextset *textsetptr)
 {
 	prompt(taskptr, "text=>\n\n");
 	if (!gettextset(taskptr, textsetptr))
@@ -54,13 +43,7 @@ getinsert (taskptr, docisaptr, vsaptr, textsetptr)
 	return(TRUE);
 }
 
-  bool
-getcreatelink (taskptr, docisaptr, fromspecsetptr, tospecsetptr, threespecsetptr)
-  typetask *taskptr;
-  typeisa *docisaptr;
-  typespecset *fromspecsetptr;
-  typespecset *tospecsetptr;
-  typespecset *threespecsetptr;
+bool getcreatelink(typetask *taskptr, typeisa *docisaptr, typespecset *fromspecsetptr, typespecset *tospecsetptr, typespecset *threespecsetptr)
 {
 	prompt (taskptr, "home document=> ");
 	if (!getisa (taskptr, docisaptr))
@@ -77,11 +60,7 @@ getcreatelink (taskptr, docisaptr, fromspecsetptr, tospecsetptr, threespecsetptr
 	return (TRUE);
 }
 
-  bool
-getfollowlink (taskptr, linkisaptr, whichendptr)
-  typetask *taskptr;
-  typeisa *linkisaptr;
-  INT *whichendptr;
+bool getfollowlink(typetask *taskptr, typeisa *linkisaptr, INT *whichendptr)
 {
 	prompt (taskptr, "enter link=> ");
 	if (!getisa (taskptr, linkisaptr))
@@ -94,38 +73,25 @@ getfollowlink (taskptr, linkisaptr, whichendptr)
 	return (TRUE);
 }
 
-  bool
-getcreatenewversion(taskptr,docisaptr)
-  typetask *taskptr;
-  typeisa *docisaptr;
+bool getcreatenewversion(typetask *taskptr, typeisa *docisaptr)
 {
 	  prompt(taskptr,"enter document=> ");
 	  return (getisa (taskptr, docisaptr));
 }
 
-  bool
-getretrievedocvspanset (taskptr, docisaptr)
-  typetask *taskptr;
-  typeisa *docisaptr;
+bool getretrievedocvspanset(typetask *taskptr, typeisa *docisaptr)
 {
 	prompt(taskptr, "enter document=> ");
 	return (getisa (taskptr, docisaptr));
 }
 
-  bool
-getretrievedocvspan (taskptr, docisaptr)
-  typetask *taskptr;
-  typeisa *docisaptr;
+bool getretrievedocvspan(typetask *taskptr, typeisa *docisaptr)
 {
 	prompt(taskptr, "enter document=> ");
 	return (getisa (taskptr, docisaptr));
 }
 
-  bool
-getrearrange (taskptr, docisaptr, cutseqptr)
-  typetask *taskptr;
-  typeisa *docisaptr;
-  typecutseq *cutseqptr;
+bool getrearrange(typetask *taskptr, typeisa *docisaptr, typecutseq *cutseqptr)
 {
 	prompt(taskptr, "enter document=> ");
 	if (!getisa(taskptr, docisaptr))
@@ -136,21 +102,12 @@ getrearrange (taskptr, docisaptr, cutseqptr)
 	return(TRUE);
 }
 
-  bool
-getretrievev (taskptr, specsetptr)
-  typetask *taskptr;
-  typespecset *specsetptr;
+bool getretrievev(typetask *taskptr, typespecset *specsetptr)
 {
 	return getspecset(taskptr,specsetptr);
 }
 
-  bool
-getfindlinksfromtothree (taskptr, fromvspecsetptr, tovspecsetptr, threevspecsetptr, homesetptr)
-  typetask *taskptr;
-  typespecset *fromvspecsetptr;
-  typespecset *tovspecsetptr;
-  typespecset *threevspecsetptr;
-  typeispanset *homesetptr;
+bool getfindlinksfromtothree(typetask *taskptr, typespecset *fromvspecsetptr, typespecset *tovspecsetptr, typespecset *threevspecsetptr, typeispanset *homesetptr)
 {
 	prompt (taskptr, "fromset\n");
 	if (!getspecset (taskptr, fromvspecsetptr))
@@ -167,26 +124,12 @@ getfindlinksfromtothree (taskptr, fromvspecsetptr, tovspecsetptr, threevspecsetp
 	return(TRUE);
 }
 
-  bool
-getfindnumoflinksfromtothree (taskptr, fromvspecsetptr, tovspecsetptr, threevspecsetptr, homesetptr)
-  typetask *taskptr;
-  typespecset *fromvspecsetptr;
-  typespecset *tovspecsetptr;
-  typespecset *threevspecsetptr;
-  typeispanset *homesetptr;
+bool getfindnumoflinksfromtothree(typetask *taskptr, typespecset *fromvspecsetptr, typespecset *tovspecsetptr, typespecset *threevspecsetptr, typeispanset *homesetptr)
 {
 	return (getfindlinksfromtothree (taskptr, fromvspecsetptr, tovspecsetptr, threevspecsetptr, homesetptr));
 }
 
-  bool
-getfindnextnlinksfromtothree (taskptr, fromvspecsetptr, tovspecsetptr, threevspecsetptr, homesetptr, lastlinkptr, nptr)
-  typetask *taskptr;
-  typespecset *fromvspecsetptr;
-  typespecset *tovspecsetptr;
-  typespecset *threevspecsetptr;
-  typeispanset *homesetptr;
-  typeisa *lastlinkptr;
-  INT *nptr;
+bool getfindnextnlinksfromtothree(typetask *taskptr, typespecset *fromvspecsetptr, typespecset *tovspecsetptr, typespecset *threevspecsetptr, typeispanset *homesetptr, typeisa *lastlinkptr, INT *nptr)
 {
 	if(!getfindlinksfromtothree (taskptr, fromvspecsetptr, tovspecsetptr, threevspecsetptr, homesetptr))
 		return(FALSE);
@@ -202,11 +145,7 @@ getfindnextnlinksfromtothree (taskptr, fromvspecsetptr, tovspecsetptr, threevspe
 
 /* getnavigateonht */
 
-  bool
-getshowrelationof2versions (taskptr, version1ptr, version2ptr)
-  typetask *taskptr;
-  typespecset *version1ptr;
-  typespecset  *version2ptr;
+bool getshowrelationof2versions(typetask *taskptr, typespecset *version1ptr, typespecset *version2ptr)
 {
 	prompt(taskptr, "version1\n");
 	if (!getspecset (taskptr,version1ptr))
@@ -216,15 +155,11 @@ getshowrelationof2versions (taskptr, version1ptr, version2ptr)
 		return(FALSE);
 	return(TRUE);
 }
-getcreatenewdocument()
+int getcreatenewdocument(void)
 {
 }
 
-  bool
-getdeletevspan (taskptr, docisaptr, vspanptr)
-  typetask *taskptr;
-  typeisa *docisaptr;
-  typevspan *vspanptr;
+bool getdeletevspan(typetask *taskptr, typeisa *docisaptr, typevspan *vspanptr)
 {
 	prompt(taskptr, "document=> ");
 	if(!getisa (taskptr,docisaptr))
@@ -235,31 +170,24 @@ getdeletevspan (taskptr, docisaptr, vspanptr)
 	return(TRUE);
 }
 
-setdebug (taskptr)
-  typetask *taskptr;
+int setdebug(typetask *taskptr)
 {
 	prompt (taskptr, "set debug => ");
 	getnumber (taskptr, &debug);
 }
 	
-playwithalloc(taskptr)
-  typetask * taskptr;
+int playwithalloc(typetask *taskptr)
 {		     
 	prompt(taskptr,"playwithalloc\n");
 	lookatalloc();
 }   
 
-  bool
-getretrieveendsets (taskptr, specsetptr)
-  typetask *taskptr;
-  typespecset *specsetptr;
+bool getretrieveendsets(typetask *taskptr, typespecset *specsetptr)
 {
 	return (getspecset (taskptr, specsetptr));
 }
 
-bool getxaccount (taskptr, accountptr)
-  typetask *taskptr;
-  typeisa *accountptr;
+bool getxaccount(typetask *taskptr, typeisa *accountptr)
 {
   bool validaccount();
 /*tumblerclear (accountptr);
@@ -277,20 +205,13 @@ return (TRUE);
 
 
 
-getcreatenode_or_account(taskptr,tp)
-  typetask *taskptr;
-  tumbler *tp;
+int getcreatenode_or_account(typetask *taskptr, tumbler *tp)
 {
   gettumbler(taskptr,tp);
 	return(TRUE);
 }
 
-getopen(taskptr,tp,typep,modep)
-  typetask *taskptr;
-  tumbler *tp;
-  int *typep;
-  int *modep;
-  
+int getopen(typetask *taskptr, tumbler *tp, int *typep, int *modep)
 {
 
 gettumbler(taskptr,tp);
@@ -299,9 +220,7 @@ getnumber(taskptr,modep);
 	return(TRUE);
 }
 
-getclose(taskptr,tp)
-  typetask *taskptr;
-  tumbler *tp;
+int getclose(typetask *taskptr, tumbler *tp)
 {
   gettumbler(taskptr,tp);
 	return(TRUE);

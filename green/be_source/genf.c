@@ -1,4 +1,4 @@
-/* Copyright © 1979-1999 Udanax.com. All rights reserved.
+/* Copyright ï¿½ 1979-1999 Udanax.com. All rights reserved.
 
 * This code is licensed under the terms of The Udanax Open-Source License,
 * which contains precisely the terms of the X11 License.  The full text of
@@ -16,16 +16,12 @@
 
 bool isxumain;
 
-  bool
-is2dcrum(ptr)
-  typecorecrum *ptr;
+bool is2dcrum(typecorecrum *ptr)
 {
 	return (ptr->cenftype != GRAN);
 }
 
-  typecorecrum *
-getleftson(ptr)
-  typecuc *ptr;
+typecorecrum *getleftson(typecuc *ptr)
 {
 	rejuvinateifnotRESERVED((typecorecrum *)ptr);
 	ptr = (typecuc *)ptr->leftson;
@@ -35,9 +31,7 @@ getleftson(ptr)
 	return ((typecorecrum *)ptr);
 }
 
-  typecorecrum *
-routinegetrightbro(ptr)
-  typecorecrum *ptr;
+typecorecrum *routinegetrightbro(typecorecrum *ptr)
 {
 	rejuvinateifnotRESERVED((typecorecrum *)ptr);
 	ptr = ptr->rightbro;
@@ -47,9 +41,7 @@ routinegetrightbro(ptr)
 	return(ptr);
 }
 
-  typecorecrum *
-getrightmostbro(ptr)
-  typecorecrum *ptr;
+typecorecrum *getrightmostbro(typecorecrum *ptr)
 {
   typecorecrum *p;
 
@@ -58,9 +50,7 @@ getrightmostbro(ptr)
 	return (ptr);
 }
 
-  typecorecrum *
-getleftbro(ptr)
-  typecorecrum *ptr;
+typecorecrum *getleftbro(typecorecrum *ptr)
 {
 	rejuvinateifnotRESERVED(ptr);
 	if (ptr->isleftmost)
@@ -72,9 +62,7 @@ getleftbro(ptr)
 	return (ptr);
 }
 
-  typecorecrum *
-getleftmostbro(ptr)
-  typecorecrum *ptr;
+typecorecrum *getleftmostbro(typecorecrum *ptr)
 {
   typecorecrum *p;
 
@@ -83,9 +71,7 @@ getleftmostbro(ptr)
 	return (ptr);
 }
 
-  typecuc *
-getfather(ptr)
-  typecorecrum *ptr;
+typecuc *getfather(typecorecrum *ptr)
 {
 	ptr = getleftmostbro(ptr)->leftbroorfather;
 	if (ptr)
@@ -100,9 +86,7 @@ isfullcrum(ptr)
 	  return (ptr->isapex);
 }
 */
-  typecuc *
-findfullcrum(descendant)
-  typecorecrum *descendant;
+typecuc *findfullcrum(typecorecrum *descendant)
 {
   typecuc *ptr;
 
@@ -110,9 +94,7 @@ findfullcrum(descendant)
 	  return (ptr);
 }
 
-  bool
-isemptyenfilade(ptr)
-  typecuc *ptr;
+bool isemptyenfilade(typecuc *ptr)
 {
 	  if (!isfullcrum((typecorecrum*)ptr))
 		  return (FALSE);
@@ -135,9 +117,7 @@ isemptyenfilade(ptr)
 
 
 /* Just does pointer following */
-  typecuc *
-functionweakfindfather(ptr)
-  typecorecrum *ptr;
+typecuc *functionweakfindfather(typecorecrum *ptr)
 {
 	if (!ptr){
 #ifndef DISTRIBUTION
@@ -156,9 +136,7 @@ functionweakfindfather(ptr)
 		return (NULL);
 	}
 }
-  typecuc *
-findfather(son)
-  typecorecrum *son;
+typecuc *findfather(typecorecrum *son)
 {
   typecuc *ptr;
 
@@ -167,9 +145,7 @@ findfather(son)
 	  return(ptr);
 }
 
-  typecorecrum *
-findleftbro(ptr)
-  typecorecrum *ptr;
+typecorecrum *findleftbro(typecorecrum *ptr)
 {
 	if (ptr->isleftmost) {
 		rejuvinateifnotRESERVED(ptr);
@@ -180,9 +156,7 @@ findleftbro(ptr)
 	return (/*checkenftypes(*/ ptr /*,"")*/);
 }
 
-  typecorecrum *
-findleftmostbro(ptr)
-  typecorecrum *ptr;
+typecorecrum *findleftmostbro(typecorecrum *ptr)
 {
 	  while (!ptr->isleftmost) {
 		  ptr = ptr->leftbroorfather;
@@ -192,9 +166,7 @@ findleftmostbro(ptr)
 }
 
 
-  typecorecrum *
-weakfindleftmostbro (ptr)
-  typecorecrum *ptr;
+typecorecrum *weakfindleftmostbro(typecorecrum *ptr)
 {
 	  while (!ptr->isleftmost)
 		  ptr = ptr->leftbroorfather;
@@ -202,9 +174,7 @@ weakfindleftmostbro (ptr)
 }
 
 
-  typecorecrum *
-funcfindrightbro (ptr)
-  register typecorecrum *ptr;
+typecorecrum *funcfindrightbro(register typecorecrum *ptr)
 {
 	 if (!ptr->rightbro) {
 		rejuvinateifnotRESERVED (ptr);
@@ -215,9 +185,7 @@ funcfindrightbro (ptr)
 	return (ptr);
 }
 
-  typecorecrum *
-weakfindrightbro (ptr)
-  typecorecrum *ptr;
+typecorecrum *weakfindrightbro(typecorecrum *ptr)
 {
 	 if (!ptr->rightbro) {
 		  return (NULL);
@@ -226,9 +194,7 @@ weakfindrightbro (ptr)
 	 return (ptr);
 }
 
-  typecorecrum *
-findrightmostbro(leftbro)
-  typecorecrum *leftbro;
+typecorecrum *findrightmostbro(typecorecrum *leftbro)
 {
   typecorecrum *temp;
 
@@ -237,9 +203,7 @@ findrightmostbro(leftbro)
 	return (/*checkenftypes(*/leftbro/*,"")*/);
 }
 
-  typecorecrum *
-findleftson (ptr)
-  register typecuc *ptr;
+typecorecrum *findleftson(register typecuc *ptr)
 {
   INT oldage;
 	if(ptr == NULL)
@@ -267,16 +231,12 @@ findleftson (ptr)
 	return (ptr->leftson);
 }
 
-  typecorecrum *
-findrightmostson (ptr)
-  typecuc *ptr;
+typecorecrum *findrightmostson(typecuc *ptr)
 {
 	return (findrightmostbro (findleftson (ptr)));
 }
 
-  bool
-toomanysons(ptr)
-  typecuc *ptr;
+bool toomanysons(typecuc *ptr)
 {
 	if (ptr->height) {
 		findleftson(ptr);
@@ -284,9 +244,7 @@ toomanysons(ptr)
 	return (ptr->numberofsons > (ptr->height > 1 ? MAXUCINLOAF : (is2dcrum((typecorecrum*)ptr)?MAX2DBCINLOAF:MAXBCINLOAF)));
 }
 
-  bool
-toofewsons(ptr)
-  typecuc *ptr;
+bool toofewsons(typecuc *ptr)
 {
 	if(ptr->height && ! ptr->leftson){ /* brings in leftson if not here */
 		findleftson(ptr);
@@ -294,9 +252,7 @@ toofewsons(ptr)
 	return (ptr->numberofsons < (ptr->height > 1 ? MAXUCINLOAF -1 : (is2dcrum((typecorecrum*)ptr)?MAX2DBCINLOAF:MAXBCINLOAF)));
 }
 
-  bool
-roomformoresons(ptr)
-  typecuc *ptr;
+bool roomformoresons(typecuc *ptr)
 {
 	if(ptr->height && ! ptr->leftson){ /* brings in leftson if not here */
 		findleftson(ptr);
@@ -304,8 +260,7 @@ roomformoresons(ptr)
 	return (ptr->numberofsons < (ptr->height > 1 ? MAXUCINLOAF : (is2dcrum((typecorecrum*)ptr)?MAX2DBCINLOAF:MAXBCINLOAF)));
 }
 
-levelpush(fullcrumptr)
-  typecuc *fullcrumptr;
+int levelpush(typecuc *fullcrumptr)
 {
   typecuc *new;
   typecorecrum *createcrum();
@@ -338,8 +293,7 @@ fprintf(stderr,"leaving levelpush");
 #endif
 }
 
-transferloaf(from, to)
-  typecuc *from, *to;
+int transferloaf(typecuc *from, typecuc *to)
 {
   typecuc *ptr;
   INT nsons;
@@ -361,8 +315,7 @@ transferloaf(from, to)
 */}
    
 
-levelpull(fullcrumptr)
-  typecuc *fullcrumptr;
+int levelpull(typecuc *fullcrumptr)
 {
 /*  typecuc *ptr; */
 return;
@@ -393,8 +346,7 @@ return;
 ** It keeps any kids it has
 */
 
-disown(crumptr)
-  typecorecrum *crumptr;
+int disown(typecorecrum *crumptr)
 {
   typecuc *father;
 	
@@ -418,8 +370,7 @@ disown(crumptr)
 	ivemodified((typecorecrum*)father);
 }
 
-disownnomodify(crumptr)
-  typecorecrum *crumptr;
+int disownnomodify(typecorecrum *crumptr)
 {
   typecuc *father;
   typecorecrum *left, *right;
@@ -465,9 +416,7 @@ disownnomodify(crumptr)
 ** Adopt "new" crum (and his kids) into a family of which "old"
 **  is a member.
 */
-adopt(new, relative, old)
-  typecorecrum *new, *old;
-  INT relative;
+int adopt(typecorecrum *new, INT relative, typecorecrum *old)
 {
   typecuc *father;
   typecorecrum *left, *right;
@@ -570,8 +519,7 @@ adopt(new, relative, old)
 	++father->numberofsons;
 }
 
-ivemodified (ptr)
-  typecorecrum *ptr;
+int ivemodified(typecorecrum *ptr)
 {
   bool fatherflag;
 
@@ -595,17 +543,13 @@ ivemodified (ptr)
 	}
 }
 
-  INT
-qerror (message)
-  char *message;
+INT qerror(char *message)
 {
 	fprintf (stderr, "Error: %s\n",message);
 	abort();
 	return(1);
 }
-  INT /* nonfatalerror*/
-nferror(message)
- char *message;
+INT nferror(char *message)
 {
 	fprintf(stderr," Non Fatal Error %s\n",message);
 }

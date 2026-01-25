@@ -1,4 +1,4 @@
-/* Copyright © 1979-1999 Udanax.com. All rights reserved.
+/* Copyright ï¿½ 1979-1999 Udanax.com. All rights reserved.
 
 * This code is licensed under the terms of The Udanax Open-Source License, 
 * which contains precisely the terms of the X11 License.  The full text of 
@@ -16,7 +16,7 @@ INT numbytesinloaf;
 INT numdiskblocksinloaf;
 INT numdiskloafsinheader;     
 
-initmagicktricks ()
+int initmagicktricks(void)
 {
   bool initenffile();
   void initkluge(), initgrimreaper();
