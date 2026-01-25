@@ -1,4 +1,4 @@
-/* Copyright © 1979-1999 Udanax.com. All rights reserved.
+/* Copyright ï¿½ 1979-1999 Udanax.com. All rights reserved.
 
 * This code is licensed under the terms of The Udanax Open-Source License, 
 * which contains precisely the terms of the X11 License.  The full text of 
@@ -189,12 +189,8 @@ extern bool          toomanysons();
 extern bool          roomformoresons();
 
 /* credel.c */
-/* These next two are macros right now.
-	extern void          rejuvinate();
-	extern void          rejuvinateifnotRESERVED();
-*/
+/* Old K&R extern declarations moved to protos.h */
 extern void          reserve();
-extern void          testforreservedness();
 extern void          subtreefree();
 extern void          freecrum();
 extern void          loaffree();
@@ -203,7 +199,7 @@ extern typecuc      *createenf();
 extern typecorecrum *createcrum();
 extern void          initcrum();
 
-/*#include "protocrum.h"*/
-
 /* test.c */
 extern typecorecrum *sonoriginok();
+
+#include "protos.h"

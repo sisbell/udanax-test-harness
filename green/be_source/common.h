@@ -11,6 +11,9 @@
 /* common xanadu header file */
 /*#include <assert.h>*/
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 #include <ctype.h>
 
 
@@ -154,7 +157,7 @@ long ntaskorcommand;
 extern INT reservnumber;
 #define lengthoftumbler(x) intof((x))
 #define SIZEOFZEROHUMBER 3
-extern char *malloc();
+/* malloc() provided by stdlib.h */
 
 #define clear(ptr,count) memset(ptr,0,count)
 #define movmem(src,dest,count) memmove(dest,src,count)
@@ -192,3 +195,5 @@ extern bool tumblercheckptr();
 #define weakfindfather(x) ((typecuc *)(((!(((typecuc*)(x))->isapex))&&(((typecuc*)(x))->isleftmost))?((typecuc*)((typecuc*)(x))->leftbroorfather):(typecuc*)functionweakfindfather((typecuc*)(x))))
 /*#define tumbleradd(x,y,z) if(iszerotumbler(y)){movetumbler(x,z);}else{functiontumbleradd(x,y,z);}*/
 #define tumbleradd(x,y,z) functiontumbleradd(x,y,z)
+
+#include "protos.h"

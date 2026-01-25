@@ -120,7 +120,7 @@ struct {
 #define SPANFDISKLOCATION (NUMDISKLOAFSINHEADER+2)
 #define PARTIALFREEDISKLOCATION (NUMDISKLOAFSINHEADER+3)
 
-typedef struct{
+typedef struct structfreediskentry{
 	INT partialdiskblocknumber;
 	unsigned short freespaceinloaf;
 	SINT moreallignmentdummy;
