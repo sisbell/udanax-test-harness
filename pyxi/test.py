@@ -1,10 +1,15 @@
+#!/usr/bin/env python3
+"""Test suite for x88.py - Udanax 88.1 FeBe protocol client."""
+
+# Ported to Python 3 - January 2026
+
 from x88 import *
 
-def verify(result, expected=1):
+def verify(result, expected=True):
     if result != expected:
-        raise ValueError, "result " + repr(result) + \
-                          " did not match " + repr(expected)
-    print "ok"
+        raise ValueError("result " + repr(result) +
+                          " did not match " + repr(expected))
+    print("ok")
 
 # tumbler arithmetic
 a = Address([2,3,4])
@@ -107,7 +112,7 @@ charspan = Span(Address(1,513), Offset(0,1))
 specfrom = SpecSet(VSpec(mydoca, [charspan]))
 links = x.find_links(specfrom)
 
-type = x.follow_link(links[0], LINK_TYPE)
+linktype = x.follow_link(links[0], LINK_TYPE)
 target = x.follow_link(links[0], LINK_TARGET)
 
 docb = target[0].docid
@@ -131,7 +136,7 @@ verify(atype, SpecSet([]))
 verify(vspanset, VSpec(Address(1, 1, 0, 1, 0, 1),
                        [Span(Address(1, 1), Offset(0, 553))]))
 verify(links, [Address(1, 1, 0, 1, 0, 2, 0, 2, 22)])
-verify(type, SpecSet([VSpec(Address(1, 1, 0, 1, 0, 2),
+verify(linktype, SpecSet([VSpec(Address(1, 1, 0, 1, 0, 2),
                             [Span(Address(2, 1), Offset(0, 1))])]))
 verify(target, SpecSet([VSpec(Address(1, 1, 0, 1, 0, 2),
                               [Span(Address(1, 1), Offset(0, 57))])]))
@@ -183,3 +188,5 @@ verify(btype, SpecSet([VSpec(Address(1, 1, 0, 1, 0, 2),
                               Span(Address(1, 1), Offset(0, 1)),
                               Span(Address(1, 1), Offset(0, 1)),
                               Span(Address(1, 1), Offset(0, 1))])]))
+
+print("All tests passed!")
