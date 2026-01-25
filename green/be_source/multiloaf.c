@@ -1,4 +1,4 @@
-/* Copyright © 1979-1999 Udanax.com. All rights reserved.
+/* Copyright ï¿½ 1979-1999 Udanax.com. All rights reserved.
 
 * This code is licensed under the terms of The Udanax Open-Source License, 
 * which contains precisely the terms of the X11 License.  The full text of 
@@ -442,9 +442,9 @@ deallocateinloaf(loafp,insidediskblocknumber)
   INT insidediskblocknumber;
 {
   char *lp;
-  unsigned INT number, n;
+  UINTnumber, n;
   INT i;
-  unsigned INT temp;
+  UINTtemp;
 
 	/*lp = (char *)&loafp->fakepartialuberloaf;*/lp = (char *) loafp +6;
 
@@ -519,10 +519,10 @@ numberofliveunterloafs(loafp)
   typeuberdiskloaf *loafp;
 {
   char *lp;
-  unsigned INT number, n;
+  UINTnumber, n;
   INT i;
   INT ret;
-  unsigned INT temp;
+  UINTtemp;
 
 	ret = 0;
 	lp = /*(char *)&loafp->fakepartialuberloaf;*/ (char *)loafp +6;
@@ -548,9 +548,9 @@ findinsideloaf(loafp,ninsideloaf)
   INT ninsideloaf;
 {
   char *lp;
-  unsigned INT number, n;
+  UINTnumber, n;
   INT i;
-  unsigned INT temp;
+  UINTtemp;
 
 /*fprintf(stderr,"findinsideloaf ninsideloaf = %x \n",ninsideloaf);*/
 /*fprintf(stderr,"findinsideloaf loafp = %x \n",loafp);*/

@@ -1,4 +1,4 @@
-/* Copyright © 1979-1999 Udanax.com. All rights reserved.
+/* Copyright ï¿½ 1979-1999 Udanax.com. All rights reserved.
 
 * This code is licensed under the terms of The Udanax Open-Source License, 
 * which contains precisely the terms of the X11 License.  The full text of 
@@ -191,7 +191,7 @@ inorglinternal (granorglptr,crumptr)
 {
   typediskloaf loaf;
   typecuc *ptr;
-  unsigned INT temp,temp2;
+  UINTtemp,temp2;
   char *loafp;
   int size;
 
@@ -251,7 +251,7 @@ hgetwiddsp(ptr,loafptrptr)
   char **loafptrptr;
 {
   int i,nstreams;
-  unsigned INT temp;
+  UINTtemp;
   typewid *wptr;
 	nstreams = widsize(ptr->cenftype);
 	wptr = &ptr->cdsp;
@@ -270,7 +270,7 @@ hgetinfo(ptr,loafptrptr)/*this assumes ptr crum is ok except for info*/
   typecbc *ptr;
   char **loafptrptr;
 {
-  unsigned INT temp;
+  UINTtemp;
 	if (!is2dcrum((typecorecrum*)ptr)) {
 		hgetfromloaf(&ptr->cinfo.infotype,*loafptrptr);
 /*	dump(ptr);*/
