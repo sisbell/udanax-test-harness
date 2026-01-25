@@ -11,6 +11,7 @@
 
 /*#include <signal.h>*/
 #include <time.h>
+#include <string.h>
 #include "xanadu.h"
 #include "requests.h"
 #include "players.h"
@@ -18,6 +19,9 @@
 int user = 0;
 PLAYER player[MAX_PLAYERS];
 extern INT errno;
+
+/* Test mode: in-memory storage (defined in disk.c) */
+extern bool test_mode;
 
 FILE *logfile;
 FILE *nulllog;
@@ -32,7 +36,7 @@ extern bool firstputforrequest;
 typetask *taskptrx;
 tumbler defaultaccount = {0,0,0,0, 1,1,0,1,0,0,0,0}; /* 1.1.0.1 */
 
-int main(void)
+int main(int argc, char *argv[])
 {
   typetask task;
   void exit();
@@ -41,6 +45,15 @@ int main(void)
   FILE *fd;
   struct tm *local;
   long clock;
+  int i;
+
+	/* Parse command line arguments */
+	for (i = 1; i < argc; i++) {
+		if (strcmp(argv[i], "--test-mode") == 0) {
+			test_mode = TRUE;
+			fprintf(stderr, "Running in test mode (in-memory storage)\n");
+		}
+	}
 
 	taskptrx = &task;
 	febelog = interfaceinput = reallog = logfile = nulllog = fopen ("/dev/null", "a");

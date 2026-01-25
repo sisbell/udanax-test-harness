@@ -12,6 +12,7 @@
 
 INT enffiledes;
 extern bool isxumain;
+extern bool test_mode;
 bool maximumsetupsizehasbeenhit = FALSE;
 INT maximumsetupsize = 0;
 
@@ -84,6 +85,11 @@ readallocinfo(INT fd)
 {
   bool ret;
 
+	/* Test mode: no disk I/O */
+	if (test_mode) {
+		return FALSE;
+	}
+
 	if (lseek (fd, 0L, 0) < 0) {
 		perror("lseek in readallocinfo");
 		gerror("lseek failed\n");
@@ -118,13 +124,24 @@ int initheader(void)
 
 int diskallocexit(INT fd)
 {
+	/* Test mode: no disk I/O */
+	if (test_mode) {
+		return 0;
+	}
+
 	diskheader.hasenftops = TRUE;
 	savepartialdiskalloctabletodisk();
 	writeallocinfo (fd);
+	return 0;
 }
 
 int writeallocinfo(INT fd)
 {
+	/* Test mode: no disk I/O */
+	if (test_mode) {
+		return 0;
+	}
+
 	if (lseek (fd, 0L, 0) < 0) {
 		perror("lseek in writeallocinfo");
 		gerror("lseek failed");
@@ -133,6 +150,7 @@ int writeallocinfo(INT fd)
 		perror("write in writeallocinfo");
 		gerror("write failed");
 	}
+	return 0;
 }
 /*
   bool

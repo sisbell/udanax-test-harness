@@ -13,6 +13,8 @@
 #include <netinet/in.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <stdlib.h>
+#include <string.h>
 
 /* Forward declarations */
 char *findinsideloaf(typeuberdiskloaf *loafptr, INT insidediskblocknumber);
@@ -21,6 +23,11 @@ void actuallywriteloaf(typeuberrawdiskloaf *loafptr, INT diskblocknumber);
 
  INT nolread = 0 /* number of blocks read from disk in session */;
  INT nolwrote = 0 /* same for writes */;
+
+/* Test mode: in-memory storage instead of disk */
+bool test_mode = FALSE;
+#define MAX_MEMORY_BLOCKS 10000
+static char *memory_blocks[MAX_MEMORY_BLOCKS];
 
 INT enffiledes;	 /* enfilade file descriptor where disk stuff is */
 bool enffileread;       /* yeah another external */
@@ -181,6 +188,18 @@ void actuallyreadrawloaf(typeuberrawdiskloaf *loafptr, INT blocknumber)
 		gerror("bad call\n");
 #endif
 	}
+
+	/* Test mode: read from in-memory storage */
+	if (test_mode) {
+		if (blocknumber >= 0 && blocknumber < MAX_MEMORY_BLOCKS && memory_blocks[blocknumber]) {
+			memcpy(loafptr, memory_blocks[blocknumber], NUMBYTESINLOAF);
+		} else {
+			memset(loafptr, 0, NUMBYTESINLOAF);
+		}
+		++nolread;
+		return;
+	}
+
 	if (!enffileread) {
 		if (close (enffiledes) != 0) {
 #ifndef DISTRIBUTION
@@ -287,6 +306,22 @@ void actuallywriteloaf(typeuberrawdiskloaf *loafptr, INT diskblocknumber)
 	if (!loafptr || diskblocknumber == DISKPTRNULL /*|| (INT)loafptr->xdbcloaf.xdbchedr.refcount < 0*/) {
 		gerror ("bad call\n");
 	}
+
+	/* Test mode: write to in-memory storage */
+	if (test_mode) {
+		if (diskblocknumber >= 0 && diskblocknumber < MAX_MEMORY_BLOCKS) {
+			if (!memory_blocks[diskblocknumber]) {
+				memory_blocks[diskblocknumber] = (char *)malloc(NUMBYTESINLOAF);
+				if (!memory_blocks[diskblocknumber]) {
+					gerror("out of memory in test mode\n");
+				}
+			}
+			memcpy(memory_blocks[diskblocknumber], loafptr, NUMBYTESINLOAF);
+		}
+		++nolwrote;
+		return;
+	}
+
 	if (!goodblock (diskblocknumber)) {
 		qerror ("unallocated block.\n");
 	}
@@ -312,6 +347,19 @@ bool initenffile(void)
 		qerror ("too many inits\n");
 	++times;
 	initincorealloctables();
+
+	/* Test mode: in-memory storage, no disk file */
+	if (test_mode) {
+		int i;
+		for (i = 0; i < MAX_MEMORY_BLOCKS; i++) {
+			memory_blocks[i] = NULL;
+		}
+		initheader();
+		enffileread = TRUE;
+		enffiledes = -1;
+		return FALSE;  /* FALSE = new/empty state */
+	}
+
 	ret = TRUE;
 	fd = open ("enf.enf", 2 /*rw*/,0);
 	if (fd == -1) {
@@ -336,11 +384,24 @@ bool initenffile(void)
 
 int closediskfile(void)
 {
+	/* Test mode: free in-memory storage */
+	if (test_mode) {
+		int i;
+		for (i = 0; i < MAX_MEMORY_BLOCKS; i++) {
+			if (memory_blocks[i]) {
+				free(memory_blocks[i]);
+				memory_blocks[i] = NULL;
+			}
+		}
+		return 0;
+	}
+
 	diskallocexit (enffiledes);
 	if (close (enffiledes) != 0) {
 		perror ("close in closediskfile");
 		gerror("close failed");
 	}
+	return 0;
 }
 
 int dieandclosefiles(void)
