@@ -38,17 +38,33 @@ bool tumblereq(tumbler *a, tumbler *b)
 
 bool tumbleraccounteq(tumbler *aptr, tumbler *bptr)
 {
-  INT i, j;
+  INT i, j_b;
 
-	if (aptr->exp != bptr->exp || aptr->sign != bptr->sign) {
+	/* Check if sign matches */
+	if (aptr->sign != bptr->sign) {
 		return(FALSE);
 	}
-	for (j = 0, i = 0; i < NPLACES; i++) {
-		if (aptr->mantissa[i] != bptr->mantissa[i]) {
-			return(FALSE);
-		}
-		if (aptr->mantissa[i] == 0 && ++j == 2) {
-			return(TRUE);
+
+	/* Compare until account (bptr) terminates with two zeros.
+	   Document (aptr) may continue beyond the account's address space.
+
+	   Key insight: When account has a zero, it marks the boundary of the
+	   account's address space. The document can have any value there
+	   (continuing to sub-addresses). We only check for exact match on
+	   non-zero account positions. */
+	for (j_b = 0, i = 0; i < NPLACES; i++) {
+		if (bptr->mantissa[i] == 0) {
+			/* Account has a zero - check if it's the terminator (second zero) */
+			if (++j_b == 2) {
+				return(TRUE);  /* Account terminated, document is under this account */
+			}
+			/* First zero in account - document can have any value here
+			   (it may be continuing to a sub-address). Skip mismatch check. */
+		} else {
+			/* Account has non-zero - document must match exactly */
+			if (aptr->mantissa[i] != bptr->mantissa[i]) {
+				return(FALSE);
+			}
 		}
 	}
 	return (TRUE);
