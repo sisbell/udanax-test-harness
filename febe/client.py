@@ -814,6 +814,127 @@ class XuSession:
         self.xc.command(38, acctid)
         return self.xc.Address()
 
+    # debugging / internal state
+
+    def dump_state(self):
+        """Request internal enfilade state dump (DUMPSTATE command 39).
+
+        Returns a dict with 'granf' and 'spanf' trees. POOM trees are nested
+        within granf nodes that have infotype=2 (GRANORGL), accessible via
+        the 'orgl' key when the orgl is in memory."""
+        self.xc.command(39)
+        result = {}
+
+        # Read granf tree
+        marker = self.xc.stream.read(1)
+        self.xc.stream.read(1)  # skip ~
+        if marker == 'g':
+            exists = self.xc.Number()
+            if exists:
+                result['granf'] = self._parse_enf_node()
+            else:
+                result['granf'] = None
+
+        # Read spanf tree
+        marker = self.xc.stream.read(1)
+        self.xc.stream.read(1)  # skip ~
+        if marker == 's':
+            exists = self.xc.Number()
+            if exists:
+                result['spanf'] = self._parse_enf_node()
+            else:
+                result['spanf'] = None
+
+        return result
+
+    def _parse_enf_node(self):
+        """Parse a single enfilade node from DUMPSTATE output."""
+        node = {}
+
+        # Expect opening (
+        ch = self.xc.stream.read(1)
+        if ch != '(':
+            raise ValueError(f"Expected '(' but got '{ch}'")
+
+        # Read depth
+        node['depth'] = self.xc.Number()
+
+        # Read height (h marker)
+        ch = self.xc.stream.read(1)
+        if ch != 'h':
+            raise ValueError(f"Expected 'h' but got '{ch}'")
+        node['height'] = self.xc.Number()
+
+        # Read enftype (e marker)
+        ch = self.xc.stream.read(1)
+        if ch != 'e':
+            raise ValueError(f"Expected 'e' but got '{ch}'")
+        enftype = self.xc.Number()
+        node['enftype'] = {1: 'GRAN', 2: 'POOM', 3: 'SPAN'}.get(enftype, enftype)
+
+        # Read wid (w marker)
+        ch = self.xc.stream.read(1)
+        if ch != 'w':
+            raise ValueError(f"Expected 'w' but got '{ch}'")
+        nstreams = self.xc.Number()
+        node['wid'] = [str(self.xc.Address()) for _ in range(nstreams)]
+
+        # Read dsp (d marker)
+        ch = self.xc.stream.read(1)
+        if ch != 'd':
+            raise ValueError(f"Expected 'd' but got '{ch}'")
+        nstreams = self.xc.Number()
+        node['dsp'] = [str(self.xc.Address()) for _ in range(nstreams)]
+
+        # Read children count (c marker)
+        ch = self.xc.stream.read(1)
+        if ch != 'c':
+            raise ValueError(f"Expected 'c' but got '{ch}'")
+        numchildren = self.xc.Number()
+
+        if numchildren > 0:
+            # Upper crum - recurse into children
+            node['children'] = []
+            for _ in range(numchildren):
+                node['children'].append(self._parse_enf_node())
+        else:
+            # Bottom crum - read info marker
+            ch = self.xc.stream.read(1)
+            if ch == 'i':
+                ch2 = self.xc.stream.read(1)
+                if ch2 == 'h':
+                    # 2D bottom crum (SPAN/POOM) - homedoc follows
+                    node['homedoc'] = str(self.xc.Address())
+                else:
+                    # GRAN bottom crum - infotype follows as number
+                    # ch2 is start of the number, put it back logically
+                    # by reading the rest of the number
+                    rest = self.xc.stream.readchunk()
+                    infotype = int(ch2 + rest)
+                    node['infotype'] = infotype
+                    if infotype == 1:  # GRANTEXT
+                        ch = self.xc.stream.read(1)  # 't'
+                        if ch == 't':
+                            length = self.xc.Number()
+                            node['text'] = self.xc.stream.read(length)
+                    elif infotype == 2:  # GRANORGL
+                        ch = self.xc.stream.read(1)  # 'o'
+                        in_memory = self.xc.stream.read(1)  # '0' or '1'
+                        self.xc.stream.read(1)  # skip ~
+                        if in_memory == '1':
+                            # Orgl (POOM tree) is in memory - parse it
+                            node['orgl'] = self._parse_enf_node()
+                        else:
+                            node['orgl'] = None  # Not in memory
+
+        # Read closing ) and ~
+        ch = self.xc.stream.read(1)
+        if ch != ')':
+            raise ValueError(f"Expected ')' but got '{ch}'")
+        self.xc.stream.read(1)  # skip ~
+
+        return node
+
 
 def collapse_sharedspans(sharedspans):
     """The results of a comparison are sometimes returned from the back-end

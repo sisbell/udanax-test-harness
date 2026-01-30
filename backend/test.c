@@ -1354,3 +1354,11 @@ fprintf(stderr,"i = %d numberofsons = %d\n",i, ptr->numberofsons);
 	}
 #endif
 }
+
+/* DUMPSTATE request handler - dumps internal enfilade state via FEBE protocol */
+void dumpstate(typetask *taskptr)
+{
+	extern int putdumpstate(typetask *taskptr);
+
+	putdumpstate(taskptr);
+}

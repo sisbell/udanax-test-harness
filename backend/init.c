@@ -33,7 +33,7 @@ int init(bool safe)
 	    xaccount(), createnode_or_account(), myopen(), myclose(), quitxanadu();
 	/* Debugging stuff */
 	void setdebug(), showenfilades(), examine(), dumpgranfwids(), ioinfo(), playwithalloc(),
-	     setmaximumsetupsize();
+	     setmaximumsetupsize(), dumpstate();
 	long start_time;
 	struct tm *tm;
 
@@ -66,6 +66,7 @@ int init(bool safe)
 	requestfns[OPEN] = myopen;
 	requestfns[CLOSE] = myclose;
 	requestfns[XACCOUNT] = xaccount;
+	requestfns[DUMPSTATE] = dumpstate;
 	
 	if (safe) {
 		requestfns[SOURCEUNIXCOMMAND] = nullfun;

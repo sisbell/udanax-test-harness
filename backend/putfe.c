@@ -12,6 +12,7 @@
 
 #include "xanadu.h"
 #include "requests.h"
+#include "enf.h"
 
 FILE *logfile;
 FILE *nulllog;
@@ -391,4 +392,143 @@ int putclose(typetask *taskptr)
 int putquitxanadu(typetask *taskptr)
 {
 	putnumber(taskptr->outp,QUIT);
+}
+
+/* DUMPSTATE output functions - outputs internal enfilade structure */
+
+/* Forward declarations for enfilade traversal */
+static void putdumpstatetree(typetask *taskptr, typecuc *root, char marker);
+static void putdumpstatenode(typetask *taskptr, typecorecrum *node, INT depth);
+
+int putdumpstate(typetask *taskptr)
+{
+	extern typegranf granf;
+	extern typespanf spanf;
+
+	putnumber(taskptr->outp, DUMPSTATE);
+
+	/* Output granf tree */
+	putdumpstatetree(taskptr, granf, 'g');
+
+	/* Output spanf tree */
+	putdumpstatetree(taskptr, spanf, 's');
+}
+
+static void putdumpstatetree(typetask *taskptr, typecuc *root, char marker)
+{
+	FILE *outp = taskptr->outp;
+
+	/* Tree marker */
+	xuputc(marker, outp);
+	xuputc('~', outp);
+
+	if (!root) {
+		putnumber(outp, 0);  /* empty tree */
+		return;
+	}
+
+	putnumber(outp, 1);  /* tree exists */
+	putdumpstatenode(taskptr, (typecorecrum *)root, 0);
+}
+
+static void putdumpstatenode(typetask *taskptr, typecorecrum *node, INT depth)
+{
+	FILE *outp = taskptr->outp;
+	INT enftype, nstreams, i;
+	typecorecrum *son;
+
+	if (!node) return;
+
+	enftype = node->cenftype;
+
+	/* Node marker and depth */
+	xuputc('(', outp);
+	putnumber(outp, depth);
+
+	/* Height */
+	xuputc('h', outp);
+	putnumber(outp, node->height);
+
+	/* Enfilade type: 1=GRAN, 2=POOM, 3=SPAN */
+	xuputc('e', outp);
+	putnumber(outp, enftype);
+
+	/* Width - number of streams depends on enfilade type */
+	xuputc('w', outp);
+	nstreams = widsize(enftype);
+	putnumber(outp, nstreams);
+	for (i = 0; i < nstreams; ++i) {
+		puttumbler(outp, &node->cwid.dsas[i]);
+	}
+
+	/* Displacement */
+	xuputc('d', outp);
+	nstreams = dspsize(enftype);
+	putnumber(outp, nstreams);
+	for (i = 0; i < nstreams; ++i) {
+		puttumbler(outp, &node->cdsp.dsas[i]);
+	}
+
+	if (node->height > 0) {
+		/* Upper crum - output children */
+		typecuc *ucnode = (typecuc *)node;
+		INT numchildren = 0;
+
+		/* Count children */
+		for (son = ucnode->leftson; son; son = son->rightbro) {
+			numchildren++;
+		}
+		xuputc('c', outp);
+		putnumber(outp, numchildren);
+
+		/* Recurse into children */
+		for (son = ucnode->leftson; son; son = son->rightbro) {
+			putdumpstatenode(taskptr, son, depth + 1);
+		}
+	} else {
+		/* Bottom crum - output info */
+		xuputc('c', outp);
+		putnumber(outp, 0);  /* no children */
+
+		if (enftype == GRAN) {
+			typecbc *bcnode = (typecbc *)node;
+			xuputc('i', outp);
+			putnumber(outp, bcnode->cinfo.infotype);
+
+			if (bcnode->cinfo.infotype == GRANTEXT) {
+				/* Text content */
+				INT len = bcnode->cinfo.granstuff.textstuff.textlength;
+				xuputc('t', outp);
+				putnumber(outp, len);
+				for (i = 0; i < len; ++i) {
+					xuputc(bcnode->cinfo.granstuff.textstuff.textstring[i], outp);
+				}
+			} else if (bcnode->cinfo.infotype == GRANORGL) {
+				/* Orgl reference - dump the POOM tree if in core */
+				xuputc('o', outp);
+				if (bcnode->cinfo.granstuff.orglstuff.orglincore &&
+				    bcnode->cinfo.granstuff.orglstuff.orglptr) {
+					/* Orgl is in memory - dump it */
+					xuputc('1', outp);
+					xuputc('~', outp);
+					putdumpstatenode(taskptr,
+						(typecorecrum *)bcnode->cinfo.granstuff.orglstuff.orglptr,
+						depth + 1);
+				} else {
+					/* Orgl not in memory or null */
+					xuputc('0', outp);
+					xuputc('~', outp);
+				}
+			}
+		} else {
+			/* 2D (SPAN/POOM) bottom crum - homedoc */
+			type2dcbc *bc2d = (type2dcbc *)node;
+			xuputc('i', outp);
+			xuputc('h', outp);  /* homedoc marker */
+			puttumbler(outp, &bc2d->c2dinfo.homedoc);
+		}
+	}
+
+	xuputc(')', outp);
+	xuputc('~', outp);
 }

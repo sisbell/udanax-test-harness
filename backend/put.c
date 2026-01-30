@@ -279,3 +279,10 @@ int putquitxanadu(typetask *taskptr)
   fprintf(taskptr->outp, "Good Bye.\n");
   return(TRUE);
 }
+
+int putdumpstate(typetask *taskptr)
+{
+  /* Stub for xumain - actual implementation is in putfe.c for FEBE */
+  fprintf(taskptr->outp, "Internal state dump not available in interactive mode.\n");
+  return(TRUE);
+}

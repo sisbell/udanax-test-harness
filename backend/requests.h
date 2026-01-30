@@ -1,4 +1,4 @@
-/* Copyright © 1979-1999 Udanax.com. All rights reserved.
+/* Copyright ï¿½ 1979-1999 Udanax.com. All rights reserved.
 
 * This code is licensed under the terms of The Udanax Open-Source License, 
 * which contains precisely the terms of the X11 License.  The full text of 
@@ -43,3 +43,4 @@
 #define CLOSE    36
 
 #define CREATENODE_OR_ACCOUNT 38
+#define DUMPSTATE 39              /* dump internal enfilade state */
