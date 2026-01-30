@@ -131,26 +131,28 @@ bool findisatoinsertgr(typecuc *fullcrumptr, typehint *hintptr, typeisa *isaptr)
 {
   bool isaexistsgr();
 
-	/*  isaexistsgr (fullcrumptr, &hintptr->hintisa);*/
-	  if (!isaexistsgr (fullcrumptr, &hintptr->hintisa)) {
-		  if(hintptr->subtype != ATOM){
-
-		  klugefindisatoinsertnonmolecule(fullcrumptr, hintptr, isaptr);
-		tumblerjustify(isaptr);
-		  return(TRUE);
-		  }
+	/* For ATOM types (text/link content), we need a document to exist first */
+	if (hintptr->subtype == ATOM) {
+		if (!isaexistsgr (fullcrumptr, &hintptr->hintisa)) {
 #ifndef DISTRIBUTION
-		  fprintf (stderr,"nothing at hintisa\n");
+			fprintf (stderr,"nothing at hintisa for atom\n");
 #endif
-		  return (FALSE);
-	  }
-	
-	  if (hintptr->subtype == ATOM)
-		  findisatoinsertmolecule (fullcrumptr, hintptr, isaptr);
-	  else
-		  findisatoinsertnonmolecule (fullcrumptr, hintptr, isaptr);
+			return (FALSE);
+		}
+		findisatoinsertmolecule (fullcrumptr, hintptr, isaptr);
+	} else {
+		/* For non-ATOM types (DOCUMENT, ACCOUNT, NODE), use the normal
+		   findisatoinsertnonmolecule which now correctly handles both:
+		   - Empty tree (first item): returns hintisa.0.1
+		   - Existing items: finds highest and increments
+
+		   The old kluge was called when isaexistsgr returned false, but it
+		   just copied hintisa unchanged, making the first document get
+		   the account address itself (1.1.0.1 instead of 1.1.0.1.0.1). */
+		findisatoinsertnonmolecule (fullcrumptr, hintptr, isaptr);
+	}
 	tumblerjustify(isaptr);
-	  return (TRUE);
+	return (TRUE);
 }
 
 static int findisatoinsertmolecule(typecuc *fullcrumptr, typehint *hintptr, typeisa *isaptr)
@@ -213,9 +215,16 @@ static int findisatoinsertnonmolecule(typecuc *fullcrumptr, typehint *hintptr, t
 
 	findpreviousisagr ((typecorecrum*)fullcrumptr, &upperbound, &lowerbound);
 
-	tumblertruncate (&lowerbound, hintlength + depth, isaptr);
-
-   tumblerincrement(isaptr,tumblerlength(isaptr)==hintlength?depth:0,1,isaptr);
+	/* BUG FIX: If nothing exists under the hint (lowerbound is zero after
+	   findpreviousisagr), create the first child address as hintisa.0.1.
+	   The original code would produce just "1" due to truncate/increment
+	   on a zero tumbler, causing the first document to get the wrong address. */
+	if (iszerotumbler(&lowerbound)) {
+		tumblerincrement(&hintptr->hintisa, depth, 1, isaptr);
+	} else {
+		tumblertruncate (&lowerbound, hintlength + depth, isaptr);
+		tumblerincrement(isaptr,tumblerlength(isaptr)==hintlength?depth:0,1,isaptr);
+	}
 }
 
 bool isaexistsgr(typecuc *crumptr, typeisa *isaptr)
