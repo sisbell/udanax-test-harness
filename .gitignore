@@ -8,3 +8,6 @@ __pycache__/
 # Runtime files
 backenderror
 enf.enf
+
+# Generated golden tests
+golden/

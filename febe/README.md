@@ -1,45 +1,51 @@
-# FEBE Protocol Client
+# FEBE Test Harness
 
-Python 3 implementation of the Udanax Green FEBE 88.1 protocol (Front End Back End).
+Generate golden tests from the Udanax Green C backend.
 
-## Components
-
-- `client.py` - Protocol client. Provides API for all backend operations.
-- `test_client.py` - Unit tests for protocol parsing.
-
-## Usage
-
-Run the C backend in test mode (in-memory storage, no disk persistence):
+## Quick Start
 
 ```bash
-../backend/build/backend --test-mode
+# Build the backend
+cd ../backend && make
+
+# Run all tests
+python3 generate_golden.py
+
+# Run specific scenario
+python3 generate_golden.py --scenario create_version
+
+# List available scenarios
+python3 generate_golden.py --list
 ```
 
-Connect and execute operations:
+## Test Mode
 
-```python
-from client import Connection
+The backend supports `--test-mode` for in-memory storage:
+- No `enf.enf` file created
+- State cleared when process exits
+- Fresh state per test scenario
 
-conn = Connection()
-doc = conn.create_document()
-conn.insert(doc, "Hello, world!")
-content = conn.retrieve(doc)
-```
+## Files
 
-## Operations
+- `client.py` - FEBE protocol client (Python 3)
+- `generate_golden.py` - Golden test generator
+- `../golden/` - Generated JSON test files
+- `../bugs/` - Bug documentation
 
-**Documents**: `create_document()`, `create_version()`, `open_document()`, `close_document()`
+## Test Scenarios
 
-**Content**: `insert()`, `vcopy()`, `delete()`, `retrieve()`, `retrieve_vspanset()`
-
-**Editing**: `pivot()`, `swap()`, `remove()`, `rearrange()`
-
-**Links**: `create_link()`, `follow_link()`, `find_links()`
-
-**Comparison**: `compare_versions()`, `find_documents()`
-
-## Origin
-
-client.py was originally written by Ka-Ping Yee <ping@lfw.org> in August 1999 as part of Pyxi, a Tcl/Tk graphical frontend for Udanax Green. In 2026, the protocol client was extracted and ported to Python 3.
-
-See [LICENSE](LICENSE) for the original terms.
+| Category | Scenario | Description |
+|----------|----------|-------------|
+| documents | create_document | Create empty document |
+| documents | multiple_documents | Multiple independent documents |
+| content | insert_text | Insert and retrieve text |
+| content | multiple_inserts | Sequential inserts |
+| content | insert_middle | Insert within existing content |
+| content | delete_text | Delete portion of content |
+| content | partial_retrieve | Retrieve subset of content |
+| content | vcopy_transclusion | Copy content between documents |
+| versions | create_version | Create document version |
+| versions | compare_versions | Compare two versions |
+| links | create_link | Create link between documents |
+| links | find_links | Search for links |
+| internal | internal_state | Capture enfilade state |
