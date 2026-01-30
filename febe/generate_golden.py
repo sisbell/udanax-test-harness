@@ -17,7 +17,8 @@ from client import (
     XuSession, XuConn, PipeStream, Address, Offset, Span, VSpec, VSpan, SpecSet,
     READ_ONLY, READ_WRITE, CONFLICT_FAIL, CONFLICT_COPY, ALWAYS_COPY,
     LINK_SOURCE, LINK_TARGET, LINK_TYPE,
-    JUMP_TYPE, QUOTE_TYPE, FOOTNOTE_TYPE, MARGIN_TYPE
+    JUMP_TYPE, QUOTE_TYPE, FOOTNOTE_TYPE, MARGIN_TYPE,
+    NOSPECS
 )
 
 # Default account address for test mode
@@ -428,6 +429,370 @@ def scenario_find_links(session):
     }
 
 
+def scenario_link_types(session):
+    """Create links with different types (quote, footnote, margin)."""
+    # Create source document
+    source_doc = session.create_document()
+    source_opened = session.open_document(source_doc, READ_WRITE, CONFLICT_FAIL)
+    session.insert(source_opened, Address(1, 1), ["Document with multiple link types"])
+
+    # Create target document
+    target_doc = session.create_document()
+    target_opened = session.open_document(target_doc, READ_WRITE, CONFLICT_FAIL)
+    session.insert(target_opened, Address(1, 1), ["Target content for all links"])
+
+    # Create different link types
+    # Quote link on "Document" (1-8)
+    quote_source = SpecSet(VSpec(source_opened, [Span(Address(1, 1), Offset(0, 8))]))
+    quote_target = SpecSet(VSpec(target_opened, [Span(Address(1, 1), Offset(0, 6))]))
+    quote_link = session.create_link(source_opened, quote_source, quote_target, SpecSet([QUOTE_TYPE]))
+
+    # Footnote link on "multiple" (15-23)
+    footnote_source = SpecSet(VSpec(source_opened, [Span(Address(1, 15), Offset(0, 8))]))
+    footnote_target = SpecSet(VSpec(target_opened, [Span(Address(1, 8), Offset(0, 7))]))
+    footnote_link = session.create_link(source_opened, footnote_source, footnote_target, SpecSet([FOOTNOTE_TYPE]))
+
+    # Margin link on "types" (29-34)
+    margin_source = SpecSet(VSpec(source_opened, [Span(Address(1, 29), Offset(0, 5))]))
+    margin_target = SpecSet(VSpec(target_opened, [Span(Address(1, 16), Offset(0, 3))]))
+    margin_link = session.create_link(source_opened, margin_source, margin_target, SpecSet([MARGIN_TYPE]))
+
+    # Find all links from source
+    search_span = Span(Address(1, 1), Offset(0, 40))
+    search_specs = SpecSet(VSpec(source_opened, [search_span]))
+    found_links = session.find_links(search_specs)
+
+    session.close_document(source_opened)
+    session.close_document(target_opened)
+
+    return {
+        "name": "link_types",
+        "description": "Create links with different types (quote, footnote, margin)",
+        "operations": [
+            {"op": "create_document", "result": str(source_doc)},
+            {"op": "open_document", "doc": str(source_doc), "mode": "read_write", "result": str(source_opened)},
+            {"op": "insert", "doc": str(source_opened), "address": "1.1", "text": "Document with multiple link types"},
+            {"op": "create_document", "result": str(target_doc)},
+            {"op": "open_document", "doc": str(target_doc), "mode": "read_write", "result": str(target_opened)},
+            {"op": "insert", "doc": str(target_opened), "address": "1.1", "text": "Target content for all links"},
+            {"op": "create_link",
+             "home_doc": str(source_opened),
+             "source": specset_to_list(quote_source),
+             "target": specset_to_list(quote_target),
+             "type": "quote",
+             "result": str(quote_link)},
+            {"op": "create_link",
+             "home_doc": str(source_opened),
+             "source": specset_to_list(footnote_source),
+             "target": specset_to_list(footnote_target),
+             "type": "footnote",
+             "result": str(footnote_link)},
+            {"op": "create_link",
+             "home_doc": str(source_opened),
+             "source": specset_to_list(margin_source),
+             "target": specset_to_list(margin_target),
+             "type": "margin",
+             "result": str(margin_link)},
+            {"op": "find_links",
+             "search": specset_to_list(search_specs),
+             "result": [str(l) for l in found_links]}
+        ]
+    }
+
+
+def scenario_multiple_links_same_doc(session):
+    """Create multiple links from the same source document."""
+    # Create source document
+    source_doc = session.create_document()
+    source_opened = session.open_document(source_doc, READ_WRITE, CONFLICT_FAIL)
+    session.insert(source_opened, Address(1, 1), ["Source with links to multiple targets"])
+
+    # Create three target documents
+    targets = []
+    for i in range(3):
+        doc = session.create_document()
+        opened = session.open_document(doc, READ_WRITE, CONFLICT_FAIL)
+        session.insert(opened, Address(1, 1), [f"Target document {i+1}"])
+        targets.append((doc, opened))
+
+    # Create links to each target
+    links = []
+    link_ops = []
+
+    # Link "Source" to target 1
+    s1 = SpecSet(VSpec(source_opened, [Span(Address(1, 1), Offset(0, 6))]))
+    t1 = SpecSet(VSpec(targets[0][1], [Span(Address(1, 1), Offset(0, 6))]))
+    link1 = session.create_link(source_opened, s1, t1, SpecSet([JUMP_TYPE]))
+    links.append(link1)
+    link_ops.append({"op": "create_link", "source_text": "Source", "target_doc": 1, "result": str(link1)})
+
+    # Link "links" to target 2
+    s2 = SpecSet(VSpec(source_opened, [Span(Address(1, 13), Offset(0, 5))]))
+    t2 = SpecSet(VSpec(targets[1][1], [Span(Address(1, 1), Offset(0, 6))]))
+    link2 = session.create_link(source_opened, s2, t2, SpecSet([JUMP_TYPE]))
+    links.append(link2)
+    link_ops.append({"op": "create_link", "source_text": "links", "target_doc": 2, "result": str(link2)})
+
+    # Link "targets" to target 3
+    s3 = SpecSet(VSpec(source_opened, [Span(Address(1, 31), Offset(0, 7))]))
+    t3 = SpecSet(VSpec(targets[2][1], [Span(Address(1, 1), Offset(0, 6))]))
+    link3 = session.create_link(source_opened, s3, t3, SpecSet([JUMP_TYPE]))
+    links.append(link3)
+    link_ops.append({"op": "create_link", "source_text": "targets", "target_doc": 3, "result": str(link3)})
+
+    # Find all links from source
+    search_span = Span(Address(1, 1), Offset(0, 40))
+    search_specs = SpecSet(VSpec(source_opened, [search_span]))
+    found_links = session.find_links(search_specs)
+
+    # Close all documents
+    session.close_document(source_opened)
+    for _, opened in targets:
+        session.close_document(opened)
+
+    return {
+        "name": "multiple_links_same_doc",
+        "description": "Create multiple links from the same source document to different targets",
+        "operations": [
+            {"op": "create_document", "result": str(source_doc)},
+            {"op": "open_document", "doc": str(source_doc), "mode": "read_write", "result": str(source_opened)},
+            {"op": "insert", "doc": str(source_opened), "address": "1.1", "text": "Source with links to multiple targets"},
+            {"op": "create_documents", "count": 3, "results": [str(t[0]) for t in targets]},
+        ] + link_ops + [
+            {"op": "find_links",
+             "search": specset_to_list(search_specs),
+             "result": [str(l) for l in found_links]}
+        ]
+    }
+
+
+def scenario_bidirectional_links(session):
+    """Create bidirectional links between two documents.
+
+    Note: Internal links (source and target in same document) are NOT supported
+    by the backend - it returns an error. Links must span different documents.
+    This test verifies that links can go both directions between documents.
+    """
+    # Create two documents
+    doc1 = session.create_document()
+    opened1 = session.open_document(doc1, READ_WRITE, CONFLICT_FAIL)
+    session.insert(opened1, Address(1, 1), ["Document one with source text"])
+
+    doc2 = session.create_document()
+    opened2 = session.open_document(doc2, READ_WRITE, CONFLICT_FAIL)
+    session.insert(opened2, Address(1, 1), ["Document two with target text"])
+
+    # Link from doc1 to doc2: "Document" -> "Document"
+    s1 = SpecSet(VSpec(opened1, [Span(Address(1, 1), Offset(0, 8))]))
+    t1 = SpecSet(VSpec(opened2, [Span(Address(1, 1), Offset(0, 8))]))
+    link1 = session.create_link(opened1, s1, t1, SpecSet([JUMP_TYPE]))
+
+    # Link from doc2 back to doc1: "target" -> "source"
+    s2 = SpecSet(VSpec(opened2, [Span(Address(1, 14), Offset(0, 6))]))
+    t2 = SpecSet(VSpec(opened1, [Span(Address(1, 14), Offset(0, 6))]))
+    link2 = session.create_link(opened2, s2, t2, SpecSet([JUMP_TYPE]))
+
+    # Find links from doc1
+    search1 = SpecSet(VSpec(opened1, [Span(Address(1, 1), Offset(0, 30))]))
+    found_from_doc1 = session.find_links(search1)
+
+    # Find links from doc2
+    search2 = SpecSet(VSpec(opened2, [Span(Address(1, 1), Offset(0, 30))]))
+    found_from_doc2 = session.find_links(search2)
+
+    # Follow link1 to target
+    link1_target = session.follow_link(link1, LINK_TARGET)
+
+    # Follow link2 to target (back to doc1)
+    link2_target = session.follow_link(link2, LINK_TARGET)
+
+    session.close_document(opened1)
+    session.close_document(opened2)
+
+    return {
+        "name": "bidirectional_links",
+        "description": "Create bidirectional links between two documents (doc1->doc2 and doc2->doc1)",
+        "operations": [
+            {"op": "create_document", "result": str(doc1)},
+            {"op": "open_document", "doc": str(doc1), "mode": "read_write", "result": str(opened1)},
+            {"op": "insert", "doc": str(opened1), "address": "1.1", "text": "Document one with source text"},
+            {"op": "create_document", "result": str(doc2)},
+            {"op": "open_document", "doc": str(doc2), "mode": "read_write", "result": str(opened2)},
+            {"op": "insert", "doc": str(opened2), "address": "1.1", "text": "Document two with target text"},
+            {"op": "create_link",
+             "home_doc": str(opened1),
+             "source": specset_to_list(s1),
+             "target": specset_to_list(t1),
+             "type": "jump",
+             "result": str(link1),
+             "comment": "Link from doc1 to doc2"},
+            {"op": "create_link",
+             "home_doc": str(opened2),
+             "source": specset_to_list(s2),
+             "target": specset_to_list(t2),
+             "type": "jump",
+             "result": str(link2),
+             "comment": "Link from doc2 back to doc1"},
+            {"op": "find_links",
+             "search": specset_to_list(search1),
+             "result": [str(l) for l in found_from_doc1],
+             "comment": "Links originating from doc1"},
+            {"op": "find_links",
+             "search": specset_to_list(search2),
+             "result": [str(l) for l in found_from_doc2],
+             "comment": "Links originating from doc2"},
+            {"op": "follow_link",
+             "link": str(link1),
+             "end": "target",
+             "result": specset_to_list(link1_target)},
+            {"op": "follow_link",
+             "link": str(link2),
+             "end": "target",
+             "result": specset_to_list(link2_target)}
+        ]
+    }
+
+
+def scenario_find_links_by_target(session):
+    """Find links by searching target spans instead of source."""
+    # Create source document
+    source_doc = session.create_document()
+    source_opened = session.open_document(source_doc, READ_WRITE, CONFLICT_FAIL)
+    session.insert(source_opened, Address(1, 1), ["Document referencing the glossary"])
+
+    # Create target (glossary) document
+    target_doc = session.create_document()
+    target_opened = session.open_document(target_doc, READ_WRITE, CONFLICT_FAIL)
+    session.insert(target_opened, Address(1, 1), ["Glossary: terms and definitions here"])
+
+    # Create link from source to target
+    source_span = Span(Address(1, 21), Offset(0, 8))  # "glossary"
+    target_span = Span(Address(1, 1), Offset(0, 8))  # "Glossary"
+
+    source_specs = SpecSet(VSpec(source_opened, [source_span]))
+    target_specs = SpecSet(VSpec(target_opened, [target_span]))
+
+    link_id = session.create_link(source_opened, source_specs, target_specs, SpecSet([JUMP_TYPE]))
+
+    # Find links by searching the TARGET document (reverse lookup)
+    target_search = SpecSet(VSpec(target_opened, [Span(Address(1, 1), Offset(0, 36))]))
+    # Use empty source specs, search by target
+    from client import NOSPECS
+    found_by_target = session.find_links(NOSPECS, target_search)
+
+    # Follow found link to get source
+    if found_by_target:
+        source_result = session.follow_link(found_by_target[0], LINK_SOURCE)
+        source_contents = session.retrieve_contents(source_result)
+    else:
+        source_result = NOSPECS
+        source_contents = []
+
+    session.close_document(source_opened)
+    session.close_document(target_opened)
+
+    return {
+        "name": "find_links_by_target",
+        "description": "Find links by searching target spans (reverse lookup)",
+        "operations": [
+            {"op": "create_document", "result": str(source_doc)},
+            {"op": "open_document", "doc": str(source_doc), "mode": "read_write", "result": str(source_opened)},
+            {"op": "insert", "doc": str(source_opened), "address": "1.1", "text": "Document referencing the glossary"},
+            {"op": "create_document", "result": str(target_doc)},
+            {"op": "open_document", "doc": str(target_doc), "mode": "read_write", "result": str(target_opened)},
+            {"op": "insert", "doc": str(target_opened), "address": "1.1", "text": "Glossary: terms and definitions here"},
+            {"op": "create_link",
+             "home_doc": str(source_opened),
+             "source": specset_to_list(source_specs),
+             "target": specset_to_list(target_specs),
+             "type": "jump",
+             "result": str(link_id)},
+            {"op": "find_links",
+             "by": "target",
+             "search": specset_to_list(target_search),
+             "result": [str(l) for l in found_by_target]},
+            {"op": "follow_link",
+             "link": str(found_by_target[0]) if found_by_target else "none",
+             "end": "source",
+             "result": specset_to_list(source_result)},
+            {"op": "retrieve_contents",
+             "specs": specset_to_list(source_result),
+             "result": source_contents}
+        ]
+    }
+
+
+def scenario_overlapping_links(session):
+    """Create multiple links with overlapping source spans."""
+    docid = session.create_document()
+    opened = session.open_document(docid, READ_WRITE, CONFLICT_FAIL)
+
+    session.insert(opened, Address(1, 1), ["The hypertext pioneer Vannevar Bush described the memex."])
+
+    # Create target document for definitions
+    def_doc = session.create_document()
+    def_opened = session.open_document(def_doc, READ_WRITE, CONFLICT_FAIL)
+    session.insert(def_opened, Address(1, 1), ["hypertext: non-linear text. Bush: American engineer. memex: memory extender."])
+
+    # Link "hypertext" to its definition
+    link1_source = SpecSet(VSpec(opened, [Span(Address(1, 5), Offset(0, 9))]))
+    link1_target = SpecSet(VSpec(def_opened, [Span(Address(1, 1), Offset(0, 10))]))
+    link1 = session.create_link(opened, link1_source, link1_target, SpecSet([JUMP_TYPE]))
+
+    # Link "hypertext pioneer" (overlapping with previous)
+    link2_source = SpecSet(VSpec(opened, [Span(Address(1, 5), Offset(0, 17))]))
+    link2_target = SpecSet(VSpec(def_opened, [Span(Address(1, 1), Offset(0, 30))]))
+    link2 = session.create_link(opened, link2_source, link2_target, SpecSet([QUOTE_TYPE]))
+
+    # Link "Vannevar Bush"
+    link3_source = SpecSet(VSpec(opened, [Span(Address(1, 23), Offset(0, 13))]))
+    link3_target = SpecSet(VSpec(def_opened, [Span(Address(1, 23), Offset(0, 22))]))
+    link3 = session.create_link(opened, link3_source, link3_target, SpecSet([JUMP_TYPE]))
+
+    # Link "memex"
+    link4_source = SpecSet(VSpec(opened, [Span(Address(1, 51), Offset(0, 5))]))
+    link4_target = SpecSet(VSpec(def_opened, [Span(Address(1, 47), Offset(0, 22))]))
+    link4 = session.create_link(opened, link4_source, link4_target, SpecSet([JUMP_TYPE]))
+
+    # Find links from "hypertext" region - should get both overlapping links
+    hypertext_search = SpecSet(VSpec(opened, [Span(Address(1, 5), Offset(0, 9))]))
+    found_hypertext = session.find_links(hypertext_search)
+
+    # Find all links from full document
+    full_search = SpecSet(VSpec(opened, [Span(Address(1, 1), Offset(0, 60))]))
+    found_all = session.find_links(full_search)
+
+    session.close_document(opened)
+    session.close_document(def_opened)
+
+    return {
+        "name": "overlapping_links",
+        "description": "Create multiple links with overlapping source spans",
+        "operations": [
+            {"op": "create_document", "result": str(docid)},
+            {"op": "open_document", "doc": str(docid), "mode": "read_write", "result": str(opened)},
+            {"op": "insert", "doc": str(opened), "address": "1.1",
+             "text": "The hypertext pioneer Vannevar Bush described the memex."},
+            {"op": "create_document", "result": str(def_doc)},
+            {"op": "open_document", "doc": str(def_doc), "mode": "read_write", "result": str(def_opened)},
+            {"op": "insert", "doc": str(def_opened), "address": "1.1",
+             "text": "hypertext: non-linear text. Bush: American engineer. memex: memory extender."},
+            {"op": "create_link", "source_text": "hypertext", "type": "jump", "result": str(link1)},
+            {"op": "create_link", "source_text": "hypertext pioneer", "type": "quote", "result": str(link2)},
+            {"op": "create_link", "source_text": "Vannevar Bush", "type": "jump", "result": str(link3)},
+            {"op": "create_link", "source_text": "memex", "type": "jump", "result": str(link4)},
+            {"op": "find_links",
+             "search_text": "hypertext",
+             "result": [str(l) for l in found_hypertext],
+             "comment": "Should find both overlapping links"},
+            {"op": "find_links",
+             "search_text": "full document",
+             "result": [str(l) for l in found_all],
+             "comment": "Should find all 4 links"}
+        ]
+    }
+
+
 def scenario_insert_middle(session):
     """Insert text in the middle of existing content."""
     docid = session.create_document()
@@ -625,29 +990,36 @@ def scenario_vcopy(session):
 # Main
 # =============================================================================
 
-# Working scenarios
-WORKING_SCENARIOS = [
+# All working scenarios
+ALL_SCENARIOS = [
+    # Documents
     ("documents", "create_document", scenario_create_document),
+    ("documents", "multiple_documents", scenario_multiple_documents),
+    # Content
     ("content", "insert_text", scenario_insert_text),
     ("content", "multiple_inserts", scenario_multiple_inserts),
     ("content", "insert_middle", scenario_insert_middle),
     ("content", "delete_text", scenario_delete_text),
     ("content", "partial_retrieve", scenario_partial_retrieve),
+    ("content", "vcopy_transclusion", scenario_vcopy),
+    # Versions
+    ("versions", "create_version", scenario_create_version),
+    ("versions", "compare_versions", scenario_compare_versions),
+    # Links
+    ("links", "create_link", scenario_create_link),
+    ("links", "find_links", scenario_find_links),
+    ("links", "link_types", scenario_link_types),
+    ("links", "multiple_links_same_doc", scenario_multiple_links_same_doc),
+    ("links", "bidirectional_links", scenario_bidirectional_links),
+    ("links", "find_links_by_target", scenario_find_links_by_target),
+    ("links", "overlapping_links", scenario_overlapping_links),
+    # Internal
     ("internal", "internal_state", scenario_internal_state),
 ]
 
-# Scenarios that fail due to backend bugs (abort traps, error responses)
-# These need C backend fixes before they can be used
-FAILING_SCENARIOS = [
-    ("documents", "multiple_documents", scenario_multiple_documents),  # error on second create
-    ("content", "vcopy_transclusion", scenario_vcopy),        # error response
-    ("versions", "create_version", scenario_create_version),  # abort trap
-    ("versions", "compare_versions", scenario_compare_versions),  # abort trap
-    ("links", "create_link", scenario_create_link),           # error response
-    ("links", "find_links", scenario_find_links),             # error response
-]
-
-ALL_SCENARIOS = WORKING_SCENARIOS
+# Legacy alias for backward compatibility
+WORKING_SCENARIOS = ALL_SCENARIOS
+FAILING_SCENARIOS = []
 
 
 def run_scenario(backend_path, category, name, scenario_func):
