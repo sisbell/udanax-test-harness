@@ -122,7 +122,7 @@ The Python client (`febe/client.py`) implements:
 | `create_document()` | 11 | ✓ |
 | `delete()` / `remove()` | 12 | ✓ |
 | `create_version()` | 13 | ✓ |
-| `retrieve_vspan()` | 14 | No |
+| `retrieve_vspan()` | 14 | ✓ |
 | `quit()` | 16 | N/A |
 | `follow_link()` | 18 | ✓ |
 | `find_documents()` | 22 | ✓ |
