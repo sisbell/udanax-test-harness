@@ -188,7 +188,7 @@ The version is a "child" in the address space of the original, but operationally
 
 ## Related Bugs
 
-None discovered during version testing. All 15 scenarios pass.
+- **Bug 009**: `compare_versions` crashes when documents have links. The link subspace (V-position 0.x) stores link ISAs rather than text content, which breaks assumptions in `correspond.c`. See Finding 009 for the architectural explanation.
 
 ## Conclusion
 

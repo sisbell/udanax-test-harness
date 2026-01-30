@@ -11,6 +11,10 @@
 
 #include "xanadu.h"
 
+/* Bug 009 fix: Handle NULL results from restrictvspecsetovercommonispans gracefully.
+ * When comparing versions of documents with links, the link subspace spans may not
+ * produce any matching ispans, resulting in NULL specsets. Previously this would crash.
+ */
 int restrictspecsetsaccordingtoispans(typetask *taskptr, typeispanset ispanset, typespecset *specset1, typespecset *specset2)
 {
   typespecset s1;
@@ -21,13 +25,23 @@ fooitemset("\n specset2 = \n",*specset2);
 #endif
 	restrictvspecsetovercommonispans (taskptr, ispanset, *specset1, &s1);
 /*	removespansnotinoriginal (taskptr, *specset1, &s1);	*/
-	removespansnotinoriginal (taskptr, s1, specset1);
-	tfreeitemset (taskptr, /**specset1*/(typeitemset)s1);
+	/* Bug 009 fix: Only call removespansnotinoriginal if s1 is not NULL */
+	if (s1 && *specset1) {
+		removespansnotinoriginal (taskptr, s1, specset1);
+	}
+	if (s1) {
+		tfreeitemset (taskptr, (typeitemset)s1);
+	}
 /*	*specset1 = s1;       */
 	restrictvspecsetovercommonispans (taskptr, ispanset, *specset2, &s2);
 /*	removespansnotinoriginal (taskptr, *specset2, &s2);	*/
-	removespansnotinoriginal (taskptr, s2, specset2);
-	tfreeitemset (taskptr, /**specset2*/(typeitemset)s2);
+	/* Bug 009 fix: Only call removespansnotinoriginal if s2 is not NULL */
+	if (s2 && *specset2) {
+		removespansnotinoriginal (taskptr, s2, specset2);
+	}
+	if (s2) {
+		tfreeitemset (taskptr, (typeitemset)s2);
+	}
 /*	*specset2 = s2;       */
 #ifndef DISTRIBUTION
 fooitemset("leaving retrievespecsetsaccordingtoispans \n",*specset1);
@@ -120,6 +134,14 @@ fooitemset("leaving removespansnotinoriginal\n",*newptr);
 #endif
 }
 
+/* intersectspansets: Find the intersection of two span sets.
+ * Returns TRUE if successful (even if result is empty).
+ * set1 and set2 are input spansets; set3 points to the result.
+ *
+ * Bug 009 fix: NULL inputs are now handled gracefully - they produce an empty
+ * result rather than crashing. This is important when comparing documents that
+ * contain links, as the link subspace (position 0) spans may not convert to ispans.
+ */
 bool intersectspansets(typetask *taskptr, typespanset set1, typespanset set2, typespanset *set3, INT spantype)
 {
   typespan *p;
@@ -128,19 +150,30 @@ bool intersectspansets(typetask *taskptr, typespanset set1, typespanset set2, ty
 foo("entering intersectspansets");
 #endif
 
-	if (!set1 || !set2 || !set3)
+	/* Output pointer must not be NULL */
+	if (!set3)
 #ifndef DISTRIBUTION
-		gerror ("Bad intersectspansets call\n");
+		gerror ("intersectspansets called with NULL output pointer\n");
 #else
-	gerror("");
+		gerror("");
 #endif
+
+	*set3 = NULL;
+
+	/* If either input is NULL/empty, intersection is empty - return success */
+	if (!set1 || !set2) {
+#ifndef DISTRIBUTION
+foo("intersectspansets: one or both inputs NULL, returning empty result");
+#endif
+		return (TRUE);
+	}
+
 #ifndef DISTRIBUTION
 foo("dumping set1\n");
 foospanset("",set1);
 foo("dumping set2\n");
 foospanset("",set2);
 #endif
-	*set3 = NULL;
 	for (; set1; set1 = set1->next) {
 		for (p = set2; p; p = p->next) {
 			if (comparespans (taskptr, set1, p, set3, spantype))

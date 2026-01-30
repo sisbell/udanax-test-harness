@@ -412,6 +412,57 @@ bool doretrieveendsets(typetask *taskptr, typespecset specset, typespecset *from
 }
 
 
+/* Bug 009 SEMANTIC FIX: Filter vspanset to text subspace only (V >= 1.0).
+ *
+ * compare_versions finds content with "common origin" - shared permascroll
+ * identity. Link references at V-position 0.x are document metadata, not
+ * transcludable content. They have unique ISAs, not permascroll addresses,
+ * so comparing them is semantically undefined.
+ *
+ * See Finding 015: Semantic Definition of compare_versions
+ */
+typevspanset filter_vspanset_to_text_subspace(typetask *taskptr, typevspanset vspanset)
+{
+  typevspanset result = NULL;
+  typevspanset *resultptr = &result;
+  tumbler text_subspace_start;
+  INT *taskalloc();
+
+	/* Create tumbler for 1.0 (start of text subspace) */
+	tumblerclear(&text_subspace_start);
+	tumblerincrement(&text_subspace_start, 0, 1, &text_subspace_start);
+
+	/* Copy only spans where stream >= 1.0 */
+	for (; vspanset; vspanset = vspanset->next) {
+		if (tumblercmp(&vspanset->stream, &text_subspace_start) >= EQUAL) {
+			/* This span is in text subspace - keep it */
+			*resultptr = (typevspanset)taskalloc(taskptr, sizeof(typevspan));
+			(*resultptr)->itemid = VSPANID;
+			movetumbler(&vspanset->stream, &(*resultptr)->stream);
+			movetumbler(&vspanset->width, &(*resultptr)->width);
+			(*resultptr)->next = NULL;
+			resultptr = &(*resultptr)->next;
+		}
+		/* Spans with stream < 1.0 are in link subspace - skip them */
+	}
+	return result;
+}
+
+/* Filter all vspansets in a specset to text subspace only */
+void filter_specset_to_text_subspace(typetask *taskptr, typespecset specset)
+{
+  typevspec *vspec;
+  typevspanset filtered;
+
+	for (; specset; specset = (typespecset)((typeitemheader *)specset)->next) {
+		vspec = (typevspec *)specset;
+		filtered = filter_vspanset_to_text_subspace(taskptr, vspec->vspanset);
+		/* Note: We don't free the old vspanset here as it may be shared.
+		 * The task allocator will clean up when the task completes. */
+		vspec->vspanset = filtered;
+	}
+}
+
 bool doshowrelationof2versions(typetask *taskptr, typespecset version1, typespecset version2, typespanpairset *relation)
 {
   typeispanset version1ispans = NULL;
@@ -420,6 +471,12 @@ bool doshowrelationof2versions(typetask *taskptr, typespecset version1, typespec
   bool specset2ispanset();
   bool intersectspansets();
   bool ispansetandspecsets2spanpairset();
+
+	/* SEMANTIC FIX: Filter to text subspace before comparison.
+	 * Link references (V < 1.0) are not content with "common origin".
+	 * See Finding 015 for the semantic definition. */
+	filter_specset_to_text_subspace(taskptr, version1);
+	filter_specset_to_text_subspace(taskptr, version2);
 
 	return
 		specset2ispanset(taskptr, version1, &version1ispans, READBERT)

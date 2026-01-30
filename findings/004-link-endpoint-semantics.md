@@ -86,6 +86,8 @@ Xanadu Green implements the intended design:
 ## Related
 
 - Bug 008: ~~Backend crashes on linked document edit~~ RESOLVED (client bugs)
+- Bug 009: compare_versions crashes when documents have links (link subspace issue)
 - Finding 002: Transclusion preserves immutable content identity
 - Finding 003: Multi-span operations preserve independent identity
+- Finding 009: Document address space structure (explains how links are stored at V-position 0.x)
 - `findings/xanadu-model-validation.md` - Detailed semantic validation

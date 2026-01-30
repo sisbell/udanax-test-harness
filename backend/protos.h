@@ -168,6 +168,9 @@ int putspanpair(typetask *taskptr, typespanpair *spanpair);
 int putcreatelink(typetask *taskptr, typeisa *istreamptr);
 int putfollowlink(typetask *taskptr, typespecset specset);
 int putretrievedocvspanset(typetask *taskptr, typespanset *spansetptr);
+/* Bug 009 semantic fix: filter to text subspace (V >= 1.0) */
+typevspanset filter_vspanset_to_text_subspace(typetask *taskptr, typevspanset vspanset);
+void filter_specset_to_text_subspace(typetask *taskptr, typespecset specset);
 int putretrievev(typetask *taskptr, typevstuffset *vstuffsetptr);
 int putfindlinksfromtothree(typetask *taskptr, typelinkset linkset);
 int putfindnumoflinksfromtothree(typetask *taskptr, INT num);
