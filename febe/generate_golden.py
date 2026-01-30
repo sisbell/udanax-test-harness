@@ -793,6 +793,172 @@ def scenario_overlapping_links(session):
     }
 
 
+def scenario_find_links_by_type(session):
+    """Find links filtered by their type."""
+    # Create source document
+    source_doc = session.create_document()
+    source_opened = session.open_document(source_doc, READ_WRITE, CONFLICT_FAIL)
+    session.insert(source_opened, Address(1, 1), ["Source with jump quote and footnote links"])
+
+    # Create target document
+    target_doc = session.create_document()
+    target_opened = session.open_document(target_doc, READ_WRITE, CONFLICT_FAIL)
+    session.insert(target_opened, Address(1, 1), ["Target document for links"])
+
+    # Create links of different types
+    # "jump" at position 13-16
+    jump_source = SpecSet(VSpec(source_opened, [Span(Address(1, 13), Offset(0, 4))]))
+    jump_target = SpecSet(VSpec(target_opened, [Span(Address(1, 1), Offset(0, 6))]))
+    jump_link = session.create_link(source_opened, jump_source, jump_target, SpecSet([JUMP_TYPE]))
+
+    # "quote" at position 18-22
+    quote_source = SpecSet(VSpec(source_opened, [Span(Address(1, 18), Offset(0, 5))]))
+    quote_target = SpecSet(VSpec(target_opened, [Span(Address(1, 8), Offset(0, 8))]))
+    quote_link = session.create_link(source_opened, quote_source, quote_target, SpecSet([QUOTE_TYPE]))
+
+    # "footnote" at position 28-35
+    footnote_source = SpecSet(VSpec(source_opened, [Span(Address(1, 28), Offset(0, 8))]))
+    footnote_target = SpecSet(VSpec(target_opened, [Span(Address(1, 17), Offset(0, 8))]))
+    footnote_link = session.create_link(source_opened, footnote_source, footnote_target, SpecSet([FOOTNOTE_TYPE]))
+
+    # Search the whole document
+    full_search = SpecSet(VSpec(source_opened, [Span(Address(1, 1), Offset(0, 50))]))
+
+    # Find all links (no type filter)
+    all_links = session.find_links(full_search)
+
+    # Find only JUMP links
+    jump_links = session.find_links(full_search, NOSPECS, SpecSet([JUMP_TYPE]))
+
+    # Find only QUOTE links
+    quote_links = session.find_links(full_search, NOSPECS, SpecSet([QUOTE_TYPE]))
+
+    # Find only FOOTNOTE links
+    footnote_links = session.find_links(full_search, NOSPECS, SpecSet([FOOTNOTE_TYPE]))
+
+    session.close_document(source_opened)
+    session.close_document(target_opened)
+
+    return {
+        "name": "find_links_by_type",
+        "description": "Find links filtered by their type",
+        "operations": [
+            {"op": "create_document", "result": str(source_doc)},
+            {"op": "open_document", "doc": str(source_doc), "mode": "read_write", "result": str(source_opened)},
+            {"op": "insert", "doc": str(source_opened), "address": "1.1",
+             "text": "Source with jump quote and footnote links"},
+            {"op": "create_document", "result": str(target_doc)},
+            {"op": "open_document", "doc": str(target_doc), "mode": "read_write", "result": str(target_opened)},
+            {"op": "insert", "doc": str(target_opened), "address": "1.1",
+             "text": "Target document for links"},
+            {"op": "create_link", "source_text": "jump", "type": "jump", "result": str(jump_link)},
+            {"op": "create_link", "source_text": "quote", "type": "quote", "result": str(quote_link)},
+            {"op": "create_link", "source_text": "footnote", "type": "footnote", "result": str(footnote_link)},
+            {"op": "find_links", "filter": "none",
+             "result": [str(l) for l in all_links],
+             "comment": "All 3 links"},
+            {"op": "find_links", "filter": "jump",
+             "result": [str(l) for l in jump_links],
+             "comment": "Only jump links"},
+            {"op": "find_links", "filter": "quote",
+             "result": [str(l) for l in quote_links],
+             "comment": "Only quote links"},
+            {"op": "find_links", "filter": "footnote",
+             "result": [str(l) for l in footnote_links],
+             "comment": "Only footnote links"}
+        ]
+    }
+
+
+def scenario_retrieve_endsets(session):
+    """Retrieve the endpoint specsets of a link."""
+    # Create source document
+    source_doc = session.create_document()
+    source_opened = session.open_document(source_doc, READ_WRITE, CONFLICT_FAIL)
+    session.insert(source_opened, Address(1, 1), ["Click here to navigate"])
+
+    # Create target document
+    target_doc = session.create_document()
+    target_opened = session.open_document(target_doc, READ_WRITE, CONFLICT_FAIL)
+    session.insert(target_opened, Address(1, 1), ["Destination content"])
+
+    # Create a link
+    link_source = SpecSet(VSpec(source_opened, [Span(Address(1, 7), Offset(0, 4))]))  # "here"
+    link_target = SpecSet(VSpec(target_opened, [Span(Address(1, 1), Offset(0, 11))]))  # "Destination"
+    link_id = session.create_link(source_opened, link_source, link_target, SpecSet([JUMP_TYPE]))
+
+    # Retrieve the endsets of the link
+    link_specset = SpecSet(VSpec(source_opened, [Span(Address(1, 0, 2, 1), Offset(0, 1))]))
+    source_specs, target_specs, type_specs = session.retrieve_endsets(link_specset)
+
+    session.close_document(source_opened)
+    session.close_document(target_opened)
+
+    return {
+        "name": "retrieve_endsets",
+        "description": "Retrieve the endpoint specsets of a link",
+        "operations": [
+            {"op": "create_document", "result": str(source_doc)},
+            {"op": "open_document", "doc": str(source_doc), "mode": "read_write", "result": str(source_opened)},
+            {"op": "insert", "doc": str(source_opened), "address": "1.1", "text": "Click here to navigate"},
+            {"op": "create_document", "result": str(target_doc)},
+            {"op": "open_document", "doc": str(target_doc), "mode": "read_write", "result": str(target_opened)},
+            {"op": "insert", "doc": str(target_opened), "address": "1.1", "text": "Destination content"},
+            {"op": "create_link", "source_text": "here", "type": "jump", "result": str(link_id)},
+            {"op": "retrieve_endsets", "link": str(link_id),
+             "source": specset_to_list(source_specs),
+             "target": specset_to_list(target_specs),
+             "type": specset_to_list(type_specs)}
+        ]
+    }
+
+
+def scenario_follow_link(session):
+    """Follow a link to retrieve its destination content."""
+    # Create source document
+    source_doc = session.create_document()
+    source_opened = session.open_document(source_doc, READ_WRITE, CONFLICT_FAIL)
+    session.insert(source_opened, Address(1, 1), ["See the reference for more info"])
+
+    # Create target document with detailed content
+    target_doc = session.create_document()
+    target_opened = session.open_document(target_doc, READ_WRITE, CONFLICT_FAIL)
+    session.insert(target_opened, Address(1, 1), ["Reference: This is the detailed explanation."])
+
+    # Create a link from "reference" to the explanation
+    link_source = SpecSet(VSpec(source_opened, [Span(Address(1, 9), Offset(0, 9))]))  # "reference"
+    link_target = SpecSet(VSpec(target_opened, [Span(Address(1, 12), Offset(0, 32))]))  # explanation
+    link_id = session.create_link(source_opened, link_source, link_target, SpecSet([JUMP_TYPE]))
+
+    # Follow the link to get the target
+    target_content = session.follow_link(link_id, LINK_TARGET)
+
+    # Retrieve the actual text at the target
+    target_text = session.retrieve_contents(target_content)
+
+    session.close_document(source_opened)
+    session.close_document(target_opened)
+
+    return {
+        "name": "follow_link",
+        "description": "Follow a link to retrieve its destination content",
+        "operations": [
+            {"op": "create_document", "result": str(source_doc)},
+            {"op": "open_document", "doc": str(source_doc), "mode": "read_write", "result": str(source_opened)},
+            {"op": "insert", "doc": str(source_opened), "address": "1.1", "text": "See the reference for more info"},
+            {"op": "create_document", "result": str(target_doc)},
+            {"op": "open_document", "doc": str(target_doc), "mode": "read_write", "result": str(target_opened)},
+            {"op": "insert", "doc": str(target_opened), "address": "1.1",
+             "text": "Reference: This is the detailed explanation."},
+            {"op": "create_link", "source_text": "reference", "type": "jump", "result": str(link_id)},
+            {"op": "follow_link", "link": str(link_id), "end": "target",
+             "result": specset_to_list(target_content)},
+            {"op": "retrieve_contents", "result": target_text,
+             "comment": "The actual text at the link destination"}
+        ]
+    }
+
+
 def scenario_insert_middle(session):
     """Insert text in the middle of existing content."""
     docid = session.create_document()
@@ -1013,6 +1179,9 @@ ALL_SCENARIOS = [
     ("links", "bidirectional_links", scenario_bidirectional_links),
     ("links", "find_links_by_target", scenario_find_links_by_target),
     ("links", "overlapping_links", scenario_overlapping_links),
+    ("links", "find_links_by_type", scenario_find_links_by_type),
+    ("links", "retrieve_endsets", scenario_retrieve_endsets),
+    ("links", "follow_link", scenario_follow_link),
     # Internal
     ("internal", "internal_state", scenario_internal_state),
 ]
