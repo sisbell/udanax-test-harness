@@ -313,11 +313,36 @@ def scenario_multiple_deletes(session):
     }
 
 
-# NOTE: scenario_delete_all is disabled due to Bug 007 - backend crashes when deleting all content
-# def scenario_delete_all(session):
-#     """Delete all content from a document."""
-#     # See bugs/007-backend-crashes-on-delete-all.md
-#     pass
+def scenario_delete_all(session):
+    """Delete all content from a document."""
+    docid = session.create_document()
+    opened_docid = session.open_document(docid, READ_WRITE, CONFLICT_FAIL)
+
+    # Insert text
+    session.insert(opened_docid, Address(1, 1), ["Content to delete"])
+    vspanset1 = session.retrieve_vspanset(opened_docid)
+
+    # Delete all content
+    session.remove(opened_docid, Span(Address(1, 1), Offset(0, 17)))
+    vspanset2 = session.retrieve_vspanset(opened_docid)
+
+    session.close_document(opened_docid)
+
+    return {
+        "name": "delete_all",
+        "description": "Delete all content from a document",
+        "operations": [
+            {"op": "create_document", "result": str(docid)},
+            {"op": "open_document", "doc": str(docid), "mode": "read_write", "result": str(opened_docid)},
+            {"op": "insert", "doc": str(opened_docid), "address": "1.1", "text": "Content to delete"},
+            {"op": "retrieve_vspanset", "doc": str(opened_docid), "result": vspec_to_dict(vspanset1)},
+            {"op": "remove", "doc": str(opened_docid), "span": span_to_dict(Span(Address(1, 1), Offset(0, 17))),
+             "comment": "Delete all content"},
+            {"op": "retrieve_vspanset", "doc": str(opened_docid), "result": vspec_to_dict(vspanset2),
+             "comment": "Should be empty"},
+            {"op": "close_document", "doc": str(opened_docid)}
+        ]
+    }
 
 
 def scenario_rearrange_content(session):
@@ -490,7 +515,7 @@ SCENARIOS = [
     ("content", "insert_beginning", scenario_insert_beginning),
     ("content", "delete_text", scenario_delete_text),
     ("content", "multiple_deletes", scenario_multiple_deletes),
-    # ("content", "delete_all", scenario_delete_all),  # Bug 007: crashes backend
+    ("content", "delete_all", scenario_delete_all),
     ("content", "partial_retrieve", scenario_partial_retrieve),
     ("content", "rearrange_content", scenario_rearrange_content),
     ("content", "vcopy_transclusion", scenario_vcopy),
