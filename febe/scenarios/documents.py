@@ -165,6 +165,121 @@ def scenario_conflict_copy(session):
     }
 
 
+def scenario_retrieve_vspan(session):
+    """Retrieve the single extent span of a document.
+
+    retrieve_vspan returns a single VSpan covering the document's extent,
+    while retrieve_vspanset returns multiple spans (for gaps or mixed content).
+    """
+    doc = session.create_document()
+    opened = session.open_document(doc, READ_WRITE, CONFLICT_FAIL)
+
+    # Insert some content
+    session.insert(opened, Address(1, 1), ["Hello World"])
+
+    # Get single vspan (document extent)
+    vspan = session.retrieve_vspan(opened)
+
+    # Compare with vspanset
+    vspanset = session.retrieve_vspanset(opened)
+
+    # Retrieve content using the vspan
+    specset = SpecSet(VSpec(opened, [vspan.span]))
+    contents = session.retrieve_contents(specset)
+
+    session.close_document(opened)
+
+    return {
+        "name": "retrieve_vspan",
+        "description": "Retrieve single extent span vs span set",
+        "operations": [
+            {"op": "create_document", "result": str(doc)},
+            {"op": "open_document", "doc": str(doc), "result": str(opened)},
+            {"op": "insert", "address": "1.1", "text": "Hello World"},
+            {"op": "retrieve_vspan", "result": str(vspan),
+             "comment": "Single span covering document extent"},
+            {"op": "retrieve_vspanset", "result": vspec_to_dict(vspanset),
+             "comment": "Span set (may have multiple spans)"},
+            {"op": "retrieve_contents", "result": contents}
+        ]
+    }
+
+
+def scenario_retrieve_vspan_empty(session):
+    """Retrieve vspan of an empty document."""
+    doc = session.create_document()
+    opened = session.open_document(doc, READ_ONLY, CONFLICT_FAIL)
+
+    # Get vspan of empty document
+    vspan = session.retrieve_vspan(opened)
+    vspanset = session.retrieve_vspanset(opened)
+
+    session.close_document(opened)
+
+    return {
+        "name": "retrieve_vspan_empty",
+        "description": "Retrieve vspan of empty document",
+        "operations": [
+            {"op": "create_document", "result": str(doc)},
+            {"op": "open_document", "doc": str(doc), "result": str(opened)},
+            {"op": "retrieve_vspan", "result": str(vspan),
+             "comment": "Empty document extent"},
+            {"op": "retrieve_vspanset", "result": vspec_to_dict(vspanset),
+             "comment": "Empty document span set"}
+        ]
+    }
+
+
+def scenario_retrieve_vspan_with_links(session):
+    """Retrieve vspan of a document containing both text and links.
+
+    Documents with links have content in two subspaces:
+    - V-position 1.x: text content
+    - V-position 0.x: link references
+
+    retrieve_vspan returns the overall extent, while retrieve_vspanset
+    may return separate spans for each subspace.
+    """
+    from .common import JUMP_TYPE
+
+    doc = session.create_document()
+    opened = session.open_document(doc, READ_WRITE, CONFLICT_FAIL)
+
+    # Insert text
+    session.insert(opened, Address(1, 1), ["Click here"])
+
+    # Create a link (adds content to 0.x subspace)
+    target_doc = session.create_document()
+    target_opened = session.open_document(target_doc, READ_WRITE, CONFLICT_FAIL)
+    session.insert(target_opened, Address(1, 1), ["Target"])
+
+    link_source = SpecSet(VSpec(opened, [Span(Address(1, 7), Offset(0, 4))]))  # "here"
+    link_target = SpecSet(VSpec(target_opened, [Span(Address(1, 1), Offset(0, 6))]))
+    link_id = session.create_link(opened, link_source, link_target, SpecSet([JUMP_TYPE]))
+
+    # Compare vspan vs vspanset
+    vspan = session.retrieve_vspan(opened)
+    vspanset = session.retrieve_vspanset(opened)
+
+    session.close_document(opened)
+    session.close_document(target_opened)
+
+    return {
+        "name": "retrieve_vspan_with_links",
+        "description": "Retrieve vspan of document with text and links",
+        "operations": [
+            {"op": "create_document", "result": str(doc)},
+            {"op": "open_document", "doc": str(doc), "result": str(opened)},
+            {"op": "insert", "address": "1.1", "text": "Click here"},
+            {"op": "create_link", "result": str(link_id)},
+            {"op": "retrieve_vspan", "result": str(vspan),
+             "comment": "Overall extent (may cover both subspaces)"},
+            {"op": "retrieve_vspanset", "result": vspec_to_dict(vspanset),
+             "comment": "Separate spans for text (1.x) and links (0.x)"}
+        ]
+    }
+
+
 def scenario_find_documents(session):
     """Find documents that contain specific content."""
     # Create multiple documents with some shared content (via vcopy)
@@ -210,5 +325,8 @@ SCENARIOS = [
     ("documents", "read_only_access", scenario_read_only_access),
     ("documents", "reopen_document", scenario_reopen_document),
     ("documents", "conflict_copy", scenario_conflict_copy),
+    ("documents", "retrieve_vspan", scenario_retrieve_vspan),
+    ("documents", "retrieve_vspan_empty", scenario_retrieve_vspan_empty),
+    ("documents", "retrieve_vspan_with_links", scenario_retrieve_vspan_with_links),
     ("documents", "find_documents", scenario_find_documents),
 ]
