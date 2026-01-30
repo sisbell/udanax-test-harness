@@ -594,12 +594,18 @@ class XuError(Exception):
 # link ends
 (LINK_SOURCE, LINK_TARGET, LINK_TYPE) = (1, 2, 3)
 
-# conventional link type addresses
-LINK_DOCID = Address(1, 1, 0, 1, 0, 2)
-JUMP_TYPE = VSpec(LINK_DOCID, [Span(Address(2, 1), Offset(0, 1))])
-QUOTE_TYPE = VSpec(LINK_DOCID, [Span(Address(2, 2), Offset(0, 1))])
-FOOTNOTE_TYPE = VSpec(LINK_DOCID, [Span(Address(2, 3), Offset(0, 1))])
-MARGIN_TYPE = VSpec(LINK_DOCID, [Span(Address(2, 4), Offset(0, 1))])
+# Link type addresses - types are in document 1's link subspace (0.2)
+# Full address format: 1.1.0.1.0.1.0.2.X where X is the type number
+# See resources/link-registry/link-types.md for the registry
+LINK_TYPES_DOC = Address(1, 1, 0, 1, 0, 1)  # Document 1 (bootstrap doc)
+
+# Type numbers from the registry (link-types-relationship.md):
+#   2.2 = jump, 2.3 = quote, 2.6 = footnote, 2.6.2 = footnote.margin
+# Local address within doc: version.0.link_subspace.type = 1.0.2.X
+JUMP_TYPE = VSpec(LINK_TYPES_DOC, [Span(Address(1, 0, 2, 2), Offset(0, 1))])
+QUOTE_TYPE = VSpec(LINK_TYPES_DOC, [Span(Address(1, 0, 2, 3), Offset(0, 1))])
+FOOTNOTE_TYPE = VSpec(LINK_TYPES_DOC, [Span(Address(1, 0, 2, 6), Offset(0, 1))])
+MARGIN_TYPE = VSpec(LINK_TYPES_DOC, [Span(Address(1, 0, 2, 6, 2), Offset(0, 1))])
 
 LINK_TYPES = [JUMP_TYPE, QUOTE_TYPE, FOOTNOTE_TYPE, MARGIN_TYPE]
 TYPE_NAMES = {JUMP_TYPE: "jump", QUOTE_TYPE: "quote",
