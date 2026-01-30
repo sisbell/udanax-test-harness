@@ -362,10 +362,15 @@ bool doretrievedocvspanset(typetask *taskptr, typeisa *docisaptr, typevspanset *
   typeorgl docorgl;
   bool findorgl(), isemptyorgl(), retrievevspansetpm();
 
-	return
-	   findorgl (taskptr, granf, docisaptr, &docorgl, READBERT)
-	&& !isemptyorgl (docorgl)
-	&& retrievevspansetpm (taskptr, docorgl, vspansetptr);
+	if (!findorgl (taskptr, granf, docisaptr, &docorgl, READBERT))
+		return FALSE;
+
+	if (isemptyorgl (docorgl)) {
+		*vspansetptr = NULL;  /* Empty document returns empty vspanset */
+		return TRUE;
+	}
+
+	return retrievevspansetpm (taskptr, docorgl, vspansetptr);
 }
 
 bool doretrievev(typetask *taskptr, typespecset specset, typevstuffset *vstuffsetptr)

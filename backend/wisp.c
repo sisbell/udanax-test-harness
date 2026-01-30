@@ -183,15 +183,11 @@ bool setwispnd(typecuc *father)
 
         /* remember original so can tell if changed */
         if ((ptr = findleftson (father)) == NULL) {
-#ifndef DISTRIBUTION
-gerror("in setwispnd null findleftson\n");
+                /* All children deleted - clear width and mark modified */
                 clear (&father->cdsp, sizeof(father->cdsp));
                 clear (&father->cwid, sizeof(father->cwid));
                 ivemodified((typecorecrum*)father);
                 return (TRUE);
-#else
-		gerror("");
-#endif
         }
         /* find new upper-left corner */
         movewisp (&ptr->cdsp, &mindsp);
