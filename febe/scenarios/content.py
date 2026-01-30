@@ -853,6 +853,309 @@ def scenario_vcopy_from_version(session):
     }
 
 
+def scenario_retrieve_noncontiguous_spans(session):
+    """Retrieve multiple non-contiguous spans from a single document in one call."""
+    docid = session.create_document()
+    opened = session.open_document(docid, READ_WRITE, CONFLICT_FAIL)
+
+    # Insert text: "The quick brown fox jumps over the lazy dog"
+    session.insert(opened, Address(1, 1), ["The quick brown fox jumps over the lazy dog"])
+    vspanset = session.retrieve_vspanset(opened)
+
+    # Retrieve non-contiguous spans: "quick" (5-9) and "lazy" (36-39)
+    span1 = Span(Address(1, 5), Offset(0, 5))   # "quick"
+    span2 = Span(Address(1, 36), Offset(0, 4))  # "lazy"
+    multi_specset = SpecSet(VSpec(opened, [span1, span2]))
+    multi_contents = session.retrieve_contents(multi_specset)
+
+    # Also retrieve them separately for comparison
+    single1 = SpecSet(VSpec(opened, [span1]))
+    single2 = SpecSet(VSpec(opened, [span2]))
+    contents1 = session.retrieve_contents(single1)
+    contents2 = session.retrieve_contents(single2)
+
+    session.close_document(opened)
+
+    return {
+        "name": "retrieve_noncontiguous_spans",
+        "description": "Retrieve multiple non-contiguous spans from a document in one call",
+        "operations": [
+            {"op": "create_document", "result": str(docid)},
+            {"op": "open_document", "doc": str(docid), "mode": "read_write", "result": str(opened)},
+            {"op": "insert", "doc": str(opened), "address": "1.1",
+             "text": "The quick brown fox jumps over the lazy dog"},
+            {"op": "retrieve_contents", "spans": ["quick (5-9)", "lazy (36-39)"],
+             "combined": True, "result": multi_contents},
+            {"op": "retrieve_contents", "span": "quick", "result": contents1},
+            {"op": "retrieve_contents", "span": "lazy", "result": contents2},
+            {"op": "close_document", "doc": str(opened)}
+        ]
+    }
+
+
+def scenario_retrieve_multiple_documents(session):
+    """Retrieve content from multiple documents in a single SpecSet."""
+    # Create three documents with different content
+    docs = []
+    for i, text in enumerate(["Alpha content", "Beta content", "Gamma content"]):
+        docid = session.create_document()
+        opened = session.open_document(docid, READ_WRITE, CONFLICT_FAIL)
+        session.insert(opened, Address(1, 1), [text])
+        session.close_document(opened)
+        docs.append(docid)
+
+    # Open all for reading
+    opened_docs = []
+    for docid in docs:
+        opened = session.open_document(docid, READ_ONLY, CONFLICT_COPY)
+        opened_docs.append(opened)
+
+    # Create a SpecSet with spans from all three documents
+    # Get first word from each: "Alpha", "Beta", "Gamma"
+    vspecs = []
+    for opened in opened_docs:
+        vs = session.retrieve_vspanset(opened)
+        # First 5 characters of each
+        span = Span(Address(1, 1), Offset(0, 5))
+        vspecs.append(VSpec(opened, [span]))
+
+    # Retrieve from multiple documents at once
+    multi_doc_specset = SpecSet(*vspecs)
+    multi_contents = session.retrieve_contents(multi_doc_specset)
+
+    # Close all
+    for opened in opened_docs:
+        session.close_document(opened)
+
+    return {
+        "name": "retrieve_multiple_documents",
+        "description": "Retrieve content from multiple documents in a single SpecSet",
+        "operations": [
+            {"op": "create_documents", "count": 3,
+             "texts": ["Alpha content", "Beta content", "Gamma content"],
+             "results": [str(d) for d in docs]},
+            {"op": "retrieve_contents",
+             "specset": "First 5 chars from each document",
+             "result": multi_contents,
+             "comment": "Should contain 'Alpha', 'Beta', 'Gamma'"}
+        ]
+    }
+
+
+def scenario_vcopy_multiple_spans(session):
+    """Copy multiple non-contiguous spans in a single vcopy operation."""
+    # Create source document
+    source = session.create_document()
+    source_opened = session.open_document(source, READ_WRITE, CONFLICT_FAIL)
+    session.insert(source_opened, Address(1, 1), ["First part. Middle part. Last part."])
+    session.close_document(source_opened)
+
+    # Create target document
+    target = session.create_document()
+    target_opened = session.open_document(target, READ_WRITE, CONFLICT_FAIL)
+    session.insert(target_opened, Address(1, 1), ["Copied: "])
+
+    # vcopy "First part" and "Last part" (skipping middle)
+    source_read = session.open_document(source, READ_ONLY, CONFLICT_COPY)
+    span1 = Span(Address(1, 1), Offset(0, 10))   # "First part"
+    span2 = Span(Address(1, 26), Offset(0, 10))  # "Last part."
+    multi_span_specs = SpecSet(VSpec(source_read, [span1, span2]))
+
+    target_vs = session.retrieve_vspanset(target_opened)
+    session.vcopy(target_opened, target_vs.spans[0].end(), multi_span_specs)
+    session.close_document(source_read)
+
+    # Get final target content
+    target_final_vs = session.retrieve_vspanset(target_opened)
+    target_final_ss = SpecSet(VSpec(target_opened, list(target_final_vs.spans)))
+    target_contents = session.retrieve_contents(target_final_ss)
+    session.close_document(target_opened)
+
+    # Compare with source - should share "First part" and "Last part"
+    source_read2 = session.open_document(source, READ_ONLY, CONFLICT_COPY)
+    target_read = session.open_document(target, READ_ONLY, CONFLICT_COPY)
+    s_vs = session.retrieve_vspanset(source_read2)
+    t_vs = session.retrieve_vspanset(target_read)
+    s_ss = SpecSet(VSpec(source_read2, list(s_vs.spans)))
+    t_ss = SpecSet(VSpec(target_read, list(t_vs.spans)))
+
+    shared = session.compare_versions(s_ss, t_ss)
+    shared_result = []
+    for span_a, span_b in shared:
+        shared_result.append({
+            "source": {"docid": str(span_a.docid), "span": span_to_dict(span_a.span)},
+            "target": {"docid": str(span_b.docid), "span": span_to_dict(span_b.span)}
+        })
+
+    session.close_document(source_read2)
+    session.close_document(target_read)
+
+    return {
+        "name": "vcopy_multiple_spans",
+        "description": "Copy multiple non-contiguous spans in a single vcopy",
+        "operations": [
+            {"op": "create_document", "doc": "source", "result": str(source)},
+            {"op": "insert", "doc": "source", "text": "First part. Middle part. Last part."},
+            {"op": "create_document", "doc": "target", "result": str(target)},
+            {"op": "vcopy", "spans": ["First part", "Last part"],
+             "comment": "Skip middle, copy first and last"},
+            {"op": "contents", "doc": "target", "result": target_contents},
+            {"op": "compare", "shared": shared_result,
+             "comment": "Should share 'First part' and 'Last part' but not 'Middle part'"}
+        ]
+    }
+
+
+def scenario_vcopy_from_multiple_documents(session):
+    """Transclude content from multiple source documents into one target."""
+    # Create three source documents
+    sources = []
+    source_texts = ["Source A text", "Source B text", "Source C text"]
+    for text in source_texts:
+        docid = session.create_document()
+        opened = session.open_document(docid, READ_WRITE, CONFLICT_FAIL)
+        session.insert(opened, Address(1, 1), [text])
+        session.close_document(opened)
+        sources.append(docid)
+
+    # Create target document
+    target = session.create_document()
+    target_opened = session.open_document(target, READ_WRITE, CONFLICT_FAIL)
+    session.insert(target_opened, Address(1, 1), ["Combined: "])
+
+    # vcopy from each source (first 8 chars: "Source X")
+    for source_docid in sources:
+        source_read = session.open_document(source_docid, READ_ONLY, CONFLICT_COPY)
+        span = Span(Address(1, 1), Offset(0, 8))  # "Source X"
+        specs = SpecSet(VSpec(source_read, [span]))
+        target_vs = session.retrieve_vspanset(target_opened)
+        session.vcopy(target_opened, target_vs.spans[0].end(), specs)
+        # Add separator
+        target_vs2 = session.retrieve_vspanset(target_opened)
+        session.insert(target_opened, target_vs2.spans[0].end(), [" | "])
+        session.close_document(source_read)
+
+    # Get final target content
+    target_final_vs = session.retrieve_vspanset(target_opened)
+    target_final_ss = SpecSet(VSpec(target_opened, list(target_final_vs.spans)))
+    target_contents = session.retrieve_contents(target_final_ss)
+    session.close_document(target_opened)
+
+    # Compare target with each source
+    comparisons = []
+    target_read = session.open_document(target, READ_ONLY, CONFLICT_COPY)
+    t_vs = session.retrieve_vspanset(target_read)
+    t_ss = SpecSet(VSpec(target_read, list(t_vs.spans)))
+
+    for i, source_docid in enumerate(sources):
+        source_read = session.open_document(source_docid, READ_ONLY, CONFLICT_COPY)
+        s_vs = session.retrieve_vspanset(source_read)
+        s_ss = SpecSet(VSpec(source_read, list(s_vs.spans)))
+        shared = session.compare_versions(t_ss, s_ss)
+
+        shared_list = []
+        for span_a, span_b in shared:
+            shared_list.append({
+                "target": span_to_dict(span_a.span),
+                "source": span_to_dict(span_b.span)
+            })
+        comparisons.append({
+            "source": chr(65 + i),  # A, B, C
+            "shared": shared_list
+        })
+        session.close_document(source_read)
+
+    session.close_document(target_read)
+
+    return {
+        "name": "vcopy_from_multiple_documents",
+        "description": "Transclude content from multiple source documents into one target",
+        "operations": [
+            {"op": "create_documents", "docs": ["A", "B", "C"],
+             "texts": source_texts,
+             "results": [str(d) for d in sources]},
+            {"op": "create_document", "doc": "target", "result": str(target)},
+            {"op": "vcopy_multiple", "from": ["A", "B", "C"], "to": "target"},
+            {"op": "contents", "doc": "target", "result": target_contents},
+            {"op": "comparisons", "results": comparisons,
+             "comment": "Target shares content with each source independently"}
+        ]
+    }
+
+
+def scenario_compare_multispan_specsets(session):
+    """Compare documents using SpecSets with multiple spans."""
+    # Create two documents with overlapping content structure
+    doc1 = session.create_document()
+    opened1 = session.open_document(doc1, READ_WRITE, CONFLICT_FAIL)
+    session.insert(opened1, Address(1, 1), ["AAA unique1 BBB shared CCC unique2 DDD"])
+    session.close_document(opened1)
+
+    # Create doc2 as version of doc1, then modify
+    doc2 = session.create_version(doc1)
+    opened2 = session.open_document(doc2, READ_WRITE, CONFLICT_FAIL)
+    # Insert something at the beginning to shift things
+    session.insert(opened2, Address(1, 1), ["PREFIX "])
+    vs2 = session.retrieve_vspanset(opened2)
+    session.close_document(opened2)
+
+    # Get contents
+    r1 = session.open_document(doc1, READ_ONLY, CONFLICT_COPY)
+    r2 = session.open_document(doc2, READ_ONLY, CONFLICT_COPY)
+    vs1 = session.retrieve_vspanset(r1)
+    vs2 = session.retrieve_vspanset(r2)
+
+    ss1 = SpecSet(VSpec(r1, list(vs1.spans)))
+    ss2 = SpecSet(VSpec(r2, list(vs2.spans)))
+    contents1 = session.retrieve_contents(ss1)
+    contents2 = session.retrieve_contents(ss2)
+
+    # Compare full documents
+    full_shared = session.compare_versions(ss1, ss2)
+    full_shared_result = []
+    for span_a, span_b in full_shared:
+        full_shared_result.append({
+            "doc1": span_to_dict(span_a.span),
+            "doc2": span_to_dict(span_b.span)
+        })
+
+    # Now compare using specific spans - just the "shared" portion
+    # In doc1: "shared" is around position 13-18
+    span1_specific = Span(Address(1, 13), Offset(0, 6))
+    ss1_specific = SpecSet(VSpec(r1, [span1_specific]))
+
+    # Compare specific span with full doc2
+    partial_shared = session.compare_versions(ss1_specific, ss2)
+    partial_shared_result = []
+    for span_a, span_b in partial_shared:
+        partial_shared_result.append({
+            "doc1_span": span_to_dict(span_a.span),
+            "doc2": span_to_dict(span_b.span)
+        })
+
+    session.close_document(r1)
+    session.close_document(r2)
+
+    return {
+        "name": "compare_multispan_specsets",
+        "description": "Compare documents using SpecSets with specific spans",
+        "operations": [
+            {"op": "create_document", "doc": "doc1", "result": str(doc1)},
+            {"op": "insert", "doc": "doc1", "text": "AAA unique1 BBB shared CCC unique2 DDD"},
+            {"op": "create_version", "from": "doc1", "result": str(doc2)},
+            {"op": "insert", "doc": "doc2", "address": "1.1", "text": "PREFIX "},
+            {"op": "contents", "doc": "doc1", "result": contents1},
+            {"op": "contents", "doc": "doc2", "result": contents2},
+            {"op": "compare_full", "shared": full_shared_result,
+             "comment": "Full document comparison"},
+            {"op": "compare_partial",
+             "doc1_span": "shared (13-18)",
+             "shared": partial_shared_result,
+             "comment": "Compare specific span from doc1 with full doc2"}
+        ]
+    }
+
+
 SCENARIOS = [
     ("content", "insert_text", scenario_insert_text),
     ("content", "multiple_inserts", scenario_multiple_inserts),
@@ -870,4 +1173,9 @@ SCENARIOS = [
     ("content", "vcopy_source_modified", scenario_vcopy_source_modified),
     ("content", "vcopy_source_deleted", scenario_vcopy_source_deleted),
     ("content", "vcopy_from_version", scenario_vcopy_from_version),
+    ("content", "retrieve_noncontiguous_spans", scenario_retrieve_noncontiguous_spans),
+    ("content", "retrieve_multiple_documents", scenario_retrieve_multiple_documents),
+    ("content", "vcopy_multiple_spans", scenario_vcopy_multiple_spans),
+    ("content", "vcopy_from_multiple_documents", scenario_vcopy_from_multiple_documents),
+    ("content", "compare_multispan_specsets", scenario_compare_multispan_specsets),
 ]
