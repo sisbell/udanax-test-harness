@@ -64,6 +64,10 @@ int dumptumbler(tumbler *tumblerptr);
 int dumphexstuff(char *ptr);
 int checkpointer(char *msg, char *ptr);
 void testforreservedness(char *msg);
+void dumpstate(typetask *taskptr);
+
+/* putfe.c */
+int putdumpstate(typetask *taskptr);
 
 /* tumble.c */
 int tumblerjustify(tumbler *tumblerptr);
@@ -114,6 +118,7 @@ int hashoftumbler(tumbler *tp);
 int logbertmodified(tumbler *tp, int connection);
 int dobertexit(int connection);
 int checkforopen(tumbler *tp, int type, int connection);
+int addtoopen(tumbler *tp, int connection, int created, int type);
 int logaccount(tumbler *tp);
 int deleteversion(tumbler *tp);
 
