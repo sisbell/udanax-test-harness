@@ -298,9 +298,19 @@ bool doopen(typetask *taskptr, tumbler *tp, tumbler *newtp, int type, int mode, 
 	}
 	return 1;
     case BERTMODEONLY:
-	if (openState == -1 || type == WRITEBERT || openState == WRITEBERT) {
+	/* BERTMODEONLY: only open if already sufficiently open, don't create new version.
+	   Fail if openState == -1 (would need new version) or already open for write by others.
+	   Note: removed "type == WRITEBERT" condition - that incorrectly blocked internal
+	   opens for newly created documents in docreatenewversion. */
+	if (openState == -1 || openState == WRITEBERT) {
 		return 0;
+	} else if (openState == 0) {
+		/* Not open yet - add new entry (happens for newly created docs) */
+		addtoopen(tp, connection, FALSE, type);
+		tumblercopy(tp, newtp);
+		return 1;
 	} else {
+		/* Already open (READBERT), increment count */
 		incrementopen(tp, connection);
 		tumblercopy(tp, newtp);
 		return 1;
