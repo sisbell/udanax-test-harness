@@ -86,3 +86,7 @@ These findings confirm the Xanadu content model:
 - `nested_vcopy`
 - `vcopy_from_version`
 - `vcopy_preserves_identity`
+
+## Related Findings
+
+- **Finding 007: Version Semantics** - Versioning also preserves content identity, and links follow content through both versioning and transclusion
