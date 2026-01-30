@@ -793,7 +793,8 @@ class XuSession:
         self.xc.command(2, docid, vaddr, specset)
 
     def delete(self, docid, start, end):
-        self.xc.command(3, docid, [start, end])
+        """Delete content. end can be an Address (exclusive end) or Offset (width)."""
+        self.xc.command(12, docid, Span(start, end))
 
     def pivot(self, docid, start, pivot, end):
         self.xc.command(3, docid, [start, pivot, end])
