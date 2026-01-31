@@ -10,6 +10,7 @@ from .interactions import SCENARIOS as INTERACTION_SCENARIOS
 from .rearrange import SCENARIOS as REARRANGE_SCENARIOS
 from .identity import SCENARIOS as IDENTITY_SCENARIOS
 from .accounts import SCENARIOS as ACCOUNT_SCENARIOS
+from .discovery import SCENARIOS as DISCOVERY_SCENARIOS
 from .multisession import MULTISESSION_SCENARIOS
 
 # All single-session scenarios combined
@@ -23,7 +24,8 @@ ALL_SCENARIOS = (
     INTERACTION_SCENARIOS +
     REARRANGE_SCENARIOS +
     IDENTITY_SCENARIOS +
-    ACCOUNT_SCENARIOS
+    ACCOUNT_SCENARIOS +
+    DISCOVERY_SCENARIOS
 )
 
 # Multi-session scenarios are run separately via generate_multisession_golden.py
@@ -39,4 +41,5 @@ from . import interactions
 from . import rearrange
 from . import identity
 from . import accounts
+from . import discovery
 from . import multisession
