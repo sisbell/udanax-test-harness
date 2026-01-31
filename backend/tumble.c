@@ -23,17 +23,16 @@ static INT abscmp();
 
 bool tumblereq(tumbler *a, tumbler *b)
 {
-  register char *aptr = (char *) a; /*char * for cheating in compare loop*/
-  register char *bptr = (char *) b;
   register INT i;
-       /* return (tumblercmp (aptr, bptr) == EQUAL);// old safe & slow// */ 
-/* could speed up by doing comparison directly or stealing from abscmp*/
-	i = (int)aptr+sizeof(tumbler);
-	for (;((int)aptr)<i;){
-		if(*aptr++ != *bptr++)
-			return(FALSE);
-	}
-	return (TRUE);
+       /* Use field-by-field comparison to avoid issues with struct padding */
+       if (a->xvartumbler != b->xvartumbler) return FALSE;
+       if (a->varandnotfixed != b->varandnotfixed) return FALSE;
+       if (a->sign != b->sign) return FALSE;
+       if (a->exp != b->exp) return FALSE;
+       for (i = 0; i < NPLACES; i++) {
+               if (a->mantissa[i] != b->mantissa[i]) return FALSE;
+       }
+       return TRUE;
 }
 
 bool tumbleraccounteq(tumbler *aptr, tumbler *bptr)

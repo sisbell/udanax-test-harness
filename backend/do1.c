@@ -263,75 +263,35 @@ bool docreatenewversion(typetask *taskptr, typeisa *isaptr, typeisa *wheretoputi
   tumbler newtp;	/* for internal open */
   bool doretrievedocvspanfoo(), createorglingranf();
 
-#ifndef DISTRIBUTION
-fprintf(stderr,"DEBUG docreatenewversion: entering\n");
-fprintf(stderr,"DEBUG isaptr: ");dumptumbler(isaptr);fprintf(stderr,"\n");
-fprintf(stderr,"DEBUG wheretoputit: ");dumptumbler(wheretoputit);fprintf(stderr,"\n");
-#endif
-
 	/* ECH 7-13 introduced test for ownership to do right thing for explicit creation
 	   of new version of someone else's document */
 	if (tumbleraccounteq(isaptr, wheretoputit) && isthisusersdocument(isaptr)) {
 		makehint (DOCUMENT, DOCUMENT, 0, isaptr/*wheretoputit*/, &hint);
-#ifndef DISTRIBUTION
-fprintf(stderr,"DEBUG: using DOCUMENT hint\n");
-#endif
 	} else {
 		/* This does the right thing for new version of someone else's document, as it
 		   duplicates the behavior of docreatenewdocument */
 		makehint (ACCOUNT, DOCUMENT, 0, wheretoputit, &hint);
-#ifndef DISTRIBUTION
-fprintf(stderr,"DEBUG: using ACCOUNT hint\n");
-#endif
 	}
-#ifndef DISTRIBUTION
-fprintf(stderr,"DEBUG: calling createorglingranf\n");
-#endif
 	if (!createorglingranf(taskptr, granf, &hint, newisaptr)) {
-#ifndef DISTRIBUTION
-fprintf(stderr,"DEBUG: createorglingranf FAILED\n");
-#endif
 		return (FALSE);
 	}
-#ifndef DISTRIBUTION
-fprintf(stderr,"DEBUG: createorglingranf succeeded, newisaptr: ");dumptumbler(newisaptr);fprintf(stderr,"\n");
-#endif
 
-#ifndef DISTRIBUTION
-fprintf(stderr,"DEBUG: calling doretrievedocvspanfoo\n");
-#endif
 	if (!doretrievedocvspanfoo (taskptr, isaptr, &vspan)) {
-#ifndef DISTRIBUTION
-fprintf(stderr,"DEBUG: doretrievedocvspanfoo FAILED\n");
-#endif
 		return FALSE;
 	}
-#ifndef DISTRIBUTION
-fprintf(stderr,"DEBUG: doretrievedocvspanfoo succeeded\n");
-#endif
 
 	vspec.next = NULL;
 	vspec.itemid = VSPECID;
 	movetumbler(isaptr, &vspec.docisa);
 	vspec.vspanset = &vspan;
 
-#ifndef DISTRIBUTION
-fprintf(stderr,"DEBUG: adding newisaptr to bert directly: ");dumptumbler(newisaptr);fprintf(stderr,"\n");
-#endif
 	/* Skip doopen ownership check - we just created this document so we own it.
 	   Add directly to bert table instead. */
 	addtoopen(newisaptr, user, TRUE, WRITEBERT);
-#ifndef DISTRIBUTION
-fprintf(stderr,"DEBUG: doopen succeeded, calling docopyinternal\n");
-#endif
 	docopyinternal(taskptr, newisaptr, &vspan.stream, &vspec);
-#ifndef DISTRIBUTION
-fprintf(stderr,"DEBUG: docopyinternal done, calling doclose\n");
-#endif
+	/* Mark as modified so removefromopen doesn't delete the newly created version */
+	logbertmodified(newisaptr, user);
 	doclose(taskptr, newisaptr, user);
-#ifndef DISTRIBUTION
-fprintf(stderr,"DEBUG: docreatenewversion complete\n");
-#endif
 
 	return (TRUE);
 }

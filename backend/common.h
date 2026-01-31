@@ -50,7 +50,7 @@ typedef unsigned  bool;
 #define ESC     '\033'  /* Standard ASCII 'escape' character */
 #define OK 0            /* General purpose "no error" return value */
 #define MAXLINE 400     /* Longest line of input expected from the console */
-#define NPLACES 11       /* places in mantissa of tumbler */
+#define NPLACES 16       /* places in mantissa of tumbler - increased from 11 to support deeper version chains */
 #define RECURSIVE
 typedef unsigned char * humber;
 #define TUMBLERMINUS 129
@@ -64,11 +64,11 @@ typedef struct structtumbler {
         tdigit mantissa[NPLACES];
 } tumbler;
 
-#define ZEROTUMBLER  {0,0,0,0,  0,0,0,0,0,0,0,0,0,0,0} /* 0.0.0.0.0.0 */
+#define ZEROTUMBLER  {0,0,0,0,  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0} /* 0.0.0.0.0.0 - 16 mantissa places + 4 header */
                                                                  
 extern tumbler ZEROTUMBLERvar; 		/* EXTERNAL BEWARE */
 
-#define tumblerclear(tumblerptr) ((*(tumblerptr)) = ZEROTUMBLERvar)
+#define tumblerclear(tumblerptr) clear((tumblerptr), sizeof(tumbler))
 #define iszerotumbler(tumblerptr) (!((tumblerptr) -> mantissa[0]))
 #define movetumbler(A,B) (*((tumbler *)(B)) = *((tumbler *)(A)))
 /*#define movetumbler(A,B) tumblercopy((A),(B)) */
