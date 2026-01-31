@@ -249,10 +249,16 @@ bool docreatenode_or_account(typetask *taskptr, typeisa *isaptr)
   typeisa isa;
   typehint hint;
   bool createorglingranf();
+  bool result;
 
 	tumblercopy(isaptr, &isa);
-	makehint (NODE, NODE, 0, /*&taskptr->account*/&isa, &hint);
-	return createorglingranf (taskptr, granf, &hint, &isa);
+	makehint (NODE, NODE, 0, &isa, &hint);
+	result = createorglingranf (taskptr, granf, &hint, &isa);
+	if (result) {
+		/* Copy the newly allocated address back to output parameter */
+		tumblercopy(&isa, isaptr);
+	}
+	return result;
 }
 
 bool docreatenewversion(typetask *taskptr, typeisa *isaptr, typeisa *wheretoputit, typeisa *newisaptr)

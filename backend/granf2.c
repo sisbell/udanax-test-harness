@@ -202,8 +202,9 @@ static int klugefindisatoinsertnonmolecule(typecuc *fullcrumptr, typehint *hintp
 
 static int findisatoinsertnonmolecule(typecuc *fullcrumptr, typehint *hintptr, typeisa *isaptr)
 {
-  typeisa upperbound, lowerbound;
+  typeisa upperbound, lowerbound, truncated;
   INT depth, hintlength;
+  bool lowerbound_under_hint;
 
 	depth = hintptr->supertype == hintptr->subtype ? 1 : 2;
 
@@ -215,11 +216,24 @@ static int findisatoinsertnonmolecule(typecuc *fullcrumptr, typehint *hintptr, t
 
 	findpreviousisagr ((typecorecrum*)fullcrumptr, &upperbound, &lowerbound);
 
-	/* BUG FIX: If nothing exists under the hint (lowerbound is zero after
+	/* BUG FIX #1: If nothing exists under the hint (lowerbound is zero after
 	   findpreviousisagr), create the first child address as hintisa.0.1.
 	   The original code would produce just "1" due to truncate/increment
-	   on a zero tumbler, causing the first document to get the wrong address. */
-	if (iszerotumbler(&lowerbound)) {
+	   on a zero tumbler, causing the first document to get the wrong address.
+
+	   BUG FIX #2: Also check if lowerbound is actually under hintisa. If the
+	   found item is from a different account (e.g., 1.1.0.1.0.1 when creating
+	   under 1.1.0.2), treat it as if nothing was found. Otherwise documents
+	   get created under the wrong account. */
+	lowerbound_under_hint = FALSE;
+	if (!iszerotumbler(&lowerbound)) {
+		/* Check if lowerbound starts with hintisa by truncating and comparing */
+		tumblertruncate(&lowerbound, hintlength, &truncated);
+		lowerbound_under_hint = tumblereq(&truncated, &hintptr->hintisa);
+	}
+
+	if (iszerotumbler(&lowerbound) || !lowerbound_under_hint) {
+		/* Nothing under this hint - create first child as hintisa.0.1 */
 		tumblerincrement(&hintptr->hintisa, depth, 1, isaptr);
 	} else {
 		tumblertruncate (&lowerbound, hintlength + depth, isaptr);
