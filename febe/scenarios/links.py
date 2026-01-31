@@ -558,49 +558,6 @@ def scenario_find_links_by_type(session):
     }
 
 
-def scenario_retrieve_endsets(session):
-    """Retrieve the endpoint specsets of a link."""
-    # Create source document
-    source_doc = session.create_document()
-    source_opened = session.open_document(source_doc, READ_WRITE, CONFLICT_FAIL)
-    session.insert(source_opened, Address(1, 1), ["Click here to navigate"])
-
-    # Create target document
-    target_doc = session.create_document()
-    target_opened = session.open_document(target_doc, READ_WRITE, CONFLICT_FAIL)
-    session.insert(target_opened, Address(1, 1), ["Destination content"])
-
-    # Create a link
-    link_source = SpecSet(VSpec(source_opened, [Span(Address(1, 7), Offset(0, 4))]))  # "here"
-    link_target = SpecSet(VSpec(target_opened, [Span(Address(1, 1), Offset(0, 11))]))  # "Destination"
-    link_id = session.create_link(source_opened, link_source, link_target, SpecSet([JUMP_TYPE]))
-
-    # Retrieve the endsets of the link
-    link_specset = SpecSet(VSpec(source_opened, [Span(Address(1, 0, 2, 1), Offset(0, 1))]))
-    source_specs, target_specs, type_specs = session.retrieve_endsets(link_specset)
-
-    session.close_document(source_opened)
-    session.close_document(target_opened)
-
-    return {
-        "name": "retrieve_endsets",
-        "description": "Retrieve the endpoint specsets of a link",
-        "operations": [
-            {"op": "create_document", "result": str(source_doc)},
-            {"op": "open_document", "doc": str(source_doc), "mode": "read_write", "result": str(source_opened)},
-            {"op": "insert", "doc": str(source_opened), "address": "1.1", "text": "Click here to navigate"},
-            {"op": "create_document", "result": str(target_doc)},
-            {"op": "open_document", "doc": str(target_doc), "mode": "read_write", "result": str(target_opened)},
-            {"op": "insert", "doc": str(target_opened), "address": "1.1", "text": "Destination content"},
-            {"op": "create_link", "source_text": "here", "type": "jump", "result": str(link_id)},
-            {"op": "retrieve_endsets", "link": str(link_id),
-             "source": specset_to_list(source_specs),
-             "target": specset_to_list(target_specs),
-             "type": specset_to_list(type_specs)}
-        ]
-    }
-
-
 def scenario_follow_link(session):
     """Follow a link to retrieve its destination content."""
     # Create source document
@@ -1108,7 +1065,6 @@ SCENARIOS = [
     ("links", "find_links_by_target", scenario_find_links_by_target),
     ("links", "overlapping_links", scenario_overlapping_links),
     ("links", "find_links_by_type", scenario_find_links_by_type),
-    ("links", "retrieve_endsets", scenario_retrieve_endsets),
     ("links", "follow_link", scenario_follow_link),
     # Link survivability tests (Bug 008 - all crash/error currently)
     ("links", "link_survives_source_insert", scenario_link_survives_source_insert),

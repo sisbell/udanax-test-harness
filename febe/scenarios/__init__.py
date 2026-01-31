@@ -4,6 +4,7 @@ from .documents import SCENARIOS as DOCUMENT_SCENARIOS
 from .content import SCENARIOS as CONTENT_SCENARIOS
 from .versions import SCENARIOS as VERSION_SCENARIOS
 from .links import SCENARIOS as LINK_SCENARIOS
+from .endsets import SCENARIOS as ENDSET_SCENARIOS
 from .internal import SCENARIOS as INTERNAL_SCENARIOS
 from .interactions import SCENARIOS as INTERACTION_SCENARIOS
 from .rearrange import SCENARIOS as REARRANGE_SCENARIOS
@@ -15,6 +16,7 @@ ALL_SCENARIOS = (
     CONTENT_SCENARIOS +
     VERSION_SCENARIOS +
     LINK_SCENARIOS +
+    ENDSET_SCENARIOS +
     INTERNAL_SCENARIOS +
     INTERACTION_SCENARIOS +
     REARRANGE_SCENARIOS +
@@ -26,6 +28,7 @@ from . import documents
 from . import content
 from . import versions
 from . import links
+from . import endsets
 from . import internal
 from . import interactions
 from . import rearrange
