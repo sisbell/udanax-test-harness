@@ -2,7 +2,7 @@
 
 **Date:** 2026-01-30
 **Severity:** Medium
-**Status:** Open
+**Status:** Closed (workaround: use retrieve_vspanset instead)
 
 ## Summary
 

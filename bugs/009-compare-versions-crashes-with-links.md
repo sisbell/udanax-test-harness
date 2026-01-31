@@ -2,7 +2,7 @@
 
 **Date:** 2026-01-30
 **Severity:** High (crashes backend with SIGABRT)
-**Status:** ROOT CAUSE IDENTIFIED - See 009-compare-versions-crashes-with-links-ROOT-CAUSE.md
+**Status:** Fixed (filter link subspace spans before compare_versions)
 
 ## Summary
 

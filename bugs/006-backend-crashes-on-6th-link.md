@@ -1,7 +1,7 @@
 # Bug 006: Backend crashes when creating 6th link in a document
 
 **Date discovered:** 2026-01-30
-**Status:** Open
+**Status:** Fixed (resolved by Bug 005 fix - malformed link type addresses were the cause)
 **Severity:** High - backend crash (abort trap)
 
 ## Summary

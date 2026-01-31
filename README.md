@@ -28,7 +28,11 @@ backend/build/backend --test-mode
 
 ```
 ├── backend/     # C backend (Udanax Green enfilade server)
-├── febe/        # Python FEBE protocol client
+├── febe/        # Python FEBE protocol client and test generator
+├── golden/      # Generated golden test files (not in source control)
+├── bugs/        # Bug reports discovered during testing
+├── findings/    # Semantic findings from test results
+├── docs/        # Documentation
 ├── Makefile     # Build orchestration
 └── LICENSE      # Project license
 ```

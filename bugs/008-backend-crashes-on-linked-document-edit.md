@@ -1,7 +1,7 @@
 # Bug 008: Backend crashes when editing documents with links
 
 **Date discovered:** 2026-01-30
-**Status:** Open
+**Status:** Fixed (client was using wrong FEBE command)
 **Severity:** High
 
 ## Summary
