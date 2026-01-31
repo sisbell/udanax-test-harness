@@ -9,6 +9,7 @@ Bugs discovered during golden test development.
 | [001](001-tumbleraccounteq-child-parent.md) | tumbleraccounteq fails for child/parent comparison | Fixed | High |
 | [002](002-bertmodeonly-openstate-zero.md) | BERTMODEONLY doesn't handle openState==0 | Fixed | Medium |
 | [003](003-docreatenewversion-doopen.md) | docreatenewversion internal doopen fails | Fixed | High |
+| [013](013-account-node-operations.md) | account() and create_node() not working | Fixed | Medium |
 
 ## Bug Relationships
 

@@ -9,6 +9,7 @@ from .internal import SCENARIOS as INTERNAL_SCENARIOS
 from .interactions import SCENARIOS as INTERACTION_SCENARIOS
 from .rearrange import SCENARIOS as REARRANGE_SCENARIOS
 from .identity import SCENARIOS as IDENTITY_SCENARIOS
+from .accounts import SCENARIOS as ACCOUNT_SCENARIOS
 
 # All scenarios combined
 ALL_SCENARIOS = (
@@ -20,7 +21,8 @@ ALL_SCENARIOS = (
     INTERNAL_SCENARIOS +
     INTERACTION_SCENARIOS +
     REARRANGE_SCENARIOS +
-    IDENTITY_SCENARIOS
+    IDENTITY_SCENARIOS +
+    ACCOUNT_SCENARIOS
 )
 
 # Re-export individual scenario modules for direct access
@@ -33,3 +35,4 @@ from . import internal
 from . import interactions
 from . import rearrange
 from . import identity
+from . import accounts
