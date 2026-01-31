@@ -11,7 +11,6 @@ import sys
 from pathlib import Path
 
 from client import XuSession, XuConn, PipeStream, Address
-
 from scenarios import ALL_SCENARIOS
 
 # Default account address for test mode
