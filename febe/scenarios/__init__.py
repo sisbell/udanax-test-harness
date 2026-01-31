@@ -1,9 +1,9 @@
 """Golden test scenarios organized by category."""
 
 from .documents import SCENARIOS as DOCUMENT_SCENARIOS
-from .content import SCENARIOS as CONTENT_SCENARIOS
+from .content import SCENARIOS as CONTENT_SCENARIOS  # Now a package with submodules
 from .versions import SCENARIOS as VERSION_SCENARIOS
-from .links import SCENARIOS as LINK_SCENARIOS
+from .links import SCENARIOS as LINK_SCENARIOS  # Now a package with submodules
 from .endsets import SCENARIOS as ENDSET_SCENARIOS
 from .internal import SCENARIOS as INTERNAL_SCENARIOS
 from .interactions import SCENARIOS as INTERACTION_SCENARIOS
@@ -32,9 +32,9 @@ ALL_SCENARIOS = (
 
 # Re-export individual scenario modules for direct access
 from . import documents
-from . import content
+from . import content  # Package with basic, vcopy
 from . import versions
-from . import links
+from . import links  # Package with basic, survival, patterns, orphaned, discovery
 from . import endsets
 from . import internal
 from . import interactions
