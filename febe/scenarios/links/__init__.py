@@ -6,6 +6,7 @@ This package contains link-related test scenarios split into logical groups:
 - patterns: Complex link topologies (chains, self-referential, overlapping)
 - orphaned: Link permanence and orphaned link behavior
 - discovery: find_links with homedocids filtering
+- chains: Cross-document link chains (cycles, diamonds, hubs, transclusion)
 """
 
 from .basic import SCENARIOS as BASIC_SCENARIOS
@@ -13,6 +14,7 @@ from .survival import SCENARIOS as SURVIVAL_SCENARIOS
 from .patterns import SCENARIOS as PATTERN_SCENARIOS
 from .orphaned import SCENARIOS as ORPHANED_SCENARIOS
 from .discovery import SCENARIOS as DISCOVERY_SCENARIOS
+from .chains import SCENARIOS as CHAIN_SCENARIOS
 
 # Combined SCENARIOS list maintains original order
 SCENARIOS = (
@@ -20,5 +22,6 @@ SCENARIOS = (
     SURVIVAL_SCENARIOS +
     PATTERN_SCENARIOS +
     ORPHANED_SCENARIOS +
-    DISCOVERY_SCENARIOS
+    DISCOVERY_SCENARIOS +
+    CHAIN_SCENARIOS
 )

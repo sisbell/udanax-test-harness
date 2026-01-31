@@ -11,7 +11,7 @@ Bugs discovered during golden test development.
 | [003](003-docreatenewversion-doopen.md) | docreatenewversion internal doopen fails | Fixed | High | |
 | [004](004-first-document-address.md) | First document gets account address instead of document address | Fixed | High | |
 | [005](005-pyxi-link-type-addresses.md) | pyxi has malformed link type addresses | Fixed | High | Also fixed 006 |
-| [006](006-backend-crashes-on-6th-link.md) | Backend crashes when creating 6th link | Fixed | High | Fixed by 005 |
+| [006](006-backend-crashes-on-6th-link.md) | Backend crashes when creating 6th link | Partial | High | See 016 |
 | [007](007-backend-crashes-on-delete-all.md) | Backend crashes when deleting all content | Fixed | High | |
 | [008](008-backend-crashes-on-linked-document-edit.md) | Backend crashes when editing documents with links | Fixed | High | Client bug |
 | [009](009-compare-versions-crashes-with-links.md) | compare_versions crashes with links | Fixed | High | Filter link subspace spans |
@@ -21,12 +21,13 @@ Bugs discovered during golden test development.
 | [013](013-account-node-operations.md) | account() and create_node() not working | Fixed | Medium | |
 | [014](014-empty-document-crash.md) | Backend crashes during empty document scenario | Open | High | |
 | [015](015-homedocids-filter-ignored.md) | find_links homedocids filter has no effect | Open | Medium | Workaround: filter client-side |
+| [016](016-link-count-limit-regression.md) | Link count limit causes crash | Open | High | Limit varies with doc count |
 
 ## Summary
 
 - **Fixed:** 11
 - **Closed:** 1 (workaround in place)
-- **Open:** 3
+- **Open:** 4
 
 ## Discovery Context
 
