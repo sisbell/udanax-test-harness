@@ -12,6 +12,7 @@ from .identity import SCENARIOS as IDENTITY_SCENARIOS
 from .accounts import SCENARIOS as ACCOUNT_SCENARIOS
 from .discovery import SCENARIOS as DISCOVERY_SCENARIOS
 from .edgecases import SCENARIOS as EDGECASE_SCENARIOS
+from .partial_overlap import SCENARIOS as PARTIAL_OVERLAP_SCENARIOS
 from .multisession import MULTISESSION_SCENARIOS
 
 # All single-session scenarios combined
@@ -27,7 +28,8 @@ ALL_SCENARIOS = (
     IDENTITY_SCENARIOS +
     ACCOUNT_SCENARIOS +
     DISCOVERY_SCENARIOS +
-    EDGECASE_SCENARIOS
+    EDGECASE_SCENARIOS +
+    PARTIAL_OVERLAP_SCENARIOS
 )
 
 # Multi-session scenarios are run separately via generate_multisession_golden.py
@@ -45,4 +47,5 @@ from . import identity
 from . import accounts
 from . import discovery
 from . import edgecases
+from . import partial_overlap
 from . import multisession
