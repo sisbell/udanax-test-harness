@@ -22,12 +22,14 @@ Bugs discovered during golden test development.
 | [014](014-empty-document-crash.md) | Backend crashes during empty document scenario | Open | High | |
 | [015](015-homedocids-filter-ignored.md) | find_links homedocids filter has no effect | Open | Medium | Workaround: filter client-side |
 | [016](016-link-count-limit-regression.md) | Link count limit causes crash | Open | High | Limit varies with doc count |
+| [017](017-zero-width-link-endpoint-crash.md) | Zero-width link endpoint crash | Open | Medium | Workaround: use non-zero spans |
+| [018](018-large-insert-crash.md) | Large insert crash | Open | High | Limit ~10KB per insert |
 
 ## Summary
 
 - **Fixed:** 11
 - **Closed:** 1 (workaround in place)
-- **Open:** 4
+- **Open:** 6
 
 ## Discovery Context
 
