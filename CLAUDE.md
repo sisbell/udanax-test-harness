@@ -50,4 +50,4 @@ Add scenarios to `febe/scenarios/<category>.py`:
 
 ## Git Commits
 
-**Attribution:** Use `Generated-By: Claude Opus 4.5` in commit messages.
+**Attribution:** Each agent owns its own attribution line. Do not use a global model name — different agents run on different models.
