@@ -2,7 +2,8 @@
 
 from client import (
     Address, Offset, Span, VSpec, SpecSet,
-    READ_ONLY, READ_WRITE, CONFLICT_FAIL, CONFLICT_COPY
+    READ_ONLY, READ_WRITE, CONFLICT_FAIL, CONFLICT_COPY,
+    JUMP_TYPE, NOSPECS
 )
 from .common import vspec_to_dict, span_to_dict
 
@@ -32,8 +33,7 @@ def scenario_insert_text_check_link_positions(session):
     # This should place the link at position 2.1 (first position in link subspace)
     from_spec = SpecSet(VSpec(opened_doc1, [Span(Address(1, 2), Offset(0, 2))]))  # "BC"
     to_spec = SpecSet(VSpec(opened_doc2, [Span(Address(1, 2), Offset(0, 2))]))    # "23"
-    three_spec = SpecSet(VSpec(opened_doc1, [Span(Address(0, 0), Offset(0, 0))]))  # Empty
-    session.create_link(opened_doc1, from_spec, to_spec, three_spec)
+    session.create_link(opened_doc1, from_spec, to_spec, SpecSet([JUMP_TYPE]))
 
     # Get vspanset to see both text (1.x) and link (2.x) positions
     vspanset_before = session.retrieve_vspanset(opened_doc1)
@@ -73,7 +73,8 @@ def scenario_insert_text_check_link_positions(session):
     )
 
     # Follow the link to verify it's still intact
-    links_from_doc1 = session.find_links(opened_doc1)
+    full_search = SpecSet(VSpec(opened_doc1, list(vspanset_after.spans)))
+    links_from_doc1 = session.find_links(full_search)
 
     session.close_document(opened_doc1)
     session.close_document(opened_doc2)
@@ -101,9 +102,11 @@ def scenario_insert_text_check_link_positions(session):
              "interpretation": "Should be 'X' (first inserted character)"},
             {"op": "text_at_1_5_after", "result": text_at_1_5_after,
              "interpretation": "Should be 'C' (shifted from 1.3 to 1.5)"},
-            {"op": "link_at_2_1_after", "result": link_at_2_1_after,
+            {"op": "link_at_2_1_after",
+             "result": [str(x) for x in link_at_2_1_after] if isinstance(link_at_2_1_after, list) else str(link_at_2_1_after),
              "interpretation": "Critical test: Is link still at 2.1 or did it shift?"},
-            {"op": "full_content_after", "result": full_content_after},
+            {"op": "full_content_after",
+             "result": [str(x) for x in full_content_after] if isinstance(full_content_after, list) else str(full_content_after)},
             {"op": "links_after_insert", "result": [str(link) for link in links_from_doc1],
              "comment": "Verify link still exists and is discoverable"}
         ],
@@ -142,15 +145,14 @@ def scenario_createlink_check_text_positions(session):
     # Create first link
     from_spec1 = SpecSet(VSpec(opened_doc1, [Span(Address(1, 2), Offset(0, 1))]))
     to_spec1 = SpecSet(VSpec(opened_doc2, [Span(Address(1, 2), Offset(0, 1))]))
-    three_spec = SpecSet(VSpec(opened_doc1, [Span(Address(0, 0), Offset(0, 0))]))
-    session.create_link(opened_doc1, from_spec1, to_spec1, three_spec)
+    session.create_link(opened_doc1, from_spec1, to_spec1, SpecSet([JUMP_TYPE]))
 
     vspanset_after_first_link = session.retrieve_vspanset(opened_doc1)
 
     # Create second link
     from_spec2 = SpecSet(VSpec(opened_doc1, [Span(Address(1, 4), Offset(0, 1))]))
     to_spec2 = SpecSet(VSpec(opened_doc2, [Span(Address(1, 4), Offset(0, 1))]))
-    session.create_link(opened_doc1, from_spec2, to_spec2, three_spec)
+    session.create_link(opened_doc1, from_spec2, to_spec2, SpecSet([JUMP_TYPE]))
 
     vspanset_after_second_link = session.retrieve_vspanset(opened_doc1)
 
