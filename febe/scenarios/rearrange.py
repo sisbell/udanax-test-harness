@@ -397,6 +397,86 @@ def scenario_double_pivot(session):
     }
 
 
+def scenario_pivot_cross_subspace_boundary(session):
+    """Test whether REARRANGE can move content across subspace boundaries.
+
+    This test attempts to pivot content from 1.x (text subspace) such that
+    it would end up in 2.x (link subspace) positions. This tests the
+    fundamental constraint: does REARRANGE operate within a single subspace,
+    or can it cross boundaries?
+
+    Insert text at 1.1-1.3 and 1.5-1.7, then pivot with cuts at 1.1, 1.4, 2.1
+    to attempt moving content from 1.x to 2.x.
+    """
+    doc = session.create_document()
+    opened = session.open_document(doc, READ_WRITE, CONFLICT_FAIL)
+
+    # Insert "ABC" at 1.1 (fills 1.1, 1.2, 1.3)
+    session.insert(opened, Address(1, 1), ["ABC"])
+
+    # Insert "DEF" at 1.5 (fills 1.5, 1.6, 1.7)
+    session.insert(opened, Address(1, 5), ["DEF"])
+
+    content_before = session.retrieve_contents(
+        SpecSet(VSpec(opened, [Span(Address(1, 1), Offset(0, 10))]))
+    )
+
+    vspanset_before = session.retrieve_vspanset(opened)
+
+    # Attempt pivot with cuts at: 1.1, 1.4, 2.1
+    # This would try to move content at [1.1, 1.4) forward by (2.1 - 1.4) = 0.7
+    # Result: 1.1 + 0.7 = 1.8 (still in 1.x subspace)
+    #
+    # To actually cross into 2.x, content would need to move from below 2.0 to at or above 2.0
+    # Let's try: cuts at 1.1, 1.4, 2.5
+    # Offset would be 2.5 - 1.4 = 1.1
+    # Content at 1.1-1.4 would move to 2.2-2.5 (crossing boundary!)
+    try:
+        session.pivot(opened, Address(1, 1), Address(1, 4), Address(2, 5))
+
+        content_after = session.retrieve_contents(
+            SpecSet(VSpec(opened, [Span(Address(1, 1), Offset(0, 10))]))
+        )
+
+        # Also try retrieving from 2.x subspace explicitly
+        content_2x = session.retrieve_contents(
+            SpecSet(VSpec(opened, [Span(Address(2, 1), Offset(0, 10))]))
+        )
+
+        vspanset_after = session.retrieve_vspanset(opened)
+
+        result_status = "succeeded"
+    except Exception as e:
+        result_status = f"failed: {e}"
+        content_after = None
+        content_2x = None
+        vspanset_after = None
+
+    session.close_document(opened)
+
+    return {
+        "name": "pivot_cross_subspace_boundary",
+        "description": "Test whether REARRANGE can cross subspace boundaries (1.x to 2.x)",
+        "operations": [
+            {"op": "create_document", "result": str(doc)},
+            {"op": "open_document", "doc": str(doc), "result": str(opened)},
+            {"op": "insert", "address": "1.1", "text": "ABC"},
+            {"op": "insert", "address": "1.5", "text": "DEF"},
+            {"op": "retrieve", "before": content_before},
+            {"op": "vspanset_before", "result": str(vspanset_before)},
+            {"op": "pivot_attempt",
+             "cut1": "1.1",
+             "cut2": "1.4",
+             "cut3": "2.5",
+             "status": result_status,
+             "description": "Attempt to pivot ABC from 1.1-1.4 to 2.2-2.5 (crossing boundary)"},
+            {"op": "retrieve_after_1x", "result": str(content_after) if content_after else "N/A"},
+            {"op": "retrieve_after_2x", "result": str(content_2x) if content_2x else "N/A"},
+            {"op": "vspanset_after", "result": str(vspanset_after) if vspanset_after else "N/A"}
+        ]
+    }
+
+
 SCENARIOS = [
     ("rearrange", "pivot_adjacent_regions", scenario_pivot_adjacent_regions),
     ("rearrange", "pivot_word_swap", scenario_pivot_word_swap),
@@ -407,4 +487,5 @@ SCENARIOS = [
     ("rearrange", "pivot_preserves_identity", scenario_pivot_preserves_identity),
     ("rearrange", "swap_with_links", scenario_swap_with_links),
     ("rearrange", "double_pivot", scenario_double_pivot),
+    ("rearrange", "pivot_cross_subspace_boundary", scenario_pivot_cross_subspace_boundary),
 ]
