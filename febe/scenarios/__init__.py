@@ -17,6 +17,9 @@ from .insert_vspace_mapping import SCENARIOS as INSERT_VSPACE_SCENARIOS
 from .insert_docispan import SCENARIOS as INSERT_DOCISPAN_SCENARIOS
 from .provenance import SCENARIOS as PROVENANCE_SCENARIOS
 from .docispan_granularity import SCENARIOS as DOCISPAN_GRANULARITY_SCENARIOS
+from .subspace_shifts import SCENARIOS as SUBSPACE_SCENARIOS
+from .bert_enforcement import SCENARIOS as BERT_SCENARIOS
+from .version_link_test import SCENARIOS as VERSION_LINK_SCENARIOS
 from .multisession import MULTISESSION_SCENARIOS
 
 # All single-session scenarios combined
@@ -37,7 +40,10 @@ ALL_SCENARIOS = (
     INSERT_VSPACE_SCENARIOS +
     INSERT_DOCISPAN_SCENARIOS +
     PROVENANCE_SCENARIOS +
-    DOCISPAN_GRANULARITY_SCENARIOS
+    DOCISPAN_GRANULARITY_SCENARIOS +
+    SUBSPACE_SCENARIOS +
+    BERT_SCENARIOS +
+    VERSION_LINK_SCENARIOS
 )
 
 # Multi-session scenarios are run separately via generate_multisession_golden.py
@@ -60,4 +66,7 @@ from . import insert_vspace_mapping
 from . import insert_docispan
 from . import provenance
 from . import docispan_granularity
+from . import subspace_shifts
+from . import bert_enforcement
+from . import version_link_test
 from . import multisession

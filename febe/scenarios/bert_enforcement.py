@@ -149,9 +149,46 @@ def scenario_copy_without_write_token_on_target(session):
     }
 
 
+def scenario_bert_failure_leaves_ispace_corruption(session):
+    """Test whether BERT failure after ispace modification leaves corruption."""
+    # Create a document
+    docid = session.create_document()
+
+    # Open for READ only (no WRITE token)
+    opened_doc = session.open_document(docid, READ_ONLY, CONFLICT_FAIL)
+
+    # Try to INSERT without WRITE token
+    try:
+        session.insert(opened_doc, Address(1, 1), ["Leaked bytes"])
+        insert_succeeded = True
+    except Exception:
+        insert_succeeded = False
+
+    # Check if the POOM is empty (which it should be)
+    vspanset = session.retrieve_vspanset(opened_doc)
+    poom_empty = len(list(vspanset.spans)) == 0
+
+    session.close_document(opened_doc)
+
+    return {
+        "name": "bert_failure_leaves_ispace_corruption",
+        "description": "Test whether failed INSERT due to BERT leaves ispace corruption",
+        "operations": [
+            {"op": "create_document", "result": str(docid)},
+            {"op": "open_document", "doc": str(docid), "mode": "read_only", "result": str(opened_doc)},
+            {"op": "insert_attempt", "doc": str(opened_doc), "address": "1.1",
+             "text": "Leaked bytes", "succeeded": insert_succeeded},
+            {"op": "retrieve_vspanset", "doc": str(opened_doc), "poom_empty": poom_empty},
+            {"op": "close_document", "doc": str(opened_doc)},
+            {"op": "note", "message": "If POOM is empty but ispace was modified, I-addresses are orphaned"}
+        ]
+    }
+
+
 SCENARIOS = [
-    scenario_insert_without_write_token,
-    scenario_delete_without_write_token,
-    scenario_rearrange_without_write_token,
-    scenario_copy_without_write_token_on_target,
+    ("bert", "insert_without_write_token", scenario_insert_without_write_token),
+    ("bert", "delete_without_write_token", scenario_delete_without_write_token),
+    ("bert", "rearrange_without_write_token", scenario_rearrange_without_write_token),
+    ("bert", "copy_without_write_token_on_target", scenario_copy_without_write_token_on_target),
+    ("bert", "bert_failure_leaves_ispace_corruption", scenario_bert_failure_leaves_ispace_corruption),
 ]
