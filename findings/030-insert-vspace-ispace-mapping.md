@@ -128,6 +128,6 @@ shared_spans = [
 
 ## Related
 
-- **Finding 027**: retrieve_contents requires source document open
-- **Finding 028**: Link discovery via content identity
+- **Finding 027b**: retrieve_contents requires source document open
+- **Finding 028b**: Link discovery via content identity
 - **Literary Machines**: "The address of a byte never changes"

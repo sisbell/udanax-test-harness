@@ -147,5 +147,5 @@ Copy contains "link" (4 chars), but `follow_link` returns "hyperlink text" (14 c
 
 - **Finding 004**: Link endpoint semantics
 - **Finding 010**: Unified storage abstraction (links stored via I-addresses)
-- **Finding 027**: retrieve_contents requires source document open
+- **Finding 027b**: retrieve_contents requires source document open
 - **Literary Machines**: "Links are always between specific bytes"
