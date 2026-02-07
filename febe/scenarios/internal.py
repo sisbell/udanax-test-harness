@@ -238,9 +238,235 @@ def scenario_ispan_partial_overlap(session):
     }
 
 
+def scenario_internal_transclusion_identity(session):
+    """Test that internal transclusion creates two V-positions for same I-address.
+
+    When content is transcluded within the same document, the POOM should map
+    the same I-address to two different V-positions. This tests whether the
+    bidirectional index (I→V direction) correctly returns all V-positions.
+    """
+    docid = session.create_document()
+    opened = session.open_document(docid, READ_WRITE, CONFLICT_FAIL)
+
+    # Insert original content
+    session.insert(opened, Address(1, 1), ["Original text here"])
+    vspanset1 = session.retrieve_vspanset(opened)
+
+    # Transclude "text" from within the same document to the end
+    source_ro = session.open_document(docid, READ_ONLY, CONFLICT_COPY)
+    source_span = Span(Address(1, 10), Offset(0, 4))  # "text"
+    source_spec = SpecSet(VSpec(source_ro, [source_span]))
+
+    end_pos = vspanset1.spans[0].end()
+    session.vcopy(opened, end_pos, source_spec)
+
+    vspanset2 = session.retrieve_vspanset(opened)
+    specset = SpecSet(VSpec(opened, list(vspanset2.spans)))
+    contents = session.retrieve_contents(specset)
+
+    # Now compare the document with itself to see if both occurrences
+    # of "text" are recognized as sharing content identity
+    session.close_document(source_ro)
+    session.close_document(opened)
+
+    # Reopen for comparison
+    ro = session.open_document(docid, READ_ONLY, CONFLICT_COPY)
+    vs = session.retrieve_vspanset(ro)
+
+    # Create specs for the two regions containing "text"
+    # First occurrence: positions 10-13 (0-indexed: 9-12)
+    # Second occurrence: should be at positions 19-22 (0-indexed: 18-21)
+    first_text = Span(Address(1, 10), Offset(0, 4))
+    second_text = Span(Address(1, 19), Offset(0, 4))
+
+    spec1 = SpecSet(VSpec(ro, [first_text]))
+    spec2 = SpecSet(VSpec(ro, [second_text]))
+
+    # Compare these two regions - they should share content identity
+    # because they both reference the same I-addresses
+    shared = session.compare_versions(spec1, spec2)
+    shared_result = []
+    for span_a, span_b in shared:
+        shared_result.append({
+            "first": span_to_dict(span_a.span),
+            "second": span_to_dict(span_b.span)
+        })
+
+    session.close_document(ro)
+
+    return {
+        "name": "internal_transclusion_identity",
+        "description": "Test I→V mapping with internal transclusion (two V-positions, same I-address)",
+        "operations": [
+            {"op": "create_document", "result": str(docid)},
+            {"op": "insert", "address": "1.1", "text": "Original text here"},
+            {"op": "vcopy", "from": "positions 10-13 (text)", "to": "end of doc",
+             "comment": "Self-transclusion creates duplicate reference"},
+            {"op": "retrieve_contents", "result": contents,
+             "expected": "Original text heretext"},
+            {"op": "compare_versions",
+             "spec1": "first occurrence of 'text' (1.10-1.13)",
+             "spec2": "second occurrence of 'text' (1.19-1.22)",
+             "shared": shared_result,
+             "comment": "Both should map to same I-addresses, thus share identity"}
+        ]
+    }
+
+
+def scenario_internal_transclusion_with_link(session):
+    """Test link discovery through internal transclusion.
+
+    If we create a link on the first occurrence of transcluded content,
+    can we discover that link by searching from the second occurrence?
+    This tests whether ispan2vspanset returns both V-positions.
+    """
+    docid = session.create_document()
+    opened = session.open_document(docid, READ_WRITE, CONFLICT_FAIL)
+
+    # Insert original content
+    session.insert(opened, Address(1, 1), ["Original text here"])
+    vspanset1 = session.retrieve_vspanset(opened)
+
+    # Transclude "text" to end
+    source_ro = session.open_document(docid, READ_ONLY, CONFLICT_COPY)
+    source_span = Span(Address(1, 10), Offset(0, 4))  # "text"
+    source_spec = SpecSet(VSpec(source_ro, [source_span]))
+
+    end_pos = vspanset1.spans[0].end()
+    session.vcopy(opened, end_pos, source_spec)
+    session.close_document(source_ro)
+
+    # Get updated content
+    vspanset2 = session.retrieve_vspanset(opened)
+    specset2 = SpecSet(VSpec(opened, list(vspanset2.spans)))
+    contents = session.retrieve_contents(specset2)
+
+    # Create a link on the FIRST occurrence of "text" (positions 10-13)
+    from_span = Span(Address(1, 10), Offset(0, 4))
+    to_span = Span(Address(1, 1), Offset(0, 8))  # link to "Original"
+    type_span = Span(Address(1, 1, 0, 1), Offset(0, 1))
+
+    from_specs = SpecSet(VSpec(opened, [from_span]))
+    to_specs = SpecSet(VSpec(opened, [to_span]))
+    type_specs = SpecSet(type_span)
+
+    link_id = session.create_link(opened, from_specs, to_specs, type_specs)
+
+    # Now search for links from the SECOND occurrence of "text" (positions 19-22)
+    # If ispan2vspanset correctly returns both V-positions for the shared I-address,
+    # the link should be discoverable from the second occurrence too
+    second_text_span = Span(Address(1, 19), Offset(0, 4))
+    second_text_specs = SpecSet(VSpec(opened, [second_text_span]))
+
+    links_from_second = session.find_links(second_text_specs)
+
+    session.close_document(opened)
+
+    return {
+        "name": "internal_transclusion_with_link",
+        "description": "Test link discovery through internal transclusion (I→V mapping)",
+        "operations": [
+            {"op": "create_document", "result": str(docid)},
+            {"op": "insert", "text": "Original text here"},
+            {"op": "vcopy", "span": "text", "to": "end",
+             "comment": "Creates duplicate reference to same I-addresses"},
+            {"op": "retrieve_contents", "result": contents},
+            {"op": "create_link",
+             "from": "first occurrence of 'text' (1.10-1.13)",
+             "to": "Original",
+             "result": str(link_id)},
+            {"op": "find_links",
+             "from": "second occurrence of 'text' (1.19-1.22)",
+             "result": [str(l) for l in links_from_second],
+             "expected": "Should find the link (same I-address as first occurrence)",
+             "comment": "Tests if I→V mapping returns both V-positions"}
+        ]
+    }
+
+
+def scenario_internal_transclusion_multiple_copies(session):
+    """Test with multiple internal transclusions of the same content.
+
+    Create three copies of the same content within one document,
+    then verify all three are recognized as sharing identity.
+    """
+    docid = session.create_document()
+    opened = session.open_document(docid, READ_WRITE, CONFLICT_FAIL)
+
+    # Insert original
+    session.insert(opened, Address(1, 1), ["ABC"])
+
+    # Make two more copies of "B"
+    source_ro = session.open_document(docid, READ_ONLY, CONFLICT_COPY)
+    b_span = Span(Address(1, 2), Offset(0, 1))  # "B"
+    b_spec = SpecSet(VSpec(source_ro, [b_span]))
+
+    vspanset1 = session.retrieve_vspanset(opened)
+    end1 = vspanset1.spans[0].end()
+    session.vcopy(opened, end1, b_spec)
+
+    vspanset2 = session.retrieve_vspanset(opened)
+    end2 = vspanset2.spans[0].end()
+    session.vcopy(opened, end2, b_spec)
+
+    session.close_document(source_ro)
+
+    vspanset3 = session.retrieve_vspanset(opened)
+    specset3 = SpecSet(VSpec(opened, list(vspanset3.spans)))
+    contents = session.retrieve_contents(specset3)
+
+    # Now verify all three "B"s share identity
+    # Positions: 1.2 (original), 1.4 (first copy), 1.5 (second copy)
+    session.close_document(opened)
+
+    ro = session.open_document(docid, READ_ONLY, CONFLICT_COPY)
+
+    pos1 = Span(Address(1, 2), Offset(0, 1))
+    pos2 = Span(Address(1, 4), Offset(0, 1))
+    pos3 = Span(Address(1, 5), Offset(0, 1))
+
+    spec_pos1 = SpecSet(VSpec(ro, [pos1]))
+    spec_pos2 = SpecSet(VSpec(ro, [pos2]))
+    spec_pos3 = SpecSet(VSpec(ro, [pos3]))
+
+    # Compare all pairs
+    shared_1_2 = session.compare_versions(spec_pos1, spec_pos2)
+    shared_1_3 = session.compare_versions(spec_pos1, spec_pos3)
+    shared_2_3 = session.compare_versions(spec_pos2, spec_pos3)
+
+    results = {
+        "1_2": len(list(shared_1_2)) > 0,
+        "1_3": len(list(shared_1_3)) > 0,
+        "2_3": len(list(shared_2_3)) > 0
+    }
+
+    session.close_document(ro)
+
+    return {
+        "name": "internal_transclusion_multiple_copies",
+        "description": "Three copies of same content in one document - all share identity",
+        "operations": [
+            {"op": "create_document", "result": str(docid)},
+            {"op": "insert", "text": "ABC"},
+            {"op": "vcopy", "span": "B", "to": "end", "comment": "First copy"},
+            {"op": "vcopy", "span": "B", "to": "end", "comment": "Second copy"},
+            {"op": "retrieve_contents", "result": contents,
+             "expected": "ABCBB"},
+            {"op": "compare_all_pairs",
+             "positions": ["1.2", "1.4", "1.5"],
+             "results": results,
+             "expected": "All three should share identity (all true)",
+             "comment": "Tests I→V mapping with three V-positions for one I-address"}
+        ]
+    }
+
+
 SCENARIOS = [
     ("internal", "internal_state", scenario_internal_state),
     ("internal", "ispan_consolidation_fragmented", scenario_ispan_consolidation_fragmented),
     ("internal", "ispan_consolidation_bulk", scenario_ispan_consolidation_bulk),
     ("internal", "ispan_partial_overlap", scenario_ispan_partial_overlap),
+    ("internal", "internal_transclusion_identity", scenario_internal_transclusion_identity),
+    ("internal", "internal_transclusion_with_link", scenario_internal_transclusion_with_link),
+    ("internal", "internal_transclusion_multiple_copies", scenario_internal_transclusion_multiple_copies),
 ]
