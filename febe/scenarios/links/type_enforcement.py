@@ -2,6 +2,7 @@
 
 This tests whether the system enforces type restrictions - specifically,
 can link orgls (element type 2) appear in the text subspace (1.x)?
+Can text bytes appear in the link subspace (2.x)?
 """
 
 from client import (
@@ -118,6 +119,102 @@ def scenario_copy_link_to_text_subspace(session):
     }
 
 
+def scenario_insert_text_at_link_subspace(session):
+    """Test whether INSERT can place text bytes at a 2.x V-position (link subspace).
+
+    Question: Does the back end enforce subspace partition at INSERT level?
+    - Expected (if enforced): INSERT at 2.x should fail
+    - Actual (if not enforced): INSERT at 2.x succeeds, text bytes at link position
+
+    Test strategy:
+    1. Create document A with normal text at 1.1
+    2. Attempt to INSERT text at 2.1 (link subspace)
+    3. Check vspanset - does 2.x position appear?
+    4. Attempt to retrieve contents from 2.1
+    5. Check if FINDDOCSCONTAINING can find the document via 2.x content
+
+    This tests whether insertpm (orglinks.c:75-134) validates V-position subspace.
+    Code inspection shows acceptablevsa (do2.c:110) just returns TRUE - no validation.
+    """
+    # Create document with normal text
+    doc_a = session.create_document()
+    a_opened = session.open_document(doc_a, READ_WRITE, CONFLICT_FAIL)
+    session.insert(a_opened, Address(1, 1), ["NormalText"])
+
+    # Check initial vspanset - should be 1.x only
+    vspan_before = session.retrieve_vspanset(a_opened)
+
+    # Attempt to INSERT text at 2.1 (link subspace)
+    try:
+        session.insert(a_opened, Address(2, 1), ["TextAtLinkPosition"])
+        insert_succeeded = True
+        insert_error = None
+    except Exception as e:
+        insert_succeeded = False
+        insert_error = str(e)
+
+    # Check vspanset after insert attempt
+    vspan_after = session.retrieve_vspanset(a_opened)
+
+    # Try to retrieve contents from 2.1
+    try:
+        retrieve_span = Span(Address(2, 1), Offset(0, 19))
+        retrieve_specs = SpecSet(VSpec(a_opened, [retrieve_span]))
+        retrieved = session.retrieve_contents(retrieve_specs)
+        retrieve_succeeded = True
+        retrieve_error = None
+    except Exception as e:
+        retrieved = None
+        retrieve_succeeded = False
+        retrieve_error = str(e)
+
+    # Check FINDDOCSCONTAINING - can it find via 2.x content?
+    try:
+        find_specs = SpecSet(VSpec(a_opened, [Span(Address(2, 1), Offset(0, 4))]))  # "Text"
+        found_docs = session.find_documents_containing(find_specs)
+        find_succeeded = True
+        find_error = None
+    except Exception as e:
+        found_docs = []
+        find_succeeded = False
+        find_error = str(e)
+
+    session.close_document(a_opened)
+
+    return {
+        "name": "insert_text_at_link_subspace",
+        "description": "Test whether INSERT allows text bytes at 2.x V-position (link subspace)",
+        "operations": [
+            {"op": "create_document", "result": str(doc_a)},
+            {"op": "open_document", "doc": str(doc_a), "mode": "read_write", "result": str(a_opened)},
+            {"op": "insert", "doc": str(a_opened), "address": "1.1", "text": "NormalText"},
+            {"op": "retrieve_vspanset", "doc": str(a_opened), "result": vspec_to_dict(vspan_before), "note": "Before 2.x insert: should be 1.x only"},
+            {"op": "insert",
+             "doc": str(a_opened),
+             "address": "2.1",
+             "text": "TextAtLinkPosition",
+             "succeeded": insert_succeeded,
+             "error": insert_error,
+             "note": "CRITICAL: Can INSERT place text at 2.x (link subspace)?"},
+            {"op": "retrieve_vspanset", "doc": str(a_opened), "result": vspec_to_dict(vspan_after), "note": "After 2.x insert: does 2.x appear?"},
+            {"op": "retrieve_contents",
+             "from": "2.1",
+             "width": "0.19",
+             "result": retrieved,
+             "succeeded": retrieve_succeeded,
+             "error": retrieve_error,
+             "note": "Can we retrieve text from 2.x?"},
+            {"op": "find_documents_containing",
+             "specset": specset_to_list(SpecSet(VSpec(a_opened, [Span(Address(2, 1), Offset(0, 4))]))),
+             "result": [str(d) for d in found_docs] if found_docs else [],
+             "succeeded": find_succeeded,
+             "error": find_error,
+             "note": "Can FINDDOCSCONTAINING find doc via 2.x content?"}
+        ]
+    }
+
+
 SCENARIOS = [
     ("links", "copy_link_to_text_subspace", scenario_copy_link_to_text_subspace),
+    ("links", "insert_text_at_link_subspace", scenario_insert_text_at_link_subspace),
 ]
