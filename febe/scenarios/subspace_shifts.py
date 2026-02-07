@@ -3,7 +3,8 @@
 from client import (
     Address, Offset, Span, VSpec, SpecSet,
     READ_ONLY, READ_WRITE, CONFLICT_FAIL, CONFLICT_COPY,
-    JUMP_TYPE, NOSPECS
+    JUMP_TYPE, NOSPECS,
+    LINK_SOURCE, LINK_TARGET, LINK_TYPE
 )
 from .common import vspec_to_dict, span_to_dict
 
@@ -257,8 +258,118 @@ def scenario_displacement_tumbler_value(session):
     }
 
 
+def scenario_insert_text_check_both_link_positions(session):
+    """
+    Targeted test: After INSERT at 1.3 with a link at 2.1, check BOTH
+    V-positions 2.1 and 2.3 to definitively answer which has the link.
+
+    This test also follows the link to verify it remains functional.
+
+    Setup: doc with "ABCDE" at 1.1-1.5, one link at 2.1
+    Action: INSERT "XY" at 1.3
+    Query: retrieve_contents at 2.1 and 2.3, plus follow_link
+    """
+    doc1 = session.create_document()
+    doc2 = session.create_document()
+
+    opened_doc1 = session.open_document(doc1, READ_WRITE, CONFLICT_FAIL)
+    opened_doc2 = session.open_document(doc2, READ_WRITE, CONFLICT_FAIL)
+
+    session.insert(opened_doc1, Address(1, 1), ["ABCDE"])
+    session.insert(opened_doc2, Address(1, 1), ["12345"])
+
+    # Create link: from doc1[1.2-1.3] to doc2[1.2-1.3]
+    from_spec = SpecSet(VSpec(opened_doc1, [Span(Address(1, 2), Offset(0, 2))]))
+    to_spec = SpecSet(VSpec(opened_doc2, [Span(Address(1, 2), Offset(0, 2))]))
+    link_id = session.create_link(opened_doc1, from_spec, to_spec, SpecSet([JUMP_TYPE]))
+
+    # Verify link is at 2.1 before insert
+    link_at_2_1_before = session.retrieve_contents(
+        SpecSet(VSpec(opened_doc1, [Span(Address(2, 1), Offset(0, 1))]))
+    )
+
+    # INSERT "XY" at 1.3 (displacement = 0.2 in V-dimension)
+    session.insert(opened_doc1, Address(1, 3), ["XY"])
+
+    # CHECK 1: Is the link still at V-position 2.1?
+    link_at_2_1_after = session.retrieve_contents(
+        SpecSet(VSpec(opened_doc1, [Span(Address(2, 1), Offset(0, 1))]))
+    )
+
+    # CHECK 2: Is the link at V-position 2.3 (shifted by +0.2)?
+    link_at_2_3_after = session.retrieve_contents(
+        SpecSet(VSpec(opened_doc1, [Span(Address(2, 3), Offset(0, 1))]))
+    )
+
+    # CHECK 3: Follow the link to verify it's still functional
+    source_spec = SpecSet(VSpec(opened_doc1, [Span(Address(1, 1), Offset(0, 10))]))
+    links_found = session.find_links(source_spec)
+
+    # CHECK 4: Try follow_link on the link we created
+    follow_result = None
+    try:
+        follow_result = session.follow_link(link_id, LINK_TARGET)
+    except Exception as e:
+        follow_result = {"error": str(e)}
+
+    # CHECK 5: Verify text shifted correctly
+    full_text = session.retrieve_contents(
+        SpecSet(VSpec(opened_doc1, [Span(Address(1, 1), Offset(0, 10))]))
+    )
+
+    session.close_document(opened_doc1)
+    session.close_document(opened_doc2)
+
+    return {
+        "name": "insert_text_check_both_link_positions",
+        "description": "After INSERT at 1.3, check BOTH V-positions 2.1 and 2.3 for the link",
+        "operations": [
+            {"op": "setup",
+             "doc1_text": "ABCDE",
+             "doc2_text": "12345",
+             "link": "doc1[1.2-1.4] -> doc2[1.2-1.4]",
+             "link_id": str(link_id)},
+
+            {"op": "link_at_2_1_before",
+             "result": [str(x) for x in link_at_2_1_before] if isinstance(link_at_2_1_before, list) else str(link_at_2_1_before),
+             "interpretation": "Link I-address should be present at 2.1 before INSERT"},
+
+            {"op": "INSERT", "at": "1.3", "text": "XY",
+             "comment": "Displacement width = 0.2 in V-dimension"},
+
+            {"op": "link_at_2_1_after",
+             "result": [str(x) for x in link_at_2_1_after] if isinstance(link_at_2_1_after, list) else str(link_at_2_1_after),
+             "interpretation": "If subspace independent: link STILL at 2.1. If shifted: empty."},
+
+            {"op": "link_at_2_3_after",
+             "result": [str(x) for x in link_at_2_3_after] if isinstance(link_at_2_3_after, list) else str(link_at_2_3_after),
+             "interpretation": "If subspace independent: empty. If shifted by +0.2: link here."},
+
+            {"op": "find_links_after",
+             "result": [str(link) for link in links_found],
+             "interpretation": "Link should still be discoverable"},
+
+            {"op": "follow_link",
+             "link_id": str(link_id),
+             "result": str(follow_result) if not isinstance(follow_result, dict) else follow_result,
+             "interpretation": "Link should still resolve to target endset"},
+
+            {"op": "full_text_after",
+             "result": [str(x) for x in full_text] if isinstance(full_text, list) else str(full_text),
+             "interpretation": "Text should be 'ABXYCDE' (XY inserted at position 3)"}
+        ],
+        "analysis": {
+            "question": "After INSERT at 1.3, is the link at 2.1 or 2.3?",
+            "code_trace": "findaddressofsecondcutforinsert(1.3) returns 2.1 as second blade, "
+                         "which causes insertcutsectionnd to classify the 2.1 crum as case 2 (no shift)",
+            "prediction": "Link remains at 2.1 because the second cut blade IS 2.1"
+        }
+    }
+
+
 SCENARIOS = [
     ("subspace", "insert_text_check_link_positions", scenario_insert_text_check_link_positions),
     ("subspace", "createlink_check_text_positions", scenario_createlink_check_text_positions),
     ("subspace", "displacement_tumbler_value", scenario_displacement_tumbler_value),
+    ("subspace", "insert_text_check_both_link_positions", scenario_insert_text_check_both_link_positions),
 ]
