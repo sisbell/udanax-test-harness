@@ -13,6 +13,7 @@ This package contains link-related test scenarios split into logical groups:
 - type_enforcement: Element type restrictions in V-subspaces
 - link_subspace_deletion: Testing DELETEVSPAN on link subspace (2.x)
 - poom_shifting: Whether CREATELINK shifts existing POOM entries
+- vposition_shift: V-position arithmetic when text before links is deleted
 """
 
 from .basic import SCENARIOS as BASIC_SCENARIOS
@@ -27,6 +28,7 @@ from .subspace_independence import SCENARIOS as SUBSPACE_INDEPENDENCE_SCENARIOS
 from .type_enforcement import SCENARIOS as TYPE_ENFORCEMENT_SCENARIOS
 from .link_subspace_deletion import SCENARIOS as LINK_SUBSPACE_DELETION_SCENARIOS
 from .poom_shifting import SCENARIOS as POOM_SHIFTING_SCENARIOS
+from .vposition_shift import SCENARIOS as VPOSITION_SHIFT_SCENARIOS
 
 # Combined SCENARIOS list maintains original order
 SCENARIOS = (
@@ -41,5 +43,6 @@ SCENARIOS = (
     SUBSPACE_INDEPENDENCE_SCENARIOS +
     TYPE_ENFORCEMENT_SCENARIOS +
     LINK_SUBSPACE_DELETION_SCENARIOS +
-    POOM_SHIFTING_SCENARIOS
+    POOM_SHIFTING_SCENARIOS +
+    VPOSITION_SHIFT_SCENARIOS
 )
