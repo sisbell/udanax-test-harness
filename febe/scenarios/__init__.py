@@ -8,6 +8,7 @@ from .endsets import SCENARIOS as ENDSET_SCENARIOS
 from .internal import SCENARIOS as INTERNAL_SCENARIOS
 from .interactions import SCENARIOS as INTERACTION_SCENARIOS
 from .rearrange import SCENARIOS as REARRANGE_SCENARIOS
+from .rearrange_semantics import SCENARIOS as REARRANGE_SEMANTICS_SCENARIOS
 from .identity import SCENARIOS as IDENTITY_SCENARIOS
 from .accounts import SCENARIOS as ACCOUNT_SCENARIOS
 from .discovery import SCENARIOS as DISCOVERY_SCENARIOS
@@ -20,6 +21,11 @@ from .docispan_granularity import SCENARIOS as DOCISPAN_GRANULARITY_SCENARIOS
 from .subspace_shifts import SCENARIOS as SUBSPACE_SCENARIOS
 from .bert_enforcement import SCENARIOS as BERT_SCENARIOS
 from .version_link_test import SCENARIOS as VERSION_LINK_SCENARIOS
+from .spanfilade_cleanup import SCENARIOS as SPANFILADE_CLEANUP_SCENARIOS
+from .delete_all_content import SCENARIOS as DELETE_ALL_SCENARIOS
+from .delete_link_gap_closure import SCENARIOS as DELETE_LINK_GAP_SCENARIOS
+from .granfilade_split import SCENARIOS as GRANFILADE_SPLIT_SCENARIOS
+from .iaddress_allocation import SCENARIOS as IADDRESS_ALLOCATION_SCENARIOS
 from .multisession import MULTISESSION_SCENARIOS
 
 # All single-session scenarios combined
@@ -32,6 +38,7 @@ ALL_SCENARIOS = (
     INTERNAL_SCENARIOS +
     INTERACTION_SCENARIOS +
     REARRANGE_SCENARIOS +
+    REARRANGE_SEMANTICS_SCENARIOS +
     IDENTITY_SCENARIOS +
     ACCOUNT_SCENARIOS +
     DISCOVERY_SCENARIOS +
@@ -43,7 +50,12 @@ ALL_SCENARIOS = (
     DOCISPAN_GRANULARITY_SCENARIOS +
     SUBSPACE_SCENARIOS +
     BERT_SCENARIOS +
-    VERSION_LINK_SCENARIOS
+    VERSION_LINK_SCENARIOS +
+    SPANFILADE_CLEANUP_SCENARIOS +
+    DELETE_ALL_SCENARIOS +
+    DELETE_LINK_GAP_SCENARIOS +
+    GRANFILADE_SPLIT_SCENARIOS +
+    IADDRESS_ALLOCATION_SCENARIOS
 )
 
 # Multi-session scenarios are run separately via generate_multisession_golden.py
@@ -57,6 +69,7 @@ from . import endsets
 from . import internal
 from . import interactions
 from . import rearrange
+from . import rearrange_semantics
 from . import identity
 from . import accounts
 from . import discovery
@@ -69,4 +82,9 @@ from . import docispan_granularity
 from . import subspace_shifts
 from . import bert_enforcement
 from . import version_link_test
+from . import spanfilade_cleanup
+from . import delete_all_content
+from . import delete_link_gap_closure
+from . import granfilade_split
+from . import iaddress_allocation
 from . import multisession
