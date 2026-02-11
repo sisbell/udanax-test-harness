@@ -26,6 +26,9 @@ from .delete_all_content import SCENARIOS as DELETE_ALL_SCENARIOS
 from .delete_link_gap_closure import SCENARIOS as DELETE_LINK_GAP_SCENARIOS
 from .granfilade_split import SCENARIOS as GRANFILADE_SPLIT_SCENARIOS
 from .iaddress_allocation import SCENARIOS as IADDRESS_ALLOCATION_SCENARIOS
+from .interior_typing import SCENARIOS as INTERIOR_TYPING_SCENARIOS
+from .insert_coalescing import SCENARIOS as INSERT_COALESCING_SCENARIOS
+from .type_c_delete import SCENARIOS as TYPE_C_DELETE_SCENARIOS
 from .multisession import MULTISESSION_SCENARIOS
 
 # All single-session scenarios combined
@@ -55,7 +58,10 @@ ALL_SCENARIOS = (
     DELETE_ALL_SCENARIOS +
     DELETE_LINK_GAP_SCENARIOS +
     GRANFILADE_SPLIT_SCENARIOS +
-    IADDRESS_ALLOCATION_SCENARIOS
+    IADDRESS_ALLOCATION_SCENARIOS +
+    INTERIOR_TYPING_SCENARIOS +
+    INSERT_COALESCING_SCENARIOS +
+    TYPE_C_DELETE_SCENARIOS
 )
 
 # Multi-session scenarios are run separately via generate_multisession_golden.py
@@ -87,4 +93,7 @@ from . import delete_all_content
 from . import delete_link_gap_closure
 from . import granfilade_split
 from . import iaddress_allocation
+from . import interior_typing
+from . import insert_coalescing
+from . import type_c_delete
 from . import multisession
