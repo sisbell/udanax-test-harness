@@ -430,3 +430,11 @@ Likely **incomplete implementation** — the commented-out code and `/*zzz...*/`
 3. **Does this affect performance?** Do tall empty trees cause slowdowns?
 4. **Disk space impact?** Do empty intermediate nodes get written to disk unnecessarily?
 5. **Could recombine be enhanced?** Add logic to detect fully-empty levels and collapse them?
+
+## Updates
+
+- **2026-02-11**: Finding 064 confirms that the empty-after-delete state causes
+  INSERT/VCOPY to crash (Bug 019). The crash was in `firstinsertionnd()` which
+  assumed a bottom crum always exists. Fixed by creating a new bottom crum when
+  `findleftson()` returns NULL. See Finding 064 for full analysis including the
+  `reserve`/`rejuvinate` mismatch that complicated the fix.
