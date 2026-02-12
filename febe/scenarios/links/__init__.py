@@ -14,6 +14,7 @@ This package contains link-related test scenarios split into logical groups:
 - link_subspace_deletion: Testing DELETEVSPAN on link subspace (2.x)
 - poom_shifting: Whether CREATELINK shifts existing POOM entries
 - vposition_shift: V-position arithmetic when text before links is deleted
+- allocation: Link I-address allocation mechanism (per-document vs global)
 """
 
 from .basic import SCENARIOS as BASIC_SCENARIOS
@@ -30,6 +31,7 @@ from .link_subspace_deletion import SCENARIOS as LINK_SUBSPACE_DELETION_SCENARIO
 from .poom_shifting import SCENARIOS as POOM_SHIFTING_SCENARIOS
 from .vposition_shift import SCENARIOS as VPOSITION_SHIFT_SCENARIOS
 from .delete_displacement_underflow import SCENARIOS as DELETE_DISPLACEMENT_UNDERFLOW_SCENARIOS
+from .allocation import SCENARIOS as ALLOCATION_SCENARIOS
 
 # Combined SCENARIOS list maintains original order
 SCENARIOS = (
@@ -46,5 +48,6 @@ SCENARIOS = (
     LINK_SUBSPACE_DELETION_SCENARIOS +
     POOM_SHIFTING_SCENARIOS +
     VPOSITION_SHIFT_SCENARIOS +
-    DELETE_DISPLACEMENT_UNDERFLOW_SCENARIOS
+    DELETE_DISPLACEMENT_UNDERFLOW_SCENARIOS +
+    ALLOCATION_SCENARIOS
 )
