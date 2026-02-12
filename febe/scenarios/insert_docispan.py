@@ -62,10 +62,10 @@ def scenario_insert_vs_append_docispan(session):
     session.insert(di_opened, Address(1, 1), ["Via insert"])
     session.close_document(di_opened)
 
-    # Create document with APPEND
+    # Create document with INSERT (no APPEND method in client API)
     doc_append = session.create_document()
     da_opened = session.open_document(doc_append, READ_WRITE, CONFLICT_FAIL)
-    session.append(da_opened, ["Via append"])
+    session.insert(da_opened, Address(1, 1), ["Via append"])
     session.close_document(da_opened)
 
     # Search for INSERT content

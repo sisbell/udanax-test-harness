@@ -36,7 +36,7 @@ def scenario_delete_all_content_simple(session):
     specset_after = SpecSet(VSpec(opened, list(vspanset_after.spans)))
     contents_after = session.retrieve_contents(specset_after)
 
-    # Try to insert again at 1.1 - does this still work?
+    # Insert again at 1.1 after delete-all
     session.insert(opened, Address(1, 1), ["After delete"])
     vspanset_reinsert = session.retrieve_vspanset(opened)
     specset_reinsert = SpecSet(VSpec(opened, list(vspanset_reinsert.spans)))
@@ -59,11 +59,10 @@ def scenario_delete_all_content_simple(session):
              "comment": "Is this empty like createenf(POOM)?"},
             {"op": "retrieve_contents", "after": contents_after,
              "expected": "empty"},
-            {"op": "insert", "address": "1.1", "text": "After delete",
-             "comment": "Can we still insert at 1.1?"},
-            {"op": "retrieve_vspanset", "after_reinsert": vspec_to_dict(vspanset_reinsert)},
-            {"op": "retrieve_contents", "reinsert": contents_reinsert},
-            {"op": "close_document"}
+            {"op": "insert_after_delete", "address": "1.1", "text": "After delete",
+             "result": contents_reinsert,
+             "reinsert_vspans": vspec_to_dict(vspanset_reinsert),
+             "comment": "INSERT into fully-deleted document — tests if empty-after-edit state supports re-insertion"}
         ]
     }
 
@@ -98,7 +97,7 @@ def scenario_delete_all_incrementally(session):
     specset_final = SpecSet(VSpec(opened, list(vspanset_final.spans)))
     contents_final = session.retrieve_contents(specset_final)
 
-    # Reinsert
+    # Reinsert after all content deleted
     session.insert(opened, Address(1, 1), ["Rebuilt"])
     vspanset_rebuilt = session.retrieve_vspanset(opened)
     specset_rebuilt = SpecSet(VSpec(opened, list(vspanset_rebuilt.spans)))
@@ -120,7 +119,8 @@ def scenario_delete_all_incrementally(session):
              "remaining": contents_final, "expected": "empty"},
             {"op": "retrieve_vspanset", "after_all_deletes": vspec_to_dict(vspanset_final),
              "comment": "Final tree state after incremental deletion"},
-            {"op": "insert", "text": "Rebuilt", "result": contents_rebuilt}
+            {"op": "insert_after_delete", "text": "Rebuilt", "result": contents_rebuilt,
+             "comment": "INSERT into fully-deleted document — tests empty-after-edit state"}
         ]
     }
 
@@ -254,7 +254,6 @@ def scenario_delete_all_then_transclude(session):
     source_specs = SpecSet(VSpec(source_ro, list(source_vspanset.spans)))
 
     session.vcopy(opened_target, Address(1, 1), source_specs)
-
     vspanset_after = session.retrieve_vspanset(opened_target)
     specset_after = SpecSet(VSpec(opened_target, list(vspanset_after.spans)))
     contents_after = session.retrieve_contents(specset_after)
@@ -272,11 +271,10 @@ def scenario_delete_all_then_transclude(session):
             {"op": "insert", "doc": "target", "text": "Temporary"},
             {"op": "remove", "doc": "target", "comment": "Delete all content"},
             {"op": "retrieve_vspanset", "empty_state": vspec_to_dict(vspanset_empty)},
-            {"op": "vcopy", "from": "source", "to": "target at 1.1",
-             "comment": "Does VCOPY work into fully-deleted document?"},
-            {"op": "retrieve_vspanset", "after_vcopy": vspec_to_dict(vspanset_after)},
-            {"op": "retrieve_contents", "result": contents_after,
-             "expected": "Source material"}
+            {"op": "vcopy_after_delete", "from": "source", "to": "target at 1.1",
+             "result": contents_after,
+             "after_vspans": vspec_to_dict(vspanset_after),
+             "comment": "VCOPY into fully-deleted document — tests empty-after-edit state"}
         ]
     }
 

@@ -141,19 +141,23 @@ def scenario_delete_does_not_affect_next_insert(session):
     vs4 = session.retrieve_vspanset(opened1)
     content4 = session.retrieve_contents(SpecSet(VSpec(opened1, list(vs4.spans))))
 
+    # Close doc1 write handle before re-opening as read-only
+    session.close_document(opened1)
+
     # Now create a second document and transclude content from doc1
     # to examine I-address structure via compare_versions
     doc2 = session.create_document()
     opened2 = session.open_document(doc2, READ_WRITE, CONFLICT_FAIL)
 
     # Copy B and C to doc2
-    read1 = session.open_document(doc1, READ_ONLY, CONFLICT_FAIL)
+    read1 = session.open_document(doc1, READ_ONLY, CONFLICT_COPY)
     vs_read = session.retrieve_vspanset(read1)
     source_specs = SpecSet(VSpec(read1, list(vs_read.spans)))
     session.vcopy(opened2, Address(1, 1), source_specs)
 
     # Compare the two documents - they should share I-addresses for B and C
-    read2 = session.open_document(doc2, READ_ONLY, CONFLICT_FAIL)
+    session.close_document(opened2)
+    read2 = session.open_document(doc2, READ_ONLY, CONFLICT_COPY)
     vs_doc1 = session.retrieve_vspanset(read1)
     vs_doc2 = session.retrieve_vspanset(read2)
     spec_doc1 = SpecSet(VSpec(read1, list(vs_doc1.spans)))
@@ -167,8 +171,6 @@ def scenario_delete_does_not_affect_next_insert(session):
 
     session.close_document(read1)
     session.close_document(read2)
-    session.close_document(opened1)
-    session.close_document(opened2)
 
     return {
         "name": "delete_does_not_affect_next_insert",

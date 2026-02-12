@@ -260,8 +260,8 @@ def scenario_delete_then_recopy(session):
     # COPY back the same I-addresses from source
     source_read = session.open_document(source, READ_ONLY, CONFLICT_COPY)
     copy_specs = SpecSet(VSpec(source_read, [Span(Address(1, 1), Offset(0, 6))]))
+
     session.vcopy(target_opened, Address(1, 1), copy_specs)
-    session.close_document(source_read)
 
     # Record final state (after DELETE + COPY)
     vs_recopied = session.retrieve_vspanset(target_opened)
@@ -269,6 +269,7 @@ def scenario_delete_then_recopy(session):
     contents_recopied = session.retrieve_contents(ss_recopied)
     contents_recopied = [str(c) if hasattr(c, 'digits') else c for c in contents_recopied]
 
+    session.close_document(source_read)
     session.close_document(target_opened)
 
     # Compare states
@@ -291,12 +292,10 @@ def scenario_delete_then_recopy(session):
             {"op": "vspanset", "doc": "target",
              "result": [span_to_dict(s) for s in vs_deleted.spans] if vs_deleted.spans else [],
              "comment": "State after DELETE (should be empty)"},
-            {"op": "vcopy", "from": "source", "to": "target", "at": "1.1",
-             "comment": "COPY back - shares I-addresses with source"},
-            {"op": "vspanset", "doc": "target", "result": recopied_vspans,
-             "comment": "State after DELETE + COPY"},
-            {"op": "contents", "doc": "target", "result": contents_recopied,
-             "comment": "Same text as before?"},
+            {"op": "vcopy_after_delete", "from": "source", "to": "target", "at": "1.1",
+             "result": contents_recopied,
+             "recopied_vspans": recopied_vspans,
+             "comment": "COPY back into fully-deleted document — tests empty-after-edit state"},
             {"op": "compare", "insert_vs_recopy": {
                 "insert_vspans": insert_vspans,
                 "recopied_vspans": recopied_vspans,

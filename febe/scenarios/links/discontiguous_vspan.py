@@ -3,7 +3,7 @@ non-contiguous I-addresses create multiple I-spans in the link endset?"""
 
 from client import (
     Address, Offset, Span, VSpec, SpecSet,
-    READ_ONLY, READ_WRITE, CONFLICT_FAIL,
+    READ_ONLY, READ_WRITE, CONFLICT_FAIL, CONFLICT_COPY,
     LINK_SOURCE, LINK_TARGET,
     JUMP_TYPE,
 )
@@ -33,8 +33,8 @@ def scenario_link_on_discontiguous_transcluded_content(session):
     doc_c_opened = session.open_document(doc_c, READ_WRITE, CONFLICT_FAIL)
 
     # Need to re-open A and B to vcopy from them
-    doc_a_opened2 = session.open_document(doc_a, READ_ONLY, CONFLICT_FAIL)
-    doc_b_opened2 = session.open_document(doc_b, READ_ONLY, CONFLICT_FAIL)
+    doc_a_opened2 = session.open_document(doc_a, READ_ONLY, CONFLICT_COPY)
+    doc_b_opened2 = session.open_document(doc_b, READ_ONLY, CONFLICT_COPY)
 
     # Transclude "AA" from doc A
     session.vcopy(doc_c_opened, Address(1, 1),
@@ -65,25 +65,44 @@ def scenario_link_on_discontiguous_transcluded_content(session):
     link_source = SpecSet(VSpec(doc_c_opened, [Span(Address(1, 1), Offset(0, 4))]))
     link_target = SpecSet(VSpec(target_opened, [Span(Address(1, 1), Offset(0, 6))]))
 
-    link_id = session.create_link(doc_c_opened, link_source, link_target,
-                                   SpecSet([JUMP_TYPE]))
+    try:
+        link_id = session.create_link(doc_c_opened, link_source, link_target,
+                                       SpecSet([JUMP_TYPE]))
+        create_link_error = None
+    except Exception as e:
+        link_id = None
+        create_link_error = str(e)
 
-    # Follow the link back to see what we get
-    followed_source = session.follow_link(link_id, LINK_SOURCE)
-    followed_text = session.retrieve_contents(followed_source)
+    followed_text = None
+    follow_error = None
+    endset_result = None
+    endset_error = None
 
-    # Retrieve the endsets to see the internal structure
-    endsets = session.retrieve_endsets(link_id)
+    if link_id is not None:
+        # Follow the link back to see what we get
+        try:
+            followed_source = session.follow_link(link_id, LINK_SOURCE)
+            followed_text = session.retrieve_contents(followed_source)
+        except Exception as e:
+            follow_error = str(e)
 
-    # Count how many source spans are in the endset
-    # If backend creates multiple I-spans for discontiguous regions,
-    # we should see multiple spans in the source endset
-    source_specs = [spec for spec in endsets['source']]
-    source_span_count = sum(len(spec.vspanset) if hasattr(spec, 'vspanset') else 1
-                           for spec in source_specs)
+        # Retrieve the endsets — needs a SpecSet containing the link's span
+        try:
+            link_search = SpecSet(VSpec(doc_c_opened, [Span(Address(1, 1), Offset(0, 4))]))
+            source_endset, target_endset, type_endset = session.retrieve_endsets(link_search)
+            endset_result = {
+                "source": str(source_endset),
+                "target": str(target_endset),
+                "type": str(type_endset)
+            }
+        except Exception as e:
+            endset_error = str(e)
 
-    session.close_document(doc_c_opened)
-    session.close_document(target_opened)
+    try:
+        session.close_document(doc_c_opened)
+        session.close_document(target_opened)
+    except Exception:
+        pass
 
     return {
         "name": "link_on_discontiguous_transcluded_content",
@@ -102,14 +121,13 @@ def scenario_link_on_discontiguous_transcluded_content(session):
             {"op": "insert", "doc": "target", "text": "Target"},
             {"op": "create_link",
              "comment": "Link source is contiguous V-span 1.1 width 0.4 mapping to non-contiguous I-addresses",
-             "result": str(link_id)},
+             "result": str(link_id) if link_id else None,
+             "error": create_link_error},
             {"op": "follow_link", "end": "source", "result": followed_text,
+             "error": follow_error,
              "comment": "Should return full 'AABB' text"},
-            {"op": "retrieve_endsets", "result": {
-                "source_span_count": source_span_count,
-                "source_specs": [vspec_to_dict(s) if hasattr(s, 'vspanset') else str(s)
-                                for s in source_specs]
-             },
+            {"op": "retrieve_endsets", "result": endset_result,
+             "error": endset_error,
              "comment": "KEY: If source has 2+ spans, backend split discontiguous I-addresses"}
         ]
     }

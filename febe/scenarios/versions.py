@@ -280,8 +280,7 @@ def scenario_version_delete_preserves_original(session):
 
     # Delete from version
     ver_opened = session.open_document(version, READ_WRITE, CONFLICT_FAIL)
-    delete_span = Span(Address(1, 10), Offset(0, 17))  # "content that will"
-    session.delete(ver_opened, SpecSet(VSpec(ver_opened, [delete_span])))
+    session.delete(ver_opened, Address(1, 10), Offset(0, 17))  # "content that will"
 
     ver_vs = session.retrieve_vspanset(ver_opened)
     ver_specs = SpecSet(VSpec(ver_opened, list(ver_vs.spans)))
@@ -451,8 +450,7 @@ def scenario_delete_from_original_check_version(session):
 
     # Delete from original
     orig_opened2 = session.open_document(original, READ_WRITE, CONFLICT_FAIL)
-    delete_span = Span(Address(1, 9), Offset(0, 18))  # "to be deleted later"
-    session.delete(orig_opened2, SpecSet(VSpec(orig_opened2, [delete_span])))
+    session.delete(orig_opened2, Address(1, 9), Offset(0, 18))  # "to be deleted later"
 
     orig_vs = session.retrieve_vspanset(orig_opened2)
     orig_specs = SpecSet(VSpec(orig_opened2, list(orig_vs.spans)))
