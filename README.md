@@ -9,9 +9,11 @@ Generate golden tests that document the correct behavior of Udanax enfilade oper
 ## Building
 
 ```bash
-make          # Build C backend
-make test     # Run Python protocol tests
-make clean    # Clean build artifacts
+make              # Build C backend
+make test         # Run all tests (client unit + golden integration)
+make test-client  # Client protocol unit tests (no backend needed)
+make test-golden  # Golden integration tests (251 scenarios)
+make clean        # Clean build artifacts
 ```
 
 Binaries are output to `backend/build/`.

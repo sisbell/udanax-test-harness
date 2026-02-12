@@ -5,17 +5,14 @@ Generate golden tests from the Udanax Green C backend.
 ## Quick Start
 
 ```bash
-# Build the backend
-cd ../backend && make
+# From the repository root:
+make test          # Run all tests (client unit + golden integration)
+make test-golden   # Golden integration tests only
 
-# Run all tests
-python3 generate_golden.py
-
-# Run specific scenario
-python3 generate_golden.py --scenario create_version
-
-# List available scenarios
-python3 generate_golden.py --list
+# Or run directly:
+PYTHONPATH=febe python3 febe/generate_golden.py
+PYTHONPATH=febe python3 febe/generate_golden.py --scenario create_version
+PYTHONPATH=febe python3 febe/generate_golden.py --list
 ```
 
 ## Test Mode
@@ -28,7 +25,9 @@ The backend supports `--test-mode` for in-memory storage:
 ## Files
 
 - `client.py` - FEBE protocol client (Python 3)
-- `generate_golden.py` - Golden test generator
+- `generate_golden.py` - Golden test generator (251 scenarios)
+- `tests/test_client.py` - Client protocol unit tests (mock, no backend)
+- `tests/debug/` - Minimal bug reproduction scripts
 - `../golden/` - Generated JSON test files
 - `../bugs/` - Bug documentation
 
