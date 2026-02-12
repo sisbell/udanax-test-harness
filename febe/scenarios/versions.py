@@ -102,135 +102,135 @@ def scenario_compare_versions(session):
             {"op": "insert", "doc": "original", "text": "Shared content"},
             {"op": "create_version", "from": "original", "result": str(version)},
             {"op": "insert", "doc": "version", "text": " plus new text"},
-            {"op": "compare_versions", "shared": shared_result}
+            {"op": "compare_versions", "docs": ["original", "version"], "shared": shared_result}
         ]
     }
 
 
 def scenario_version_chain(session):
-    """Create a chain of versions: v1 -> v2 -> v3."""
+    """Create version of version, verify transitivity."""
+    # Create v1 with some text
     v1 = session.create_document()
     v1_opened = session.open_document(v1, READ_WRITE, CONFLICT_FAIL)
-    session.insert(v1_opened, Address(1, 1), ["v1 content"])
+    session.insert(v1_opened, Address(1, 1), ["Version 1 text"])
     session.close_document(v1_opened)
 
+    # Create v2 from v1
     v2 = session.create_version(v1)
     v2_opened = session.open_document(v2, READ_WRITE, CONFLICT_FAIL)
     v2_vs = session.retrieve_vspanset(v2_opened)
-    session.insert(v2_opened, v2_vs.spans[0].end(), [" plus v2"])
+    session.insert(v2_opened, v2_vs.spans[0].end(), [" and v2"])
     session.close_document(v2_opened)
 
+    # Create v3 from v2
     v3 = session.create_version(v2)
     v3_opened = session.open_document(v3, READ_WRITE, CONFLICT_FAIL)
     v3_vs = session.retrieve_vspanset(v3_opened)
-    session.insert(v3_opened, v3_vs.spans[0].end(), [" plus v3"])
+    session.insert(v3_opened, v3_vs.spans[0].end(), [" and v3"])
     session.close_document(v3_opened)
 
-    # Retrieve all three
+    # Compare v1 with v3
     v1_read = session.open_document(v1, READ_ONLY, CONFLICT_COPY)
-    v1_vs = session.retrieve_vspanset(v1_read)
-    v1_specs = SpecSet(VSpec(v1_read, list(v1_vs.spans)))
-    v1_contents = session.retrieve_contents(v1_specs)
-
-    v2_read = session.open_document(v2, READ_ONLY, CONFLICT_COPY)
-    v2_vs = session.retrieve_vspanset(v2_read)
-    v2_specs = SpecSet(VSpec(v2_read, list(v2_vs.spans)))
-    v2_contents = session.retrieve_contents(v2_specs)
-
     v3_read = session.open_document(v3, READ_ONLY, CONFLICT_COPY)
+
+    v1_vs = session.retrieve_vspanset(v1_read)
     v3_vs = session.retrieve_vspanset(v3_read)
+
+    v1_specs = SpecSet(VSpec(v1_read, list(v1_vs.spans)))
     v3_specs = SpecSet(VSpec(v3_read, list(v3_vs.spans)))
-    v3_contents = session.retrieve_contents(v3_specs)
+
+    shared = session.compare_versions(v1_specs, v3_specs)
+    shared_result = []
+    for span_a, span_b in shared:
+        shared_result.append({
+            "v1": span_to_dict(span_a.span),
+            "v3": span_to_dict(span_b.span)
+        })
 
     session.close_document(v1_read)
-    session.close_document(v2_read)
     session.close_document(v3_read)
 
     return {
         "name": "version_chain",
-        "description": "Create chain v1 -> v2 -> v3, each adding unique content",
+        "description": "Create v1->v2->v3 chain and compare v1 with v3",
         "operations": [
             {"op": "create_document", "doc": "v1", "result": str(v1)},
-            {"op": "insert", "doc": "v1", "text": "v1 content"},
+            {"op": "insert", "doc": "v1", "text": "Version 1 text"},
             {"op": "create_version", "from": "v1", "result": str(v2)},
-            {"op": "insert", "doc": "v2", "text": " plus v2"},
+            {"op": "insert", "doc": "v2", "text": " and v2"},
             {"op": "create_version", "from": "v2", "result": str(v3)},
-            {"op": "insert", "doc": "v3", "text": " plus v3"},
-            {"op": "contents", "doc": "v1", "result": v1_contents},
-            {"op": "contents", "doc": "v2", "result": v2_contents},
-            {"op": "contents", "doc": "v3", "result": v3_contents}
+            {"op": "insert", "doc": "v3", "text": " and v3"},
+            {"op": "compare_versions", "docs": ["v1", "v3"], "shared": shared_result,
+             "comment": "v3 should share 'Version 1 text' with v1 transitively"}
         ]
     }
 
 
 def scenario_multiple_versions_same_source(session):
-    """Create multiple independent versions from the same source."""
+    """Create multiple versions of same document, verify independence."""
+    # Create source
     source = session.create_document()
     source_opened = session.open_document(source, READ_WRITE, CONFLICT_FAIL)
-    session.insert(source_opened, Address(1, 1), ["Base content"])
+    session.insert(source_opened, Address(1, 1), ["Source text"])
     session.close_document(source_opened)
 
     # Create two versions
     v1 = session.create_version(source)
-    v2 = session.create_version(source)
-
-    # Modify each independently
     v1_opened = session.open_document(v1, READ_WRITE, CONFLICT_FAIL)
     v1_vs = session.retrieve_vspanset(v1_opened)
     session.insert(v1_opened, v1_vs.spans[0].end(), [" v1"])
     session.close_document(v1_opened)
 
+    v2 = session.create_version(source)
     v2_opened = session.open_document(v2, READ_WRITE, CONFLICT_FAIL)
     v2_vs = session.retrieve_vspanset(v2_opened)
     session.insert(v2_opened, v2_vs.spans[0].end(), [" v2"])
     session.close_document(v2_opened)
 
-    # Retrieve all three
+    # Read all three
     source_read = session.open_document(source, READ_ONLY, CONFLICT_COPY)
-    source_vs = session.retrieve_vspanset(source_read)
-    source_specs = SpecSet(VSpec(source_read, list(source_vs.spans)))
-    source_contents = session.retrieve_contents(source_specs)
-    session.close_document(source_read)
-
     v1_read = session.open_document(v1, READ_ONLY, CONFLICT_COPY)
-    v1_vs = session.retrieve_vspanset(v1_read)
-    v1_specs = SpecSet(VSpec(v1_read, list(v1_vs.spans)))
-    v1_contents = session.retrieve_contents(v1_specs)
-    session.close_document(v1_read)
-
     v2_read = session.open_document(v2, READ_ONLY, CONFLICT_COPY)
-    v2_vs = session.retrieve_vspanset(v2_read)
-    v2_specs = SpecSet(VSpec(v2_read, list(v2_vs.spans)))
+
+    source_specs = SpecSet(VSpec(source_read, list(session.retrieve_vspanset(source_read).spans)))
+    v1_specs = SpecSet(VSpec(v1_read, list(session.retrieve_vspanset(v1_read).spans)))
+    v2_specs = SpecSet(VSpec(v2_read, list(session.retrieve_vspanset(v2_read).spans)))
+
+    source_contents = session.retrieve_contents(source_specs)
+    v1_contents = session.retrieve_contents(v1_specs)
     v2_contents = session.retrieve_contents(v2_specs)
+
+    session.close_document(source_read)
+    session.close_document(v1_read)
     session.close_document(v2_read)
 
     return {
         "name": "multiple_versions_same_source",
-        "description": "Create two independent versions from same source",
+        "description": "Create two versions of same source, verify independence",
         "operations": [
             {"op": "create_document", "doc": "source", "result": str(source)},
-            {"op": "insert", "doc": "source", "text": "Base content"},
+            {"op": "insert", "doc": "source", "text": "Source text"},
             {"op": "create_version", "from": "source", "result": str(v1)},
-            {"op": "create_version", "from": "source", "result": str(v2)},
             {"op": "insert", "doc": "v1", "text": " v1"},
+            {"op": "create_version", "from": "source", "result": str(v2)},
             {"op": "insert", "doc": "v2", "text": " v2"},
-            {"op": "contents", "doc": "source", "result": source_contents},
-            {"op": "contents", "doc": "v1", "result": v1_contents},
-            {"op": "contents", "doc": "v2", "result": v2_contents}
+            {"op": "retrieve_contents", "doc": "source", "result": source_contents},
+            {"op": "retrieve_contents", "doc": "v1", "result": v1_contents},
+            {"op": "retrieve_contents", "doc": "v2", "result": v2_contents}
         ]
     }
 
 
 def scenario_compare_unrelated_documents(session):
-    """Compare two documents that have no shared content."""
+    """Compare two documents with no shared content."""
     doc1 = session.create_document()
     doc1_opened = session.open_document(doc1, READ_WRITE, CONFLICT_FAIL)
-    session.insert(doc1_opened, Address(1, 1), ["Content A"])
+    session.insert(doc1_opened, Address(1, 1), ["First document"])
     session.close_document(doc1_opened)
 
     doc2 = session.create_document()
     doc2_opened = session.open_document(doc2, READ_WRITE, CONFLICT_FAIL)
-    session.insert(doc2_opened, Address(1, 1), ["Content B"])
+    session.insert(doc2_opened, Address(1, 1), ["Second document"])
     session.close_document(doc2_opened)
 
     # Compare
@@ -256,59 +256,42 @@ def scenario_compare_unrelated_documents(session):
 
     return {
         "name": "compare_unrelated_documents",
-        "description": "Compare two documents with no shared content (should be empty)",
+        "description": "Compare two documents with no shared content",
         "operations": [
             {"op": "create_document", "doc": "doc1", "result": str(doc1)},
-            {"op": "insert", "doc": "doc1", "text": "Content A"},
+            {"op": "insert", "doc": "doc1", "text": "First document"},
             {"op": "create_document", "doc": "doc2", "result": str(doc2)},
-            {"op": "insert", "doc": "doc2", "text": "Content B"},
-            {"op": "compare_versions", "shared": shared_result,
-             "comment": "Should be empty - no shared content identity"}
+            {"op": "insert", "doc": "doc2", "text": "Second document"},
+            {"op": "compare_versions", "docs": ["doc1", "doc2"], "shared": shared_result,
+             "comment": "Should be empty - no shared content"}
         ]
     }
 
 
 def scenario_version_delete_preserves_original(session):
-    """Create version, delete from version, ensure original unchanged."""
+    """Delete from version, verify original unchanged."""
     original = session.create_document()
     orig_opened = session.open_document(original, READ_WRITE, CONFLICT_FAIL)
-    session.insert(orig_opened, Address(1, 1), ["Original content that will be partially deleted"])
+    session.insert(orig_opened, Address(1, 1), ["Keep this text"])
     session.close_document(orig_opened)
 
-    # Create version
+    # Create version and delete some text
     version = session.create_version(original)
-
-    # Delete from version
     ver_opened = session.open_document(version, READ_WRITE, CONFLICT_FAIL)
-    session.delete(ver_opened, Address(1, 10), Offset(0, 17))  # "content that will"
-
-    ver_vs = session.retrieve_vspanset(ver_opened)
-    ver_specs = SpecSet(VSpec(ver_opened, list(ver_vs.spans)))
-    ver_contents = session.retrieve_contents(ver_specs)
+    session.delete(ver_opened, Span(Address(1, 1), Offset(0, 5)))  # Delete "Keep "
     session.close_document(ver_opened)
 
-    # Check original is unchanged
+    # Read both
     orig_read = session.open_document(original, READ_ONLY, CONFLICT_COPY)
-    orig_vs = session.retrieve_vspanset(orig_read)
-    orig_specs = SpecSet(VSpec(orig_read, list(orig_vs.spans)))
-    orig_contents = session.retrieve_contents(orig_specs)
-    session.close_document(orig_read)
-
-    # Compare to see what's still shared
-    orig_read2 = session.open_document(original, READ_ONLY, CONFLICT_COPY)
     ver_read = session.open_document(version, READ_ONLY, CONFLICT_COPY)
-    orig_vs2 = session.retrieve_vspanset(orig_read2)
-    ver_vs2 = session.retrieve_vspanset(ver_read)
-    orig_specs2 = SpecSet(VSpec(orig_read2, list(orig_vs2.spans)))
-    ver_specs2 = SpecSet(VSpec(ver_read, list(ver_vs2.spans)))
-    shared = session.compare_versions(orig_specs2, ver_specs2)
-    shared_result = []
-    for span_a, span_b in shared:
-        shared_result.append({
-            "original": span_to_dict(span_a.span),
-            "version": span_to_dict(span_b.span)
-        })
-    session.close_document(orig_read2)
+
+    orig_specs = SpecSet(VSpec(orig_read, list(session.retrieve_vspanset(orig_read).spans)))
+    ver_specs = SpecSet(VSpec(ver_read, list(session.retrieve_vspanset(ver_read).spans)))
+
+    orig_contents = session.retrieve_contents(orig_specs)
+    ver_contents = session.retrieve_contents(ver_specs)
+
+    session.close_document(orig_read)
     session.close_document(ver_read)
 
     return {
@@ -316,96 +299,94 @@ def scenario_version_delete_preserves_original(session):
         "description": "Delete from version, verify original unchanged",
         "operations": [
             {"op": "create_document", "doc": "original", "result": str(original)},
-            {"op": "insert", "doc": "original", "text": "Original content that will be partially deleted"},
+            {"op": "insert", "doc": "original", "text": "Keep this text"},
             {"op": "create_version", "from": "original", "result": str(version)},
-            {"op": "delete", "doc": "version", "text": "content that will",
-             "comment": "Delete middle portion from version"},
-            {"op": "contents", "doc": "version", "result": ver_contents,
-             "comment": "Should be 'Original  be partially deleted'"},
-            {"op": "contents", "doc": "original", "result": orig_contents,
-             "comment": "Should be unchanged"},
-            {"op": "compare_versions", "shared": shared_result,
-             "comment": "Should share the non-deleted parts"}
+            {"op": "delete", "doc": "version", "range": "first 5 chars"},
+            {"op": "retrieve_contents", "doc": "original", "result": orig_contents},
+            {"op": "retrieve_contents", "doc": "version", "result": ver_contents}
         ]
     }
 
 
 def scenario_modify_original_after_version(session):
-    """Create version, then modify original, ensure version unchanged."""
+    """Create version, then modify original, verify version unchanged."""
     original = session.create_document()
     orig_opened = session.open_document(original, READ_WRITE, CONFLICT_FAIL)
-    session.insert(orig_opened, Address(1, 1), ["Original content"])
+    session.insert(orig_opened, Address(1, 1), ["Original text"])
+    orig_vs = session.retrieve_vspanset(orig_opened)
     session.close_document(orig_opened)
 
-    # Create version (snapshot of current state)
+    # Create version
     version = session.create_version(original)
 
-    # Now modify original
+    # Modify original
     orig_opened2 = session.open_document(original, READ_WRITE, CONFLICT_FAIL)
-    orig_vs = session.retrieve_vspanset(orig_opened2)
-    session.insert(orig_opened2, orig_vs.spans[0].end(), [" with additions"])
     orig_vs2 = session.retrieve_vspanset(orig_opened2)
-    orig_specs = SpecSet(VSpec(orig_opened2, list(orig_vs2.spans)))
-    orig_contents = session.retrieve_contents(orig_specs)
+    session.insert(orig_opened2, orig_vs2.spans[0].end(), [" modified"])
     session.close_document(orig_opened2)
 
-    # Check version is unchanged
+    # Read both
+    orig_read = session.open_document(original, READ_ONLY, CONFLICT_COPY)
     ver_read = session.open_document(version, READ_ONLY, CONFLICT_COPY)
-    ver_vs = session.retrieve_vspanset(ver_read)
-    ver_specs = SpecSet(VSpec(ver_read, list(ver_vs.spans)))
+
+    orig_specs = SpecSet(VSpec(orig_read, list(session.retrieve_vspanset(orig_read).spans)))
+    ver_specs = SpecSet(VSpec(ver_read, list(session.retrieve_vspanset(ver_read).spans)))
+
+    orig_contents = session.retrieve_contents(orig_specs)
     ver_contents = session.retrieve_contents(ver_specs)
+
+    session.close_document(orig_read)
     session.close_document(ver_read)
 
     return {
         "name": "modify_original_after_version",
-        "description": "Create version, modify original, verify version unchanged",
+        "description": "Create version, then modify original, verify version unchanged",
         "operations": [
             {"op": "create_document", "doc": "original", "result": str(original)},
-            {"op": "insert", "doc": "original", "text": "Original content"},
+            {"op": "insert", "doc": "original", "text": "Original text"},
             {"op": "create_version", "from": "original", "result": str(version)},
-            {"op": "insert", "doc": "original", "text": " with additions",
-             "comment": "Modify original after version created"},
-            {"op": "contents", "doc": "original", "result": orig_contents},
-            {"op": "contents", "doc": "version", "result": ver_contents,
-             "comment": "Should be 'Original content' (unchanged)"}
+            {"op": "insert", "doc": "original", "text": " modified"},
+            {"op": "retrieve_contents", "doc": "original", "result": orig_contents},
+            {"op": "retrieve_contents", "doc": "version", "result": ver_contents}
         ]
     }
 
 
 def scenario_version_preserves_transclusion(session):
-    """Version a document that contains transclusion, verify identity preserved."""
-    # Create source document
+    """Create version of document with transclusion, verify shared content identity."""
+    # Create source
     source = session.create_document()
     source_opened = session.open_document(source, READ_WRITE, CONFLICT_FAIL)
     session.insert(source_opened, Address(1, 1), ["Shared transcluded content"])
     session.close_document(source_opened)
 
-    # Create document that transcludes from source
+    # Create doc with transclusion from source
     doc = session.create_document()
     doc_opened = session.open_document(doc, READ_WRITE, CONFLICT_FAIL)
     session.insert(doc_opened, Address(1, 1), ["Prefix: "])
 
-    # Transclude "Shared" from source
+    # Transclude from source
     source_read = session.open_document(source, READ_ONLY, CONFLICT_COPY)
-    copy_span = Span(Address(1, 1), Offset(0, 6))  # "Shared"
-    copy_specs = SpecSet(VSpec(source_read, [copy_span]))
+    source_vs = session.retrieve_vspanset(source_read)
+    source_spec = SpecSet(VSpec(source_read, [Span(Address(1, 1), Offset(0, 6))]))  # "Shared"
+
     doc_vs = session.retrieve_vspanset(doc_opened)
-    session.vcopy(doc_opened, doc_vs.spans[0].end(), copy_specs)
+    session.vcopy(doc_opened, doc_vs.spans[0].end(), source_spec)
     session.close_document(source_read)
     session.close_document(doc_opened)
 
     # Create version of doc
     version = session.create_version(doc)
 
-    # Compare version with source - should find "Shared" as shared content
+    # Compare version with source - should find shared content
     ver_read = session.open_document(version, READ_ONLY, CONFLICT_COPY)
     source_read2 = session.open_document(source, READ_ONLY, CONFLICT_COPY)
 
     ver_vs = session.retrieve_vspanset(ver_read)
-    source_vs = session.retrieve_vspanset(source_read2)
+    source_vs2 = session.retrieve_vspanset(source_read2)
 
     ver_specs = SpecSet(VSpec(ver_read, list(ver_vs.spans)))
-    source_specs = SpecSet(VSpec(source_read2, list(source_vs.spans)))
+    source_specs = SpecSet(VSpec(source_read2, list(source_vs2.spans)))
 
     shared = session.compare_versions(ver_specs, source_specs)
     shared_result = []
@@ -415,25 +396,21 @@ def scenario_version_preserves_transclusion(session):
             "source": span_to_dict(span_b.span)
         })
 
-    # Get version contents
-    ver_contents = session.retrieve_contents(ver_specs)
-
     session.close_document(ver_read)
     session.close_document(source_read2)
 
     return {
         "name": "version_preserves_transclusion",
-        "description": "Version document with transclusion, verify content identity preserved",
+        "description": "Version of document with transclusion preserves content identity",
         "operations": [
             {"op": "create_document", "doc": "source", "result": str(source)},
             {"op": "insert", "doc": "source", "text": "Shared transcluded content"},
             {"op": "create_document", "doc": "doc", "result": str(doc)},
             {"op": "insert", "doc": "doc", "text": "Prefix: "},
-            {"op": "vcopy", "from": "source", "text": "Shared", "to": "doc"},
+            {"op": "vcopy", "from": "source", "to": "doc", "text": "Shared"},
             {"op": "create_version", "from": "doc", "result": str(version)},
-            {"op": "contents", "doc": "version", "result": ver_contents},
             {"op": "compare_versions", "docs": ["version", "source"], "shared": shared_result,
-             "comment": "Version should share 'Shared' with source through transclusion"}
+             "comment": "Version should share transcluded content identity with source"}
         ]
     }
 
@@ -442,57 +419,59 @@ def scenario_delete_from_original_check_version(session):
     """Delete from original after versioning, verify version unchanged."""
     original = session.create_document()
     orig_opened = session.open_document(original, READ_WRITE, CONFLICT_FAIL)
-    session.insert(orig_opened, Address(1, 1), ["Content to be deleted later"])
+    session.insert(orig_opened, Address(1, 1), ["Text to delete"])
     session.close_document(orig_opened)
 
-    # Create version (snapshot)
+    # Create version
     version = session.create_version(original)
 
     # Delete from original
     orig_opened2 = session.open_document(original, READ_WRITE, CONFLICT_FAIL)
-    session.delete(orig_opened2, Address(1, 9), Offset(0, 18))  # "to be deleted later"
-
-    orig_vs = session.retrieve_vspanset(orig_opened2)
-    orig_specs = SpecSet(VSpec(orig_opened2, list(orig_vs.spans)))
-    orig_contents = session.retrieve_contents(orig_specs)
+    session.delete(orig_opened2, Span(Address(1, 1), Offset(0, 5)))  # Delete "Text "
     session.close_document(orig_opened2)
 
-    # Check version is unchanged
+    # Read both
+    orig_read = session.open_document(original, READ_ONLY, CONFLICT_COPY)
     ver_read = session.open_document(version, READ_ONLY, CONFLICT_COPY)
-    ver_vs = session.retrieve_vspanset(ver_read)
-    ver_specs = SpecSet(VSpec(ver_read, list(ver_vs.spans)))
+
+    orig_specs = SpecSet(VSpec(orig_read, list(session.retrieve_vspanset(orig_read).spans)))
+    ver_specs = SpecSet(VSpec(ver_read, list(session.retrieve_vspanset(ver_read).spans)))
+
+    orig_contents = session.retrieve_contents(orig_specs)
     ver_contents = session.retrieve_contents(ver_specs)
+
+    session.close_document(orig_read)
     session.close_document(ver_read)
 
     return {
         "name": "delete_from_original_check_version",
-        "description": "Delete from original, verify version still has deleted content",
+        "description": "Delete from original after versioning, verify version unchanged",
         "operations": [
             {"op": "create_document", "doc": "original", "result": str(original)},
-            {"op": "insert", "doc": "original", "text": "Content to be deleted later"},
+            {"op": "insert", "doc": "original", "text": "Text to delete"},
             {"op": "create_version", "from": "original", "result": str(version)},
-            {"op": "delete", "doc": "original", "text": "to be deleted later"},
-            {"op": "contents", "doc": "original", "result": orig_contents,
-             "comment": "Should be 'Content '"},
-            {"op": "contents", "doc": "version", "result": ver_contents,
-             "comment": "Should be unchanged: 'Content to be deleted later'"}
+            {"op": "delete", "doc": "original", "range": "first 5 chars"},
+            {"op": "retrieve_contents", "doc": "original", "result": orig_contents},
+            {"op": "retrieve_contents", "doc": "version", "result": ver_contents}
         ]
     }
 
 
 def scenario_compare_across_version_chain(session):
-    """Compare v1 with v3 in chain v1->v2->v3, verify transitive content sharing."""
+    """Create v1->v2->v3 and compare v1 with v3."""
     v1 = session.create_document()
     v1_opened = session.open_document(v1, READ_WRITE, CONFLICT_FAIL)
     session.insert(v1_opened, Address(1, 1), ["Original from v1"])
     session.close_document(v1_opened)
 
+    # v2 from v1
     v2 = session.create_version(v1)
     v2_opened = session.open_document(v2, READ_WRITE, CONFLICT_FAIL)
     v2_vs = session.retrieve_vspanset(v2_opened)
     session.insert(v2_opened, v2_vs.spans[0].end(), [" plus v2"])
     session.close_document(v2_opened)
 
+    # v3 from v2
     v3 = session.create_version(v2)
     v3_opened = session.open_document(v3, READ_WRITE, CONFLICT_FAIL)
     v3_vs = session.retrieve_vspanset(v3_opened)
@@ -547,160 +526,119 @@ def scenario_version_with_links(session):
     target = session.create_document()
     target_opened = session.open_document(target, READ_WRITE, CONFLICT_FAIL)
     session.insert(target_opened, Address(1, 1), ["Information content"])
-
-    # Create link from "here" to target
-    link_source = SpecSet(VSpec(source_opened, [Span(Address(1, 7), Offset(0, 4))]))
-    link_target = SpecSet(VSpec(target_opened, [Span(Address(1, 1), Offset(0, 11))]))
-    link_id = session.create_link(source_opened, link_source, link_target, SpecSet([JUMP_TYPE]))
-
     session.close_document(target_opened)
+
+    # Create link
+    link_source = SpecSet(VSpec(source_opened, [Span(Address(1, 7), Offset(0, 4))]))  # "here"
+    link_target = SpecSet(VSpec(target_opened, [Span(Address(1, 1), Offset(0, 19))]))
+    link_id = session.create_link(source_opened, link_source, link_target, SpecSet([JUMP_TYPE]))
     session.close_document(source_opened)
 
-    # Create version of source document (which has the link)
+    # Create version of source
     version = session.create_version(source)
 
-    # Find links from original source
+    # Try to find links in version
+    ver_opened = session.open_document(version, READ_ONLY, CONFLICT_COPY)
+    ver_vs = session.retrieve_vspanset(ver_opened)
+    ver_spec = SpecSet(VSpec(ver_opened, list(ver_vs.spans)))
+
+    ver_links = session.find_links(ver_spec, NOSPECS, NOSPECS, entire_backend=True)
+    session.close_document(ver_opened)
+
+    # Also check source
     source_read = session.open_document(source, READ_ONLY, CONFLICT_COPY)
-    source_search = SpecSet(VSpec(source_read, [Span(Address(1, 1), Offset(0, 20))]))
-    links_from_source = session.find_links(source_search)
+    source_vs = session.retrieve_vspanset(source_read)
+    source_spec = SpecSet(VSpec(source_read, list(source_vs.spans)))
+    source_links = session.find_links(source_spec, NOSPECS, NOSPECS, entire_backend=True)
     session.close_document(source_read)
-
-    # Find links from version - do links transfer to versions?
-    ver_read = session.open_document(version, READ_ONLY, CONFLICT_COPY)
-    ver_search = SpecSet(VSpec(ver_read, [Span(Address(1, 1), Offset(0, 20))]))
-    links_from_version = session.find_links(ver_search)
-
-    # Get version contents
-    ver_vs = session.retrieve_vspanset(ver_read)
-    ver_ss = SpecSet(VSpec(ver_read, list(ver_vs.spans)))
-    ver_contents_raw = session.retrieve_contents(ver_ss)
-    # Convert any Address objects (embedded links) to strings
-    ver_contents = [str(c) if hasattr(c, 'digits') else c for c in ver_contents_raw]
-    session.close_document(ver_read)
 
     return {
         "name": "version_with_links",
-        "description": "Create document with links, then version it",
+        "description": "Create document with links, then version it, verify link discovery",
         "operations": [
             {"op": "create_document", "doc": "source", "result": str(source)},
             {"op": "insert", "doc": "source", "text": "Click here for info"},
             {"op": "create_document", "doc": "target", "result": str(target)},
             {"op": "insert", "doc": "target", "text": "Information content"},
-            {"op": "create_link", "source_text": "here", "result": str(link_id)},
+            {"op": "create_link", "from": "source:here", "to": "target", "result": str(link_id)},
             {"op": "create_version", "from": "source", "result": str(version)},
-            {"op": "contents", "doc": "version", "result": ver_contents,
-             "comment": "Text plus embedded link address"},
-            {"op": "find_links", "from": "source",
-             "result": [str(l) for l in links_from_source],
-             "comment": "Links from original source"},
-            {"op": "find_links", "from": "version",
-             "result": [str(l) for l in links_from_version],
-             "comment": "Do links transfer to version? (tests link-to-content binding)"}
+            {"op": "find_links", "doc": "version", "result": [str(link) for link in ver_links],
+             "comment": "Links discovered via content identity"},
+            {"op": "find_links", "doc": "source", "result": [str(link) for link in source_links]}
         ]
     }
 
 
 def scenario_version_of_empty_document(session):
-    """Create version of an empty document."""
-    # Create empty document
+    """Create version of empty document."""
     empty = session.create_document()
-
-    # Create version of empty document
     version = session.create_version(empty)
 
-    # Check both are empty initially
-    empty_read1 = session.open_document(empty, READ_ONLY, CONFLICT_COPY)
-    empty_vs = session.retrieve_vspanset(empty_read1)
-    session.close_document(empty_read1)
+    # Add content to version only
+    ver_opened = session.open_document(version, READ_WRITE, CONFLICT_FAIL)
+    session.insert(ver_opened, Address(1, 1), ["Content in version only"])
+    session.close_document(ver_opened)
 
-    ver_read1 = session.open_document(version, READ_ONLY, CONFLICT_COPY)
-    ver_vs = session.retrieve_vspanset(ver_read1)
-    session.close_document(ver_read1)
+    # Read both
+    empty_read = session.open_document(empty, READ_ONLY, CONFLICT_COPY)
+    ver_read = session.open_document(version, READ_ONLY, CONFLICT_COPY)
 
-    # Now add content to version
-    ver_write = session.open_document(version, READ_WRITE, CONFLICT_FAIL)
-    session.insert(ver_write, Address(1, 1), ["Content in version only"])
-    ver_vs2 = session.retrieve_vspanset(ver_write)
-    ver_ss = SpecSet(VSpec(ver_write, list(ver_vs2.spans)))
-    ver_contents = session.retrieve_contents(ver_ss)
-    session.close_document(ver_write)
+    empty_vs = session.retrieve_vspanset(empty_read)
+    ver_vs = session.retrieve_vspanset(ver_read)
 
-    # Empty should still be empty
-    empty_read2 = session.open_document(empty, READ_ONLY, CONFLICT_COPY)
-    empty_vs2 = session.retrieve_vspanset(empty_read2)
-    session.close_document(empty_read2)
+    empty_result = vspec_to_dict(empty_vs) if empty_vs.spans else {"docid": str(empty), "spans": []}
+    ver_specs = SpecSet(VSpec(ver_read, list(ver_vs.spans)))
+    ver_contents = session.retrieve_contents(ver_specs)
+
+    session.close_document(empty_read)
+    session.close_document(ver_read)
 
     return {
         "name": "version_of_empty_document",
-        "description": "Create version of an empty document",
+        "description": "Create version of empty document, add content to version",
         "operations": [
             {"op": "create_document", "doc": "empty", "result": str(empty)},
             {"op": "create_version", "from": "empty", "result": str(version)},
-            {"op": "retrieve_vspanset", "doc": "empty", "label": "initial",
-             "result": vspec_to_dict(empty_vs),
-             "comment": "Empty document should have no spans"},
-            {"op": "retrieve_vspanset", "doc": "version", "label": "initial",
-             "result": vspec_to_dict(ver_vs),
-             "comment": "Version of empty should also have no spans"},
             {"op": "insert", "doc": "version", "text": "Content in version only"},
-            {"op": "contents", "doc": "version", "result": ver_contents},
-            {"op": "retrieve_vspanset", "doc": "empty", "label": "after",
-             "result": vspec_to_dict(empty_vs2),
-             "comment": "Empty document should still be empty"}
+            {"op": "retrieve_vspanset", "doc": "empty", "result": empty_result},
+            {"op": "retrieve_contents", "doc": "version", "result": ver_contents}
         ]
     }
 
 
 def scenario_cross_version_vcopy(session):
-    """Copy content from version back to original (or between versions)."""
-    # Create original document
+    """Copy content from version back to original."""
     original = session.create_document()
     orig_opened = session.open_document(original, READ_WRITE, CONFLICT_FAIL)
     session.insert(orig_opened, Address(1, 1), ["Original text"])
     session.close_document(orig_opened)
 
-    # Create version and add unique content
+    # Create version and add text
     version = session.create_version(original)
     ver_opened = session.open_document(version, READ_WRITE, CONFLICT_FAIL)
     ver_vs = session.retrieve_vspanset(ver_opened)
     session.insert(ver_opened, ver_vs.spans[0].end(), [" with version-only addition"])
+    ver_vs2 = session.retrieve_vspanset(ver_opened)
     session.close_document(ver_opened)
 
-    # Now vcopy "version-only" from version back to original
+    # Copy "version-only" back to original
     orig_opened2 = session.open_document(original, READ_WRITE, CONFLICT_FAIL)
     ver_read = session.open_document(version, READ_ONLY, CONFLICT_COPY)
-
-    # "version-only" is at position 20-32 in version
-    copy_span = Span(Address(1, 20), Offset(0, 12))
-    copy_specs = SpecSet(VSpec(ver_read, [copy_span]))
-
+    ver_spec = SpecSet(VSpec(ver_read, [Span(Address(1, 15), Offset(0, 12))]))  # "version-only"
     orig_vs = session.retrieve_vspanset(orig_opened2)
-    session.vcopy(orig_opened2, orig_vs.spans[0].end(), copy_specs)
-
-    # Get final contents
-    orig_vs2 = session.retrieve_vspanset(orig_opened2)
-    orig_ss = SpecSet(VSpec(orig_opened2, list(orig_vs2.spans)))
-    orig_contents = session.retrieve_contents(orig_ss)
-
+    session.vcopy(orig_opened2, orig_vs.spans[0].end(), ver_spec)
     session.close_document(ver_read)
     session.close_document(orig_opened2)
 
-    # Get version contents
-    ver_read2 = session.open_document(version, READ_ONLY, CONFLICT_COPY)
-    ver_vs2 = session.retrieve_vspanset(ver_read2)
-    ver_ss = SpecSet(VSpec(ver_read2, list(ver_vs2.spans)))
-    ver_contents = session.retrieve_contents(ver_ss)
-    session.close_document(ver_read2)
-
-    # Compare - should now have two shared regions
+    # Compare - should find TWO shared regions now
     orig_read = session.open_document(original, READ_ONLY, CONFLICT_COPY)
-    ver_read3 = session.open_document(version, READ_ONLY, CONFLICT_COPY)
+    ver_read2 = session.open_document(version, READ_ONLY, CONFLICT_COPY)
 
-    orig_vs3 = session.retrieve_vspanset(orig_read)
-    ver_vs3 = session.retrieve_vspanset(ver_read3)
+    orig_vs2 = session.retrieve_vspanset(orig_read)
+    ver_vs3 = session.retrieve_vspanset(ver_read2)
 
-    orig_specs = SpecSet(VSpec(orig_read, list(orig_vs3.spans)))
-    ver_specs = SpecSet(VSpec(ver_read3, list(ver_vs3.spans)))
+    orig_specs = SpecSet(VSpec(orig_read, list(orig_vs2.spans)))
+    ver_specs = SpecSet(VSpec(ver_read2, list(ver_vs3.spans)))
 
     shared = session.compare_versions(orig_specs, ver_specs)
     shared_result = []
@@ -711,61 +649,54 @@ def scenario_cross_version_vcopy(session):
         })
 
     session.close_document(orig_read)
-    session.close_document(ver_read3)
+    session.close_document(ver_read2)
 
     return {
         "name": "cross_version_vcopy",
-        "description": "Copy content from version back to original",
+        "description": "Copy content from version back to original via vcopy",
         "operations": [
             {"op": "create_document", "doc": "original", "result": str(original)},
             {"op": "insert", "doc": "original", "text": "Original text"},
             {"op": "create_version", "from": "original", "result": str(version)},
             {"op": "insert", "doc": "version", "text": " with version-only addition"},
-            {"op": "vcopy", "from": "version", "text": "version-only", "to": "original"},
-            {"op": "contents", "doc": "original", "result": orig_contents,
-             "comment": "Should be 'Original textversion-only'"},
-            {"op": "contents", "doc": "version", "result": ver_contents},
-            {"op": "compare_versions", "shared": shared_result,
-             "comment": "Should share both 'Original text' and 'version-only'"}
+            {"op": "vcopy", "from": "version:version-only", "to": "original"},
+            {"op": "compare_versions", "docs": ["original", "version"], "shared": shared_result,
+             "comment": "Should find both 'Original text' and 'version-only' as shared"}
         ]
     }
 
 
 def scenario_version_insert_in_middle(session):
-    """Insert text in middle of versioned content, verify content identity splits."""
+    """Insert in middle of versioned content, verify split."""
     original = session.create_document()
     orig_opened = session.open_document(original, READ_WRITE, CONFLICT_FAIL)
     session.insert(orig_opened, Address(1, 1), ["FirstSecond"])
     session.close_document(orig_opened)
 
-    # Create version
+    # Create version and insert in middle
     version = session.create_version(original)
-
-    # Insert in middle of version
     ver_opened = session.open_document(version, READ_WRITE, CONFLICT_FAIL)
-    session.insert(ver_opened, Address(1, 6), [" MIDDLE "])
-
-    ver_vs = session.retrieve_vspanset(ver_opened)
-    ver_specs = SpecSet(VSpec(ver_opened, list(ver_vs.spans)))
-    ver_contents = session.retrieve_contents(ver_specs)
+    session.insert(ver_opened, Address(1, 6), [" MIDDLE "])  # After "First"
     session.close_document(ver_opened)
 
-    # Compare - should find two shared regions
+    # Compare - should find TWO shared regions
     orig_read = session.open_document(original, READ_ONLY, CONFLICT_COPY)
     ver_read = session.open_document(version, READ_ONLY, CONFLICT_COPY)
 
     orig_vs = session.retrieve_vspanset(orig_read)
-    ver_vs2 = session.retrieve_vspanset(ver_read)
+    ver_vs = session.retrieve_vspanset(ver_read)
 
     orig_specs = SpecSet(VSpec(orig_read, list(orig_vs.spans)))
-    ver_specs2 = SpecSet(VSpec(ver_read, list(ver_vs2.spans)))
+    ver_specs = SpecSet(VSpec(ver_read, list(ver_vs.spans)))
 
-    shared = session.compare_versions(orig_specs, ver_specs2)
+    shared = session.compare_versions(orig_specs, ver_specs)
     shared_result = []
     for span_a, span_b in shared:
         shared_result.append({
             "original": span_to_dict(span_a.span),
-            "version": span_to_dict(span_b.span)
+            "version": span_to_dict(span_b.span),
+            "original_width": str(span_a.span.width),
+            "version_width": str(span_b.span.width)
         })
 
     session.close_document(orig_read)
@@ -773,53 +704,52 @@ def scenario_version_insert_in_middle(session):
 
     return {
         "name": "version_insert_in_middle",
-        "description": "Insert in middle of versioned content, splits content identity",
+        "description": "Insert in middle of versioned content, verify content identity split",
         "operations": [
             {"op": "create_document", "doc": "original", "result": str(original)},
             {"op": "insert", "doc": "original", "text": "FirstSecond"},
             {"op": "create_version", "from": "original", "result": str(version)},
-            {"op": "insert", "doc": "version", "address": "1.6", "text": " MIDDLE "},
-            {"op": "contents", "doc": "version", "result": ver_contents,
-             "comment": "Should be 'First MIDDLE Second'"},
-            {"op": "compare_versions", "shared": shared_result,
-             "comment": "Should find two regions: 'First' and 'Second' at different positions"}
+            {"op": "insert", "doc": "version", "at": "position 6", "text": " MIDDLE "},
+            {"op": "compare_versions", "docs": ["original", "version"], "shared": shared_result,
+             "comment": "Should find 'First' and 'Second' as two separate shared regions"}
         ]
     }
 
 
 def scenario_both_versions_modified(session):
-    """Modify both original and version independently, then compare."""
+    """Modify both original and version, verify independence."""
     original = session.create_document()
     orig_opened = session.open_document(original, READ_WRITE, CONFLICT_FAIL)
-    session.insert(orig_opened, Address(1, 1), ["Shared base content"])
+    session.insert(orig_opened, Address(1, 1), ["Base content"])
     session.close_document(orig_opened)
 
     # Create version
     version = session.create_version(original)
 
-    # Modify original
+    # Modify both
     orig_opened2 = session.open_document(original, READ_WRITE, CONFLICT_FAIL)
     orig_vs = session.retrieve_vspanset(orig_opened2)
-    session.insert(orig_opened2, orig_vs.spans[0].end(), [" original-only"])
+    session.insert(orig_opened2, orig_vs.spans[0].end(), [" - original edit"])
     session.close_document(orig_opened2)
 
-    # Modify version
     ver_opened = session.open_document(version, READ_WRITE, CONFLICT_FAIL)
-    session.insert(ver_opened, Address(1, 1), ["version-only "])
+    ver_vs = session.retrieve_vspanset(ver_opened)
+    session.insert(ver_opened, ver_vs.spans[0].end(), [" - version edit"])
     session.close_document(ver_opened)
 
-    # Get contents of both
+    # Compare
     orig_read = session.open_document(original, READ_ONLY, CONFLICT_COPY)
-    orig_vs2 = session.retrieve_vspanset(orig_read)
-    orig_specs = SpecSet(VSpec(orig_read, list(orig_vs2.spans)))
-    orig_contents = session.retrieve_contents(orig_specs)
-
     ver_read = session.open_document(version, READ_ONLY, CONFLICT_COPY)
-    ver_vs = session.retrieve_vspanset(ver_read)
-    ver_specs = SpecSet(VSpec(ver_read, list(ver_vs.spans)))
+
+    orig_vs2 = session.retrieve_vspanset(orig_read)
+    ver_vs2 = session.retrieve_vspanset(ver_read)
+
+    orig_specs = SpecSet(VSpec(orig_read, list(orig_vs2.spans)))
+    ver_specs = SpecSet(VSpec(ver_read, list(ver_vs2.spans)))
+
+    orig_contents = session.retrieve_contents(orig_specs)
     ver_contents = session.retrieve_contents(ver_specs)
 
-    # Compare
     shared = session.compare_versions(orig_specs, ver_specs)
     shared_result = []
     for span_a, span_b in shared:
@@ -833,19 +763,17 @@ def scenario_both_versions_modified(session):
 
     return {
         "name": "both_versions_modified",
-        "description": "Modify both original and version independently, then compare",
+        "description": "Modify both original and version independently",
         "operations": [
             {"op": "create_document", "doc": "original", "result": str(original)},
-            {"op": "insert", "doc": "original", "text": "Shared base content"},
+            {"op": "insert", "doc": "original", "text": "Base content"},
             {"op": "create_version", "from": "original", "result": str(version)},
-            {"op": "insert", "doc": "original", "text": " original-only",
-             "comment": "Append to original"},
-            {"op": "insert", "doc": "version", "address": "1.1", "text": "version-only ",
-             "comment": "Prepend to version"},
-            {"op": "contents", "doc": "original", "result": orig_contents},
-            {"op": "contents", "doc": "version", "result": ver_contents},
-            {"op": "compare", "shared": shared_result,
-             "comment": "Should share 'Shared base content' despite both being modified"}
+            {"op": "insert", "doc": "original", "text": " - original edit"},
+            {"op": "insert", "doc": "version", "text": " - version edit"},
+            {"op": "retrieve_contents", "doc": "original", "result": orig_contents},
+            {"op": "retrieve_contents", "doc": "version", "result": ver_contents},
+            {"op": "compare_versions", "docs": ["original", "version"], "shared": shared_result,
+             "comment": "Should still share 'Base content'"}
         ]
     }
 
@@ -908,6 +836,47 @@ def scenario_version_copies_link_subspace(session):
     }
 
 
+def scenario_version_address_allocation(session):
+    """Test version address allocation mechanism: child of d or sibling under parent account?"""
+    # Create first document
+    doc1 = session.create_document()
+
+    # Create second document (to establish account pattern)
+    doc2 = session.create_document()
+
+    # Create version of doc1
+    version1 = session.create_version(doc1)
+
+    # Create second version of doc1
+    version2 = session.create_version(doc1)
+
+    # Create version of doc2
+    version3 = session.create_version(doc2)
+
+    # Create version of version1 (version chain)
+    version_of_version = session.create_version(version1)
+
+    return {
+        "name": "version_address_allocation",
+        "description": "Test version address allocation: child of document or sibling under account?",
+        "operations": [
+            {"op": "create_document", "label": "doc1", "result": str(doc1),
+             "comment": "First document under account"},
+            {"op": "create_document", "label": "doc2", "result": str(doc2),
+             "comment": "Second document under account"},
+            {"op": "create_version", "from": "doc1", "label": "version1", "result": str(version1),
+             "comment": "If child: doc1.1  If sibling: account.0.2"},
+            {"op": "create_version", "from": "doc1", "label": "version2", "result": str(version2),
+             "comment": "Second version of doc1 - shows monotonic allocation"},
+            {"op": "create_version", "from": "doc2", "label": "version3", "result": str(version3),
+             "comment": "Version of different document"},
+            {"op": "create_version", "from": "version1", "label": "version_of_version",
+             "result": str(version_of_version),
+             "comment": "Version chain: shows if versions can be versioned with same mechanism"}
+        ]
+    }
+
+
 SCENARIOS = [
     ("versions", "create_version", scenario_create_version),
     ("versions", "compare_versions", scenario_compare_versions),
@@ -925,4 +894,5 @@ SCENARIOS = [
     ("versions", "version_insert_in_middle", scenario_version_insert_in_middle),
     ("versions", "both_versions_modified", scenario_both_versions_modified),
     ("versions", "version_copies_link_subspace", scenario_version_copies_link_subspace),
+    ("versions", "version_address_allocation", scenario_version_address_allocation),
 ]
