@@ -227,7 +227,7 @@ typecontext *findcbcnd(typecorecrum *father, typewid *offsetptr, tumbler *addres
 }
 
 int findcbcinarea2d(typecorecrum *crumptr, typedsp *offsetptr, tumbler *span1start, tumbler *span1end, INT index1, tumbler *span2start, tumbler *span2end, INT index2, typecontext **headptr, typebottomcruminfo *infoptr)
-{ 
+{
 
   typedsp localoffset;
   typecontext *context, *makecontextfromcbc();

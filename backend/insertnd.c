@@ -185,7 +185,7 @@ int findaddressofsecondcutforinsert(tumbler *position, tumbler *secondcut)
 INT doinsertnd(typecuc *father, typewid *origin, typewid *width, type2dbottomcruminfo *infoptr, INT index)
 {
   typedsp  offset;
-		   
+
 	if (iszerotumbler (&width->dsas[index]))
 		/*q*/gerror ("zero width in doinsertnd\n");
 	if (isemptyenfilade (father)) {
@@ -199,8 +199,16 @@ INT doinsertnd(typecuc *father, typewid *origin, typewid *width, type2dbottomcru
 int firstinsertionnd(typecuc *father, typewid *origin, typewid *width, type2dbottomcruminfo *infoptr)
 {
   typecorecrum *ptr;
+  typecorecrum *createcrum();
 
 	ptr = findleftson (father);
+	if (!ptr) {
+		/* Enfilade was emptied by delete-all — no bottom crum remains.
+		   Create a fresh one and adopt it. No reserve() needed here:
+		   makecontextfromcbc will reserve/rejuvinate during retrieval. */
+		ptr = createcrum (0, (INT)father->cenftype);
+		adopt (ptr, SON, (typecorecrum*)father);
+	}
 	movewisp (origin, &ptr->cdsp);
 	movewisp (width, &ptr->cwid);
 	move2dinfo (infoptr, &((type2dcbc *)ptr)->c2dinfo);

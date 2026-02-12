@@ -24,10 +24,11 @@ Bugs discovered during golden test development.
 | [016](016-link-count-limit-regression.md) | Link count limit causes crash | Open | High | Limit varies with doc count |
 | [017](017-zero-width-link-endpoint-crash.md) | Zero-width link endpoint crash | Open | Medium | Workaround: use non-zero spans |
 | [018](018-large-insert-crash.md) | Large insert crash | Open | High | Limit ~10KB per insert |
+| [019](019-insert-after-delete-all-crash.md) | INSERT/VCOPY after delete-all crashes | Fixed | High | Sequel to 007 |
 
 ## Summary
 
-- **Fixed:** 11
+- **Fixed:** 12
 - **Closed:** 1 (workaround in place)
 - **Open:** 6
 
