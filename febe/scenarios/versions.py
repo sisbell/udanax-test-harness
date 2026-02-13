@@ -278,7 +278,7 @@ def scenario_version_delete_preserves_original(session):
     # Create version and delete some text
     version = session.create_version(original)
     ver_opened = session.open_document(version, READ_WRITE, CONFLICT_FAIL)
-    session.delete(ver_opened, Span(Address(1, 1), Offset(0, 5)))  # Delete "Keep "
+    session.delete(ver_opened, Address(1, 1), Offset(0, 5))  # Delete "Keep "
     session.close_document(ver_opened)
 
     # Read both
@@ -427,7 +427,7 @@ def scenario_delete_from_original_check_version(session):
 
     # Delete from original
     orig_opened2 = session.open_document(original, READ_WRITE, CONFLICT_FAIL)
-    session.delete(orig_opened2, Span(Address(1, 1), Offset(0, 5)))  # Delete "Text "
+    session.delete(orig_opened2, Address(1, 1), Offset(0, 5))  # Delete "Text "
     session.close_document(orig_opened2)
 
     # Read both
@@ -542,14 +542,14 @@ def scenario_version_with_links(session):
     ver_vs = session.retrieve_vspanset(ver_opened)
     ver_spec = SpecSet(VSpec(ver_opened, list(ver_vs.spans)))
 
-    ver_links = session.find_links(ver_spec, NOSPECS, NOSPECS, entire_backend=True)
+    ver_links = session.find_links(ver_spec, NOSPECS, NOSPECS)
     session.close_document(ver_opened)
 
     # Also check source
     source_read = session.open_document(source, READ_ONLY, CONFLICT_COPY)
     source_vs = session.retrieve_vspanset(source_read)
     source_spec = SpecSet(VSpec(source_read, list(source_vs.spans)))
-    source_links = session.find_links(source_spec, NOSPECS, NOSPECS, entire_backend=True)
+    source_links = session.find_links(source_spec, NOSPECS, NOSPECS)
     session.close_document(source_read)
 
     return {

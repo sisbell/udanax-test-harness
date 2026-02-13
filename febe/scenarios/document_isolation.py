@@ -15,7 +15,8 @@ only modify the target document's text span sequence.
 
 from client import (
     Address, Offset, Span, VSpec, SpecSet,
-    READ_ONLY, READ_WRITE, CONFLICT_FAIL, CONFLICT_COPY
+    READ_ONLY, READ_WRITE, CONFLICT_FAIL, CONFLICT_COPY,
+    LINK_SOURCE
 )
 from .common import vspec_to_dict, span_to_dict
 
@@ -228,7 +229,7 @@ def scenario_insert_text_does_not_affect_links_in_same_document(session):
 
     # Capture link state before insertion
     links_before = session.find_links(from_specs)
-    follow_before = session.follow_link(link_id)
+    follow_before = session.follow_link(link_id, LINK_SOURCE)
 
     session.close_document(opened2)
 
@@ -243,7 +244,7 @@ def scenario_insert_text_does_not_affect_links_in_same_document(session):
     # Check link state after insertion
     # The link should still exist and be discoverable
     links_after = session.find_links(from_specs)
-    follow_after = session.follow_link(link_id)
+    follow_after = session.follow_link(link_id, LINK_SOURCE)
 
     session.close_document(opened3)
 
@@ -318,7 +319,7 @@ def scenario_delete_text_does_not_affect_links_in_same_document(session):
 
     # The link should still be discoverable (though endpoints may have shifted)
     try:
-        follow_after = session.follow_link(link_id)
+        follow_after = session.follow_link(link_id, LINK_SOURCE)
         follow_result = [vspec_to_dict(v) for v in follow_after]
     except:
         follow_result = "error"
