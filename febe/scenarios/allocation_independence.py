@@ -83,7 +83,7 @@ def scenario_insert_link_allocation_independence(session):
                 "expected": "I-addresses under .0.3.1, .0.3.2, .0.3.3"
             }},
             {"op": "makelink_1", "result": {
-                "link": link1_result,
+                "link": str(link1_result),
                 "links_found": len(links1),
                 "expected": "Link I-address under .0.2.1"
             }},
@@ -92,7 +92,7 @@ def scenario_insert_link_allocation_independence(session):
                 "expected": "I-addresses continue at .0.3.4 (link did not affect text counter)"
             }},
             {"op": "makelink_2", "result": {
-                "link": link2_result,
+                "link": str(link2_result),
                 "links_found": len(links2),
                 "expected": "Link I-address continues at .0.2.2 (text did not affect link counter)"
             }},
@@ -157,16 +157,9 @@ def scenario_version_insert_allocation_independence(session):
 
     session.close_document(opened)
 
-    # Extract I-addresses from vspans
+    # Extract span information from vspans
     def extract_spans(vspanset):
-        result = []
-        for vspan in vspanset.spans:
-            result.append({
-                "vspan": span_to_dict(vspan.span),
-                "ispan_start": str(vspan.ispan.span.start),
-                "ispan_width": str(vspan.ispan.span.width)
-            })
-        return result
+        return [span_to_dict(span) for span in vspanset.spans]
 
     return {
         "name": "version_insert_allocation_independence",
@@ -255,7 +248,7 @@ def scenario_version_link_allocation_independence(session):
             {"op": "create_document", "result": str(docid)},
             {"op": "insert_text", "text": "ABCDEF"},
             {"op": "makelink_1", "result": {
-                "link": link1,
+                "link": str(link1),
                 "expected": "Link at .0.2.1"
             }},
             {"op": "version_1", "result": {
@@ -263,7 +256,7 @@ def scenario_version_link_allocation_independence(session):
                 "expected": f"{docid}.1"
             }},
             {"op": "makelink_2", "result": {
-                "link": link2,
+                "link": str(link2),
                 "expected": "Link at .0.2.2 (VERSION did not affect link counter)"
             }},
             {"op": "version_2", "result": {
@@ -271,7 +264,7 @@ def scenario_version_link_allocation_independence(session):
                 "expected": f"{docid}.2 (MAKELINK did not affect doc counter)"
             }},
             {"op": "makelink_3", "result": {
-                "link": link3,
+                "link": str(link3),
                 "expected": "Link at .0.2.3"
             }},
         ]
@@ -349,14 +342,7 @@ def scenario_all_operations_interleaved(session):
     session.close_document(opened2)
 
     def extract_spans(vspanset):
-        result = []
-        for vspan in vspanset.spans:
-            result.append({
-                "vspan": span_to_dict(vspan.span),
-                "ispan_start": str(vspan.ispan.span.start),
-                "ispan_width": str(vspan.ispan.span.width)
-            })
-        return result
+        return [span_to_dict(span) for span in vspanset.spans]
 
     return {
         "name": "all_operations_interleaved",
