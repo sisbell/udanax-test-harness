@@ -29,6 +29,8 @@ from .iaddress_allocation import SCENARIOS as IADDRESS_ALLOCATION_SCENARIOS
 from .interior_typing import SCENARIOS as INTERIOR_TYPING_SCENARIOS
 from .insert_coalescing import SCENARIOS as INSERT_COALESCING_SCENARIOS
 from .type_c_delete import SCENARIOS as TYPE_C_DELETE_SCENARIOS
+from .document_isolation import SCENARIOS as ISOLATION_SCENARIOS
+from .allocation_independence import SCENARIOS as ALLOCATION_INDEPENDENCE_SCENARIOS
 from .multisession import MULTISESSION_SCENARIOS
 
 # All single-session scenarios combined
@@ -61,7 +63,9 @@ ALL_SCENARIOS = (
     IADDRESS_ALLOCATION_SCENARIOS +
     INTERIOR_TYPING_SCENARIOS +
     INSERT_COALESCING_SCENARIOS +
-    TYPE_C_DELETE_SCENARIOS
+    TYPE_C_DELETE_SCENARIOS +
+    ISOLATION_SCENARIOS +
+    ALLOCATION_INDEPENDENCE_SCENARIOS
 )
 
 # Multi-session scenarios are run separately via generate_multisession_golden.py
@@ -96,4 +100,6 @@ from . import iaddress_allocation
 from . import interior_typing
 from . import insert_coalescing
 from . import type_c_delete
+from . import document_isolation
+from . import allocation_independence
 from . import multisession
