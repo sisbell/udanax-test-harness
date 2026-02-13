@@ -89,3 +89,19 @@ The malformed type addresses (`Address(2, 1)` within the type document) may be i
 
 - `febe/client.py` - LINK_DOCID and type constants (Bug 005)
 - Backend link creation code - crash location unknown
+
+## Amendment (Bug 020)
+
+The true root cause of the "6th link" crash was a stack buffer overflow in
+`recombinend()` (`recombine.c`). The `sons` array was declared as
+`sons[MAXUCINLOAF]` (6 elements), but `getorderedsons()` writes a NULL sentinel
+at `sons[nsons]`, overflowing when `nsons == 6`. Each link adds endset entries
+to the spanfilade, and the 6th link produced the 6th child node at height >= 2,
+triggering the overflow.
+
+Bug 005's address format fix reduced the number of spanfilade children per link,
+pushing the crash threshold beyond the test cases — but the underlying overflow
+remained. The "crash on 4th link for doc 1 vs 6th for doc 2" pattern is
+explained by home-document links adding more spanfilade entries per link.
+
+See Bug 020 for the full analysis and fix (`sons[MAXUCINLOAF + 1]`).

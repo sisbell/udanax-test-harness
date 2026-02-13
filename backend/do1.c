@@ -71,18 +71,14 @@ bool docopyinternal(typetask *taskptr, typeisa *docisaptr, tumbler *vsaptr, type
   bool specset2ispanset(), findorgl(), acceptablevsa(), insertpm(), insertspanf();
   bool asserttreeisok();
 
-	return (
-	   specset2ispanset (taskptr, specset, &ispanset, NOBERTREQUIRED)
-	&& findorgl (taskptr, granf, docisaptr, &docorgl, NOBERTREQUIRED)
-	&& acceptablevsa (vsaptr, docorgl)
-	&& asserttreeisok(docorgl)
-
-	/* the meat of docopy: */
-	&& insertpm (taskptr, docisaptr, docorgl, vsaptr, ispanset)
-
-	&&  insertspanf (taskptr, spanf, docisaptr, ispanset, DOCISPAN)
-	&& asserttreeisok(docorgl)
-/*      &&  ht stuff */ );
+	if (!specset2ispanset (taskptr, specset, &ispanset, NOBERTREQUIRED)) return FALSE;
+	if (!findorgl (taskptr, granf, docisaptr, &docorgl, NOBERTREQUIRED)) return FALSE;
+	if (!acceptablevsa (vsaptr, docorgl)) return FALSE;
+	if (!asserttreeisok(docorgl)) return FALSE;
+	if (!insertpm (taskptr, docisaptr, docorgl, vsaptr, ispanset)) return FALSE;
+	if (!insertspanf (taskptr, spanf, docisaptr, ispanset, DOCISPAN)) return FALSE;
+	if (!asserttreeisok(docorgl)) return FALSE;
+	return TRUE;
 }
 
   typespec spec,spec2,spec3;

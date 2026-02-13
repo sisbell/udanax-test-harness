@@ -51,7 +51,7 @@ fprintf(stderr,"entering insertnd\n");
      switch (fullcrumptr->cenftype) {
 
        case POOM:
-	  makegappm (taskptr, fullcrumptr, origin, width);      
+	  makegappm (taskptr, fullcrumptr, origin, width);
 	checkspecandstringbefore();
 	  setwispupwards(fullcrumptr,0);
 	  bothertorecombine=doinsertnd(fullcrumptr,origin,width,infoptr,index);
@@ -73,7 +73,7 @@ fprintf(stderr,"entering insertnd\n");
 		fprintf(stderr,"insertnd recombineing and notbothertorecombine\n");
 	}
 #endif
-	  recombine (fullcrumptr); 
+	  recombine (fullcrumptr);
      }
      newdiff = widdiffs(fullcrumptr);
 #ifndef DISTRIBUTION

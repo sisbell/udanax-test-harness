@@ -80,3 +80,16 @@ All golden tests pass after the fix.
 ## Test reference
 
 The `identity_through_version_chain` test now works with deep version chains. The test was previously simplified to 2 versions as a workaround.
+
+## Amendment (Bug 020)
+
+The three issues identified here (tumbler overflow, struct padding, version
+deletion) were all real bugs. However, deep version chains also trigger Bug 020:
+each `create_version` copies content via `docopyinternal` → `insertspanf` →
+`insertnd` → `recombine`, and after enough versions the spanfilade accumulates
+6 children at height >= 2, triggering a stack buffer overflow in
+`recombinend()` (`sons[MAXUCINLOAF]` off-by-one). Some crashes attributed to
+tumbler overflow may have been this buffer overflow instead — both produce
+SIGABRT with no `gerror` message.
+
+See Bug 020 for the full analysis and fix (`sons[MAXUCINLOAF + 1]`).

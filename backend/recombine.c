@@ -102,10 +102,10 @@ int eatbrossubtreeseq(typecuc *me)
 /* 2d recombine */
 
 int recombinend(typecuc *father)
-{ 
+{
 
   typecorecrum *ptr;
-  typecorecrum *sons[MAXUCINLOAF];
+  typecorecrum *sons[MAXUCINLOAF + 1]; /* +1 for NULL sentinel from getorderedsons */
   INT i, j, n;
   bool ishouldbother();
 
@@ -164,7 +164,7 @@ bool ishouldbother(typecuc *dest, typecuc *src)
 
 int takeovernephewsnd(typecuc **meptr, typecuc **broptr)
 {
-  typecorecrum *sons[MAXUCINLOAF], *ptr;
+  typecorecrum *sons[MAXUCINLOAF + 1], *ptr; /* +1 for NULL sentinel from getorderedsons */
   typecuc *me, *bro;
   INT i, n;
   bool ret;

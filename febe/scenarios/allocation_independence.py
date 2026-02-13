@@ -350,7 +350,7 @@ def scenario_all_operations_interleaved(session):
         "operations": [
             {"op": "create_doc1", "result": str(doc1)},
             {"op": "insert_1_AAA", "result": extract_spans(vs1)},
-            {"op": "makelink_1", "result": link1},
+            {"op": "makelink_1", "result": str(link1)},
             {"op": "version_1", "result": str(ver1)},
             {"op": "delete", "result": extract_spans(vs_after_delete)},
             {"op": "insert_2_BBB", "result": extract_spans(vs2)},
@@ -359,7 +359,7 @@ def scenario_all_operations_interleaved(session):
                 "vspans_doc2": extract_spans(vs_doc2),
                 "note": "COPY should reuse I-addresses, not allocate new ones"
             }},
-            {"op": "makelink_2", "result": link2},
+            {"op": "makelink_2", "result": str(link2)},
             {"op": "version_2", "result": str(ver2)},
             {"op": "insert_3_CCC", "result": {
                 "vspans": extract_spans(vs3),

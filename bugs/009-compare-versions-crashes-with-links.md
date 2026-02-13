@@ -130,3 +130,14 @@ This prevents comparing versions when either document contains links, which limi
 
 `scenarios/interactions.py::scenario_compare_versions_with_different_links` - disabled due to this bug
 `febe/debug_bug009.py` - debug script that reproduces the issue
+
+## Amendment (Bug 020)
+
+The crash symptom here (SIGABRT with no `gerror` message) matches the signature
+of Bug 020: a stack buffer overflow in `recombinend()` caused by an off-by-one
+in the `sons[MAXUCINLOAF]` array. While the cross-subspace span intersection
+issue is real, some of the observed SIGABRT crashes in this scenario may have
+been the recombine overflow triggered during the version copy that precedes
+comparison, rather than the tumbler arithmetic in `intersectspansets()`.
+
+See Bug 020 for the full analysis and fix (`sons[MAXUCINLOAF + 1]`).

@@ -25,20 +25,20 @@ bool insertspanf(typetask *taskptr, typespanf spanfptr, typeisa *isaptr, typespo
         for (; sporglset; sporglset = (typesporglset)((typeitemheader *)sporglset)->next) {
                 if (((typeitemheader *)sporglset)->itemid == ISPANID) {
                         movetumbler (&((typeispan *)sporglset)->stream, &lstream);
-                        movetumbler (&((typeispan *)sporglset)->width, &lwidth);       
+                        movetumbler (&((typeispan *)sporglset)->width, &lwidth);
                         movetumbler (isaptr,&linfo.homedoc);
                 } else if (((typeitemheader *)sporglset)->itemid == SPORGLID) {
                         movetumbler (&((typesporgl *)sporglset)->sporglorigin, &lstream);
                         movetumbler (&((typesporgl *)sporglset)->sporglwidth, &lwidth);
                         movetumbler (&((typesporgl *)sporglset)->sporgladdress,&linfo.homedoc);
                 } else if (((typeitemheader *)sporglset)->itemid == TEXTID) {
-                        movetumbler(isaptr,&lstream);   
+                        movetumbler(isaptr,&lstream);
 
-                        /*create lwidth out of sporglset->length*/      
+                        /*create lwidth out of sporglset->length*/
                         tumblerclear(&lwidth);
                         lwidth.mantissa[1] = ((typetext *)sporglset) -> length;
                         tumblerjustify(&lwidth);
-                        
+
                         movetumbler(isaptr,&linfo.homedoc);
                 }else
 #ifndef DISTRIBUTION
