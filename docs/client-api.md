@@ -335,7 +335,7 @@ links = session.find_links(search_specs)
 Optional parameters narrow the search:
 - `targetspecs` — filter by target content
 - `typespecs` — filter by link type
-- `homedocids` — filter by home document (Bug 015: this filter has no effect)
+- `homedocids` — filter by home document (Bug 0015: this filter has no effect)
 
 ### `follow_link(linkid, linkend)` → SpecSet
 
@@ -384,7 +384,7 @@ docs = session.find_documents(specset)
 ```
 
 **Note:** May return stale results — documents that once contained the
-I-addresses but no longer do (Finding 057: spanfilade is write-only).
+I-addresses but no longer do (Finding 0057: spanfilade is write-only).
 
 ---
 
