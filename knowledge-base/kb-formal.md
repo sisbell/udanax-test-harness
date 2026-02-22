@@ -539,7 +539,7 @@ The enfilade B-tree used by the permanent layer (ispace + spanf) stores I-addres
 
 ### SS-SPANF-OPERATIONS
 
-**Sources:** Findings 0012, 0069
+**Source:** Finding 0012
 
 #### Finding 0012
 
@@ -552,20 +552,6 @@ The enfilade B-tree used by the permanent layer (ispace + spanf) stores I-addres
 - `do1.c:386-391` — `dofindlinksfromtothree()` delegates entirely to `findlinksfromtothreesp()`
 
 **Provenance:** Finding 0012
-
-#### Finding 0069
-
-**What happens:** The spanfilade search operates in two dimensions: the span dimension (I-address content matching) and the orgl dimension (document/link origin scoping). The span dimension filter works correctly — `find_links` returns only links whose endpoints share I-addresses with the query. However, the orgl dimension filter is disabled by a code bug (`TRUE||!homeset` in `sporglset2linkset`). The actual search boundary in the orgl dimension is a hardcoded width of 100 tumbler digits starting from zero, set via `nullhomeset.width.mantissa[0] = 100`. This is effectively unbounded for any realistic deployment.
-
-**Why it matters for spec:** The `SpanEnfilade` query model from Finding 0012 (`find_links(specset) = {link | endpoints(link) ∩ query_range ≠ ∅}`) is correct for the span dimension. But the intended 2D query — filtering by both content identity AND orgl origin — is reduced to a 1D query on content identity alone. The spec should model `find_links` as: `find_links(from, to, three) = {link ∈ all_links | endpoint_iaddrs(link) ∩ query_iaddrs ≠ ∅}` with no orgl scoping, reflecting the actual implementation. If the spec intends to model the design rather than the code, the orgl-range parameter should be included but annotated as unimplemented.
-
-**Code references:**
-- `sporgl.c:222-237` — `sporglset2linkset()` replaces homeset with hardcoded range
-- `sporgl.c:239-269` — `sporglset2linksetinrange()` performs actual search using the overridden range
-
-**Provenance:** Finding 0069
-
-**Co-occurring entries:** [SS-DUAL-ENFILADE], [SS-GRANF-OPERATIONS], [PRE-FIND-LINKS], [ST-CREATE-LINK], [FC-CONTENT-SPANF-ISOLATION], [INV-DUAL-ENFILADE-CONSISTENCY], [EC-FIND-LINKS-GLOBAL]
 
 ---
 
@@ -599,7 +585,7 @@ Sporgl:
 
 ### SS-BERT
 
-**Sources:** Findings 0014, 0050
+**Source:** Finding 0014
 
 #### Finding 0014
 
@@ -616,34 +602,6 @@ BertTable: Map<(ConnectionId, Tumbler), BertEntry>
 **Code references:** `bert.c:13-29` (struct definition), `common.h:165-167` (access level constants)
 
 **Provenance:** Finding 0014
-
-#### Finding 0050
-
-**What happens:** The BERT access control mechanism is architecturally advisory, not enforced. The back end contains the `checkforopen`/`findorgl` machinery described in Finding 0014, but for state-modifying operations (INSERT, DELETEVSPAN, REARRANGE, COPY), the BERT check occurs *after* the success response has already been sent to the front end. The BERT table exists as state, but it functions as a coordination hint rather than an access gate.
-
-The back end handler pattern for mutations is:
-1. `getXXX()` — parse the request
-2. `putXXX()` — send success response to front end
-3. `doXXX()` — attempt the actual operation (which calls `findorgl(..., WRITEBERT)`)
-
-When `findorgl` returns FALSE (BERT check fails), the operation is silently skipped — the front end has already received success. This means the BERT table's state does not actually gate mutations; it only determines whether the `doXXX` path executes internally.
-
-**Why it matters for spec:** The specification must model two distinct things: (1) the BERT state structure (as in Finding 0014), and (2) the fact that BERT enforcement is a front-end protocol obligation, not a back-end invariant. The spec should distinguish between the *intended* access control semantics (which BERT represents) and the *actual* enforcement boundary (which is the front end). A formal model might express this as: the back end's postconditions for mutations hold *only if* the front end has satisfied BERT preconditions — they are conditional postconditions, not unconditional guarantees.
-
-**Code references:**
-- `fns.c:84-98` — `insert()` handler: `putinsert()` before `doinsert()`
-- `fns.c:333-347` — `deletevspan()` handler: same response-before-check pattern
-- `granf1.c:17-41` — `findorgl()` checks BERT via `checkforopen()`, returns FALSE on failure
-- `bert.c:52-87` — `checkforopen()` actual BERT checking logic
-
-**Concrete example:**
-- Before: Front end sends INSERT without acquiring WRITEBERT token
-- Expected (if enforced): Back end rejects the operation, sends failure response
-- Actual: Back end sends success response immediately via `putinsert()`, then `doinsert()` calls `findorgl()` which returns FALSE, operation is silently skipped. Front end believes the insert succeeded. Document is unchanged.
-
-**Provenance:** Finding 0050
-
-**Co-occurring entries:** [PRE-INSERT], [PRE-OPEN-DOC], [INV-READ-SHARING], [INV-WRITE-EXCLUSIVITY], [INT-BERT-FEBE], [INT-BERT-VERSION], [EC-RESPONSE-BEFORE-CHECK]
 
 ---
 
@@ -1603,6 +1561,627 @@ Both widths represent the value 11, but at different tumbler precisions.
 
 ---
 
+### SS-GRAN-BOTTOM-SINGLETON
+
+**Source:** Finding 0070
+
+**What happens:** GRAN (1D) enfilades have `MAXBCINLOAF = 1`, meaning bottom crums hold exactly one entry. The comment in `enf.h` says "so text will fit." This makes the granfilade bottom level effectively a linked list: each bottom crum contains a single text entry, with B-tree fan-out only at upper levels (where `MAXUCINLOAF = 6` still applies).
+
+This asymmetry means the threshold functions behave differently at the bottom of a GRAN enfilade:
+- `toomanysons` triggers at > 1 (any bottom node with 2+ children must split)
+- `roomformoresons` returns TRUE only when sons = 0 (empty)
+- `toofewsons` returns TRUE when sons < 1 (i.e., the node is empty)
+
+**Why it matters for spec:** The formal model must handle GRAN bottom crums as a degenerate case of the B-tree structure. The occupancy invariant at the bottom level of a GRAN is `sons = 1` (exactly one entry per bottom crum), which is much tighter than the upper-level bound. This also means GRAN bottom crums never undergo merge/steal operations in the usual sense — they're always at their only valid occupancy.
+
+**Code references:**
+- `backend/enf.h:28` — `MAXBCINLOAF` = 1, with comment "so text will fit"
+- `backend/genf.c:239-261` — threshold functions selecting `MAXBCINLOAF` for GRAN bottom crums
+
+**Provenance:** Finding 0070
+**Co-occurring entries:** [SS-ENFILADE-BRANCHING], [PRE-SPLIT], [INV-ENFILADE-OCCUPANCY]
+
+---
+
+### SS-GRAN-MB-ONE
+
+**Source:** Finding 0060
+
+**What happens:** The granfilade's `MAXBCINLOAF = 1` creates a degenerate B-tree structure where every height-1 non-root node holds exactly one bottom crum. This means the height-1 layer adds no fan-out — it is effectively a pass-through that maps each height-2 child pointer to exactly one bottom crum. The tree is taller than necessary: a granfilade with N bottom crums needs height `⌈log₆(N)⌉ + 1` (the extra +1 for the pass-through height-1 layer) rather than the `⌈log₆(N)⌉` that a uniform M=6 tree would require.
+
+The code comment `/* so text will fit *//* as you wish */` on the `MAXBCINLOAF` definition suggests this is a deliberate trade-off: bottom crums can hold up to `GRANTEXTLENGTH = 950` bytes of text, and limiting each height-1 node to one bottom crum simplifies loaf management at the cost of tree depth.
+
+The POOM and SPAN enfilades avoid this degenerate case because `MAX2DBCINLOAF = 4` permits useful fan-out at height-1.
+
+**Why it matters for spec:** Models should treat the height-1 layer of a GRAN enfilade as a trivial 1:1 mapping layer, not a branching layer. Complexity and lookup cost analysis must account for this extra level. The choice is architecturally significant: it means the granfilade is always at least 1 level taller than a comparable POOM for the same number of leaf entries.
+
+**Code references:**
+- `backend/enf.h:27` — `#define MAXBCINLOAF 1  /* so text will fit *//* as you wish */`
+- `backend/enf.h:26` — `#define MAXUCINLOAF 6`
+- `backend/enf.h:28` — `#define MAX2DBCINLOAF 4`
+
+**Provenance:** Finding 0060
+**Co-occurring entries:** [SS-ENFILADE-TREE], [ST-INSERT], [INV-ENFILADE-MINIMALITY]
+
+---
+
+### SS-DURABILITY-BOUNDARY
+
+**Source:** Finding 0059
+
+**What happens:** Durability guarantees depend on session lifecycle, not on individual operations:
+
+1. **On clean session exit:** `writeenfilades()` recursively writes all modified crums from both granfilade and spanfilade to disk. This is called from `bed.c:134` during daemon shutdown.
+2. **On crash/kill:** Only crums previously evicted by the grim reaper survive. Recent INSERTs still in cache are lost.
+3. **No fsync:** `write()` syscalls go to OS buffers; no explicit `fsync()` guarantees.
+4. **No transaction log:** Within-session consistency comes from the in-memory cache, not from disk state.
+
+**Why it matters for spec:** A formal specification must distinguish between "operation completed" (in-memory postcondition holds) and "operation is durable" (survives crash). The system provides session-level durability (all-or-nothing at session boundary), not operation-level durability. This is the key durability invariant: `writeenfilades() → ∀ modified crums c: c is on disk`. But absent `writeenfilades()`, durability is best-effort via grim reaper eviction.
+
+**Code references:**
+- `backend/corediskout.c:68-88` — `writeenfilades()` writes granf and spanf roots
+- `backend/bed.c:134,183` — daemon exit calls `writeenfilades(); closediskfile()`
+- `backend/disk.c:300-338` — `actuallywriteloaf` does synchronous `write()` with no `fsync`
+
+**Concrete example:**
+```
+Session timeline:
+  t0: INSERT("hello") → crum in RAM, modified=TRUE
+  t1: RETRIEVE → "hello" (from cache) ✓
+  t2: [crash]
+  t3: restart, RETRIEVE → fails (crum never written to disk)
+
+vs.
+
+  t0: INSERT("hello") → crum in RAM, modified=TRUE
+  t1: RETRIEVE → "hello" (from cache) ✓
+  t2: clean exit → writeenfilades() flushes to disk
+  t3: restart, RETRIEVE → "hello" ✓
+```
+
+**Provenance:** Finding 0059
+**Co-occurring entries:** [SS-CACHE-MECHANISM], [SS-UNIFIED-STORAGE], [ST-INSERT], [EC-CRASH-MID-WRITE], [EC-CROSS-ENFILADE-EVICTION], [EC-NO-STARTUP-VALIDATION]
+
+---
+
+### SS-SUBSPACE-CONVENTION
+
+**Sources:** Findings 0009, 0010, 0011, 0015, 0038, 0049, 0051, 0054
+
+#### Finding 0009
+
+**What happens**: The system enforces by convention (not by runtime check) that V-positions `0.x` contain only link orgl ISAs as I-addresses, and V-positions `1.x` contain only permascroll I-addresses. No code in the enfilade storage path validates this invariant — it is maintained by callers (`docreatelink` writes to `0.x`, `doinsert`/`docopy` for text writes to `1.x`). The `permute()`, `retrieverestricted()`, and `docopy()` functions are all type-agnostic.
+
+**Why it matters for spec**: This is a convention-over-enforcement invariant. The spec should state it as a property that holds across all well-formed operations, but note that the storage layer does not enforce it. This is the kind of invariant that Dafny can verify as a postcondition of each operation rather than as a storage-layer check.
+
+**Code references**:
+- `do1.c:215-216` — `findnextlinkvsa` + `docopy` for link storage (caller ensures `0.x`)
+- `do2.c:151-167` — `findnextlinkvsa` hardcodes first link at `0.1`
+
+**Provenance**: Finding 0009
+
+#### Finding 0010
+
+**What happens**: The unified enfilade storage model treats all V→I mappings identically — `insertpm`, `docopy`, `retrieverestricted`, and `permute` are all type-agnostic. The convention that V-position `0.x` holds link orgl ISAs and `1.x` holds permascroll I-addresses is enforced solely by callers. The validation function `acceptablevsa()` in `do2.c:110-113` unconditionally returns `TRUE`, providing no runtime enforcement. This means it is possible to: (a) insert text at position `0.x`, corrupting the link subspace; (b) insert link references at position `1.x`, corrupting the text subspace; (c) create semantically invalid documents that violate the subspace convention.
+
+**Why it matters for spec**: The convention-over-enforcement design means the subspace invariant is not a storage-layer property but a property that must be verified as a postcondition of every well-formed operation. In Dafny, this would be modeled as a `requires` clause on document mutation operations asserting that text content targets `V >= 1.0` and link references target `V < 1.0`. The `acceptablevsa` stub is a clear signal that enforcement was intended but never implemented.
+
+**Code references**:
+- `do2.c:110-113` — `acceptablevsa()` always returns `TRUE`
+- `do1.c:45-65` — `docopy()` calls `acceptablevsa()` but gets no validation
+- `do1.c:162-171` — `dodeletevspan()` performs no subspace check
+
+**Concrete example**:
+```
+acceptablevsa(vsaptr, orglptr) always returns TRUE
+
+Consequence: docopy(doc, vsa=0.5, text_ispanset) succeeds
+  → permascroll I-address stored in link subspace
+  → retrieve_contents on 0.x returns garbage (permascroll addr treated as link ISA)
+  → find_links on 0.x finds no valid link orgl
+
+Similarly: docopy(doc, vsa=1.5, link_ispanset) succeeds
+  → link orgl ISA stored in text subspace
+  → retrieve_contents on 1.x dereferences link ISA in permascroll → NULL/garbage
+```
+
+**Provenance**: Finding 0010, also Finding 0009
+
+#### Finding 0011
+
+**What happens:** The subspace convention (V-position 0.x = links, 1.x = text) is a social contract enforced by convention, not by runtime checks. The unified enfilade storage treats all data uniformly — the system does not distinguish between link I-addresses and content I-addresses at the type level. Both are just tumblers. Dereferencing a link ISA as content produces garbage, but no error is raised.
+
+**Why it matters for spec:** The formal specification must model subspace membership as a type-level distinction even though the implementation uses untyped tumblers. This invariant — that data at 0.x V-positions are links and data at 1.x V-positions are text — must be stated as a global invariant in the spec. Every operation that reads or writes V-positions should preserve this invariant. The spec makes explicit what the code leaves implicit.
+
+**Code references:**
+- `backend/green/do2.c:110-113` — `acceptablevsa` does not enforce subspace rules
+- `specset2ispanset` and `ispanset2vstuffset` treat all I-addresses uniformly
+
+**Provenance:** Finding 0011
+
+#### Finding 0015
+
+**What happens**: The finding provides a decision table confirming the subspace convention's implications for `compare_versions`:
+
+| V-Position | Contains | I-Address Type | Has "Common Origin"? | Included in compare_versions? |
+|------------|----------|----------------|---------------------|-------------------------------|
+| 0.x | Link references | Link orgl ISAs | No | No |
+| 1.x | Text content | Permascroll addresses | Yes | Yes |
+
+Links have no "common origin" for three reasons: (1) link ISAs are unique identities, not content origins — two documents cannot share the same link ISA via transclusion; (2) links are metadata about content, not content itself; (3) comparing link ISAs is semantically undefined — even if they matched, it wouldn't mean "shared content."
+
+**Why it matters for spec**: This strengthens the subspace convention invariant with a semantic justification: the link/text partition is not merely a storage convention but reflects a fundamental type distinction. Operations defined over "content with common origin" (compare_versions, and potentially others) must be restricted to the text subspace by definition, not by workaround.
+
+**Code references**:
+- `correspond.c` — does not implement subspace filtering
+- `do1.c:199-225` — `docreatelink()` creates unique link ISAs (non-shareable)
+
+**Provenance**: Finding 0015, also Finding 0009
+
+#### Finding 0038
+
+**What happens**: The three-subspace convention uses mantissa[0] to encode content type: `1` = text, `2` = link, `3` = link type endpoint. This is constructed in `setlinkvsas()` which hardcodes digit-0 values of 1, 2, and 3 for the FROM, TO, and THREE endpoints respectively. The convention extends beyond the two-subspace model (text vs. links) documented in finding 0009 to include a third subspace for type endpoints. Each subspace maintains its own contiguous numbering independently (links at 2.1, 2.2, ...; text at 1.1, 1.2, ...).
+
+**Why it matters for spec**: The formal model of V-address space needs three partitions, not two. The invariant is: `mantissa[0] in {1, 2, 3}` for all valid V-addresses, with each value mapping to a distinct content type. Contiguity within each subspace is maintained independently — inserting at 1.5 shifts 1.6+ but does not affect 2.x numbering.
+
+**Code references**:
+- `do2.c:169-183` — `setlinkvsas()` constructs all three subspace positions
+
+**Provenance**: Finding 0038
+
+#### Finding 0049
+
+**What happens:** Finding 0049 provides direct experimental confirmation that the subspace partition (text at 1.x, links at 2.x) is not enforced. INSERT at V-position 2.1 with text content succeeds, and the content is stored and retrievable. The vspanset after insertion shows two disjoint spans crossing subspace boundaries. This demonstrates the convention is purely caller-enforced — the back end treats all V-positions uniformly.
+
+**Why it matters for spec:** The subspace convention must be modeled as a precondition on every V-position-accepting operation, not as a storage-layer invariant. The spec invariant `INV-SUBSPACE: ∀ v ∈ doc.vspan_set: (type(content_at(v)) == TEXT) ⟹ v.head == 1` holds only if all callers cooperate. A well-formed system state requires this invariant, but the implementation provides no enforcement. For Dafny, this means the invariant must appear as a `requires` clause on every public operation, with a proof obligation that each operation preserves it.
+
+**Code references:**
+- `backend/do2.c:110-113` — `acceptablevsa()` stub that was presumably intended for validation
+- `backend/do1.c:121-124` — `doinsert()` sets `TEXTATOM` element type but V-position is independent
+
+**Concrete example:**
+```
+INSERT text at V:2.1 → succeeds
+retrieve_contents(V:2.1, width:0.19) → "TextAtLinkPosition"
+  → text bytes occupying link subspace
+  → no error, no warning, no distinction from normal text insertion
+```
+
+**Provenance:** Finding 0049
+
+#### Finding 0051
+
+**What happens:** Finding 0051 demonstrates a second violation path for the subspace convention. While finding 0049 showed INSERT can place text at link-subspace positions, finding 0051 shows REARRANGE can *move* previously correctly-placed text into the wrong subspace. After a pivot with cross-subspace cuts, `retrieve_contents` at 2.x returns text bytes ("ABC") — identical behavior to a direct misplacement via INSERT. The back end draws no distinction between content that was placed at 2.x directly vs. content that was moved there by rearrangement.
+
+**Why it matters for spec:** The subspace invariant `∀ v ∈ doc.vspan_set: type(content_at(v)) == TEXT ⟹ v.head == 1` can be violated by at least two operations: INSERT (finding 0049) and REARRANGE (this finding). For Dafny verification, the proof that this invariant is preserved must cover every V-position-mutating operation, not just content-placing ones. REARRANGE is particularly insidious because content may be correctly placed initially and only later displaced across the boundary. The preservation proof must show that the displacement arithmetic for every affected orgl stays within the original subspace.
+
+**Code references:**
+- `backend/edit.c:125` — `tumbleradd` displaces V-position without subspace guard
+- `backend/do2.c:110-113` — `acceptablevsa()` (from finding 0049) — even if this were fixed, REARRANGE would bypass it since it modifies V-positions in-place rather than going through `acceptablevsa()`
+
+**Concrete example:**
+```
+Initial state: "ABC" correctly at V:1.1–1.3 (text subspace) — invariant holds
+After pivot [1.1, 1.4, 2.5]: "ABC" at V:2.2–2.4 (link subspace) — invariant violated
+
+Two violation paths now known:
+  1. INSERT at V:2.1 with text  (finding 0049) — direct misplacement
+  2. REARRANGE pivot across subspace boundary (finding 0051) — displacement into wrong subspace
+```
+
+**Provenance:** Finding 0051, also Finding 0049
+
+#### Finding 0054
+
+**What happens:** The subspace isolation property generalizes across all three subspaces. For ANY insertion at `N.x` (where `N` is the subspace digit), the second blade is `(N+1).1`, restricting shifts to the `N.x` subspace only:
+- INSERT at `1.x` → blades `[1.x, 2.1)` → shifts only text
+- INSERT at `2.x` → blades `[2.x, 3.1)` → shifts only links
+- INSERT at `3.x` → blades `[3.x, 4.1)` → shifts only type endpoints
+
+Each subspace is a self-contained shift domain. This is a structural consequence of `findaddressofsecondcutforinsert()` computing `(N+1).1` regardless of the fractional part of the insertion position.
+
+**Why it matters for spec:** The invariant `∀ N ∈ {1,2,3}, ∀ op = INSERT(N.x) : shift_region(op) ⊆ [N.1, (N+1).1)` holds for all insertions. This can be verified in Dafny as a lemma about `findaddressofsecondcutforinsert`: for input `N.x`, the output is always `(N+1).1`, which combined with the knife classification logic guarantees subspace isolation.
+
+**Code references:**
+- `insertnd.c:174-183` — `findaddressofsecondcutforinsert()` generalizes across subspaces
+
+**Provenance:** Finding 0054
+
+**Co-occurring entries:** [SS-CONTENT-IDENTITY], [SS-DUAL-ENFILADE], [SS-TWO-BLADE-KNIFE], [PRE-COMPARE-VERSIONS], [PRE-DELETE], [PRE-ENF0-PLACEMENT-GAP], [PRE-INSERT], [PRE-REARRANGE], [PRE-RETRIEVE-CONTENTS], [PRE-VCOPY], [ST-COMPARE-VERSIONS], [ST-INSERT], [ST-REARRANGE], [FC-SUBSPACE], [INT-LINK-RETRIEVAL], [EC-COMPARE-VERSIONS-LINK-CRASH], [EC-ERROR-ABORT], [EC-RETRIEVE-VSPANSET-BOTH-SUBSPACES], [EC-VSPAN-NORMALIZATION]
+
+---
+
+### SS-ADDRESS-ALLOC
+
+**Sources:** Findings 0021, 0025, 0065, 0068
+
+#### Finding 0021
+
+**What happens**: New addresses are allocated by `findisatoinsertnonmolecule` in `granf2.c`:
+
+1. Compute upper bound from the parent (hint) address: `upperbound = tumblerincrement(hintisa, depth-1, 1)` — the next sibling of the parent.
+2. Find the highest existing address below upperbound via `findpreviousisagr`.
+3. If nothing found under the parent, create the first child: `hintisa.0.1`.
+4. Otherwise, truncate the found item and increment to produce the next sibling.
+
+The entire granf (global address enfilade) is a single flat tree; the allocation algorithm enforces hierarchical structure by bounding searches to the parent's address range.
+
+**Why it matters for spec**: Defines the postcondition for address allocation — the allocated address must be (a) under the parent, (b) greater than all existing addresses under the parent, and (c) unique. The first-child convention (`parent.0.1`) is a concrete invariant.
+
+**Code references**: `granf2.c:findisatoinsertnonmolecule`, `findpreviousisagr`, `tumblerincrement`.
+
+**Concrete example**:
+- Parent account `1.1.0.2`, no existing documents → allocates `1.1.0.2.0.1`
+- Parent account `1.1.0.2`, existing document `1.1.0.2.0.1` → allocates `1.1.0.2.0.2`
+
+**Provenance**: Finding 0021
+
+#### Finding 0025
+
+**What happens**: Link address allocation follows the same hierarchical allocation pattern as document addresses. When a link is created with a given home document, its address is allocated as the next available child under that home document's address. The first link under a home document gets suffix `.0.2.1`, subsequent links get `.0.2.2`, `.0.2.3`, etc. This confirms that the general address allocation mechanism (documented for documents under accounts) also governs link allocation under documents.
+
+**Why it matters for spec**: The postcondition for `create_link` includes an address allocation step: `address(new_link) = next_child(home_doc, link_subspace)`. This unifies link and document allocation under the same allocation model — the allocator is agnostic to what kind of entity is being allocated; it only cares about the parent address and the allocation depth.
+
+**Code references**: Test `links/find_links_filter_by_homedocid`; `granf2.c:findisatoinsertnonmolecule` for the general allocation mechanism.
+
+**Provenance**: Finding 0025
+
+#### Finding 0065
+
+**Detail level: Essential**
+
+MAKELINK allocates link I-addresses using query-and-increment within a document-bounded region of the global granfilade. The allocation uses the same `findisatoinsertmolecule` mechanism as text allocation but with different bounds.
+
+**What happens:**
+1. `upperbound` is set to `docISA.2.3` (bounding search to the document's link subspace)
+2. `findpreviousisagr` finds the highest existing link I-address below that bound
+3. If no links exist yet (`lowerbound < docISA.2.2`), allocate at `docISA.2.2.1`
+4. Otherwise, increment from `lowerbound` (the highest existing link's address) by `0.1`
+
+**Why it matters for spec:** The allocation postcondition for MAKELINK is: the new link's I-address is strictly greater than all existing link I-addresses in the same document, and independent of link I-addresses in other documents.
+
+**Concrete example (before/after):**
+- Before: Document A has link at `docA.2.1`; Document B has no links
+- MAKELINK on B → B gets link at `docB.2.1` (B's own first link)
+- MAKELINK on A → A gets link at `docA.2.2` (consecutive with A's existing link, unaffected by B)
+
+**Code references:**
+- `backend/granf2.c:162` — `tumblerincrement(&hintptr->hintisa, 2, hintptr->atomtype + 1, &upperbound)` sets document-scoped bound
+- `backend/granf2.c:164` — `findpreviousisagr` performs bounded search
+- `backend/granf2.c:171-175` — allocation logic: first-link vs increment cases
+
+**Provenance:** Finding 0065
+
+#### Finding 0068
+
+**What happens:** VERSION uses the same stateless query-and-increment allocation mechanism as CREATE and INSERT. For owned-document versions, the algorithm:
+
+1. Computes upper bound: `tumblerincrement(source_doc, depth-1=0, 1)` — the next sibling of the source document (e.g., `1.1.0.1.0.2` for source `1.1.0.1.0.1`).
+2. Calls `findpreviousisagr` to find the highest existing address below the upper bound.
+3. Applies containment check: verifies the found address is actually under the source document.
+4. If no child exists: allocates first child as `source_doc.1` (e.g., `1.1.0.1.0.1.1`).
+5. If child exists: truncates and increments to produce next sibling (e.g., `1.1.0.1.0.1.2`).
+
+This extends ST-ADDRESS-ALLOC from Finding 0021 with the VERSION-specific hint parameters.
+
+**Why it matters for spec:** The postcondition for owned-version allocation is: `allocated = max_child(source_doc, granf) + 1`, where `max_child` returns the highest existing address under `source_doc`. If no children exist: `allocated = source_doc.1`. The allocation is a pure function of granfilade state, with no session-local counter.
+
+**Code references:** `granf2.c:203-242` — `findisatoinsertnonmolecule` (query-and-increment). `granf2.c:255-278` — `findpreviousisagr` (tree traversal). `granf2.c:130-156` — `findisatoinsertgr` (allocation dispatcher).
+
+**Concrete example:**
+Second version of `1.1.0.1.0.1`:
+1. `hintisa = 1.1.0.1.0.1`, depth=1
+2. `upperbound = 1.1.0.1.0.2`
+3. `findpreviousisagr` finds `1.1.0.1.0.1.1` (first version)
+4. Truncate to length 7: `1.1.0.1.0.1.1`, increment: `1.1.0.1.0.1.2`
+
+**Provenance:** Finding 0068
+
+**Co-occurring entries:** [SS-ADDRESS-SPACE], [SS-LINK-HOME-DOCUMENT], [SS-TUMBLER-CONTAINMENT], [SS-VERSION-ADDRESS], [PRE-ADDRESS-ALLOC], [PRE-FIND-LINKS], [PRE-VERSION-OWNERSHIP], [FC-DOC-ISOLATION], [FC-GRANF-ON-DELETE], [INV-ACCOUNT-ISOLATION], [INV-MONOTONIC], [EC-HOMEDOCIDS-FILTER-BROKEN]
+
+---
+
+### SS-INSERT-VWIDTH-ENCODING
+
+**Source:** Finding 0076
+
+**What happens:** During INSERT, `insertpm` computes the V-width of a POOM bottom crum by extracting the integer value from the I-width and re-encoding it as a tumbler at V-space precision. The three-step process is:
+
+1. `shift = tumblerlength(vsaptr) - 1` — compute exponent from V-address length
+2. `inc = tumblerintdiff(&lwidth, &zero)` — extract integer value from I-width
+3. `tumblerincrement(&zero, shift, inc, &crumwidth.dsas[V])` — create V-width tumbler with `exp = -shift`, `mantissa[0] = inc`
+
+This produces a tumbler representing `inc * 10^(-shift)`. The I-width is copied directly without transformation: `movetumbler(&lwidth, &crumwidth.dsas[I])`.
+
+**Why it matters for spec:** The INSERT postcondition on POOM crums must specify that V-width and I-width are not equal as tumblers, even though they encode the same numeric width. Formally: `value(crum.width.dsas[V]) == value(crum.width.dsas[I])` but `crum.width.dsas[V] != crum.width.dsas[I]` as tumbler representations. The V-width exponent is determined by the V-address length, not the I-address length. This is a derived encoding, not a copy.
+
+**Code references:**
+- `orglinks.c:105-117` — V-width computation in `insertpm`
+- `tumble.c:599-623` — `tumblerincrement` zero-tumbler special case: sets `exp = -rightshift`, `mantissa[0] = bint`
+
+**Concrete example:**
+```
+Input: vsaptr = "1.1" (tumblerlength = 2), lwidth represents 11 characters
+
+Step 1: shift = tumblerlength("1.1") - 1 = 2 - 1 = 1
+Step 2: inc = tumblerintdiff(lwidth, zero) = 11
+Step 3: tumblerincrement(zero, 1, 11, &V-width)
+        → V-width tumbler: exp = -1, mantissa[0] = 11
+        → Tumbler notation: 0.11
+
+Meanwhile: I-width = 0.0.0.0.0.0.0.0.11 (copied directly)
+```
+
+**Provenance:** Finding 0076
+**Co-occurring entries:** [SS-POOM-BOTTOM-CRUM], [INV-WIDTH-VALUE-EQUIVALENCE], [EC-VWIDTH-ZERO-ADDRESS]
+
+---
+
+### SS-VSPAN-TO-SPORGL
+
+**Source:** Finding 0013
+
+**What happens:** The function `vspanset2sporglset()` converts a set of V-address spans within a document into sporgls. For each vspan, it: (1) converts V-addresses to I-addresses via the document's enfilade (`vspanset2ispanset`); (2) attaches the source document ISA to each resulting I-span, producing a sporgl. The output sporglset preserves the content identity (I-address) while adding provenance (which document). The reverse operation `linksporglset2specset()` converts sporgls back to V-address specs for display or user-facing operations.
+
+**Why it matters for spec:** This is a key state transition in many compound operations. The conversion is: `vspan_to_sporgl(doc, vspan) = { origin: V_to_I(doc, vspan.start), width: vspan.width, source_doc: doc.isa }`. The postcondition is that the I-address range in the sporgl exactly corresponds to the content at the given V-positions in the document. This conversion is a pure function over the document's current V→I mapping — it reads the enfilade but does not modify it. The inverse `linksporglset2specset` is also pure: it looks up the sporgl's I-address in the source document's enfilade to recover V-positions.
+
+**Code references:**
+- `sporgl.c:35-65` — `vspanset2sporglset()` implementation
+- `sporgl.c:97+` — `linksporglset2specset()` reverse conversion
+
+**Concrete example:**
+```
+Input:
+  doc ISA = 1.1.0.1.0.1
+  vspan = V-range 1.1..1.15 (first 15 characters)
+
+vspanset2sporglset(doc, vspan):
+  Step 1: vspanset2ispanset → I-span at 2.1.0.5.0.100 for 0.15
+  Step 2: attach doc ISA → sporgl(origin=2.1.0.5.0.100, width=0.15, doc=1.1.0.1.0.1)
+
+Output: sporglset with one sporgl carrying both I-address and document provenance
+```
+
+**Provenance:** Finding 0013
+**Co-occurring entries:** [SS-SPORGL], [INT-SPORGL-LINK-INDEX], [INT-SPORGL-TRANSCLUSION], [INT-SPORGL-VERSION-COMPARE]
+
+---
+
+### SS-COMPARE-VERSIONS
+
+**Source:** Finding 0015
+
+**What happens**: The `compare_versions` operation (FEBE opcode 10: SHOWRELATIONOF2VERSIONS) answers the question: "What text content do these two documents share by common origin?" The operation produces a list of ordered pairs of V-spans — one from each document — where the paired spans reference the same permascroll I-address range. The semantic definition is: two spans correspond if and only if they map to the same permascroll content identities.
+
+**Why it matters for spec**: This is the postcondition for `compare_versions`. Each pair `(span_a, span_b)` in the result satisfies: `VSpanToISpan(doc_a, span_a) == VSpanToISpan(doc_b, span_b)` where both I-spans are permascroll addresses. The result is complete: every shared permascroll address range appears in exactly one pair. The result covers only text content — link references are excluded by definition, not by accident.
+
+**Code references**:
+- `correspond.c` — nested loop computing I-span intersections and mapping back to V-spans
+
+**Concrete example**:
+```
+Document A: "Hello World" (text at V 1.1..1.11, permascroll I-addrs P₁..P₁₁)
+Document B: version of A, then insert "Dear " at position 6
+  → "Hello Dear World" (V 1.1..1.16)
+  → "Hello" has permascroll I-addrs P₁..P₅, "World" has P₆..P₁₁
+
+compare_versions(A, B) returns:
+  [(A: V 1.1 for 5, B: V 1.1 for 5),     // "Hello" — same P₁..P₅
+   (A: V 1.6 for 6, B: V 1.11 for 6)]    // "World" — same P₆..P₁₁
+```
+
+**Provenance**: Finding 0015
+**Co-occurring entries:** [SS-CONTENT-IDENTITY], [PRE-COMPARE-VERSIONS], [INV-SUBSPACE-CONVENTION]
+
+---
+
+### SS-FIND-LINKS
+
+**Sources:** Findings 0028, 0029, 0035
+
+#### Finding 0028
+
+**What happens**: `find_links(search_specset)` discovers links by I-address intersection, not by document or V-address matching. The search specset is converted to I-addresses, and links are returned if any I-address in the search overlaps with I-addresses in a link endpoint. Partial overlap suffices — a search specset that shares even one I-address with a link endpoint will discover that link. The search is purely set-intersection on I-addresses: `find_links(S) = { L | I-addresses(S) ∩ I-addresses(L.source) ≠ ∅ }`.
+
+**Why it matters for spec**: The postcondition for `find_links` is: return the set of all links whose source endpoint I-addresses have non-empty intersection with the search specset's I-addresses. Document identity plays no role — a document that was not involved in link creation can discover the link if it shares content identity (via transclusion) with an endpoint. This is the formal mechanism by which transclusion enables link discovery.
+
+**Code references**: Test `partial_vcopy_of_linked_span` — `find_links` on a document containing only "link" (4 chars transcluded from "hyperlink text") discovers the link created on "hyperlink text"
+
+**Concrete example**:
+```
+Document A: "ABCDEFGHIJ" (I-addresses I.1 through I.10)
+Link source: "DEF" (I-addresses I.4, I.5, I.6)
+
+Document C transcludes "EF" from A via vcopy:
+  C contains: "Copy: EF"
+  C's "EF" has I-addresses I.5, I.6 (shared with A)
+
+find_links(specset covering C's "EF"):
+  I-addresses of search: {I.5, I.6}
+  I-addresses of link source: {I.4, I.5, I.6}
+  Intersection: {I.5, I.6} ≠ ∅
+  → Link returned (partial overlap is sufficient)
+```
+
+**Provenance**: Finding 0028b §2
+
+#### Finding 0029
+
+**What happens:** `find_links()` uses AND semantics when called with multiple criteria. When both source and target specs are provided, both endpoints must have V-stream presence for the link to be found. Single-endpoint search (passing NOSPECS for the other) requires only that endpoint's presence.
+
+Cross-endpoint search matrix:
+
+| Source State | Target State | Search by Source | Search by Target |
+|--------------|--------------|------------------|------------------|
+| Intact       | Intact       | Found            | Found            |
+| Deleted      | Intact       | Not found        | Found            |
+| Intact       | Deleted      | Found            | Not found        |
+| Deleted      | Deleted      | Not found        | Not found        |
+
+When multiple links share a target, deleting one source removes only that link from source-based search; target-based search still finds all links (the link objects themselves are unaffected).
+
+**Why it matters for spec:** Defines the state-transition semantics of `find_links()` — specifically how delete operations on document content transitively affect link discoverability without modifying the links themselves. The AND semantics for multi-criteria search is a key behavioral property: `find_links(source_spec, target_spec)` ≡ `find_links(source_spec) ∩ find_links(target_spec)`.
+
+**Code references:** Tests `search_by_both_endpoints_one_removed`, `search_multiple_links_selective_removal` in `febe/scenarios/links/search_endpoint_removal.py`.
+
+**Concrete example:**
+- `find_links(source, target)` before delete → `[link_id]`
+- Delete source content
+- `find_links(source, target)` → `[]` (AND fails)
+- `find_links(NOSPECS, target)` → `[link_id]` (target-only still works)
+
+**Provenance:** Finding 0029, sections 2, 5, 7
+
+#### Finding 0035
+
+**What happens:** FINDNUMOFLINKSFROMTOTHREE (opcode 29) is a trivial wrapper around FINDLINKSFROMTOTHREE. It calls `findlinksfromtothreesp()` to materialize the complete linked list of matching links, then walks the list counting elements. There is no count-only optimization — the full search executes (V-to-I translation, spanfilade search per endset, intersection of result sets), then the list is linearly counted.
+
+**Why it matters for spec:** For formal specification, FINDNUMOFLINKSFROMTOTHREE has identical preconditions and search semantics to FINDLINKSFROMTOTHREE. Its postcondition is simply `|result| = count` where `result` is the set FINDLINKSFROMTOTHREE would return. No additional state transitions or side effects. Both operations are disabled in safe mode (`init.c:75`).
+
+**Code references:**
+- `findnumoflinksfromtothreesp()`: `backend/spanf1.c:105-115` — calls full search then counts
+- `findlinksfromtothreesp()`: shared search implementation
+- `intersectlinksets()`: `backend/spanf2.c:46-120` — O(n*m) or O(n*m*p) intersection
+- Safe mode disable: `backend/init.c:75`
+
+**Provenance:** Finding 0035 (section 4)
+
+**Co-occurring entries:** [SS-ADDRESS-SPACE], [SS-LINK-ENDPOINT], [SS-LINK-SPACE], [SS-VSPAN-VS-VSPANSET], [PRE-FIND-LINKS], [PRE-LINK-CREATE], [PRE-ZERO-WIDTH], [ST-FOLLOW-LINK], [ST-PAGINATE-LINKS], [ST-RETRIEVE-ENDSETS], [FC-DOC-ISOLATION], [FC-LINK-DELETE-ISOLATION], [INV-IDENTITY-OVERLAP], [INV-LINK-PERMANENCE], [INV-SINGLE-CHAR-GRANULARITY], [INV-VSPAN-CONSOLIDATION], [INT-LINK-TRANSCLUSION], [INT-SPORGL-LINK-INDEX], [INT-TRANSCLUSION-LINK-SEARCH], [EC-CURSOR-INVALIDATION], [EC-SEARCH-SPEC-BEYOND-BOUNDS], [EC-SELF-COMPARISON], [EC-SELF-TRANSCLUSION], [EC-TYPE-FILTER-NONFUNCTIONAL], [EC-VSPAN-MISLEADING-SIZE]
+
+---
+
+### SS-FOLLOW-LINK
+
+**Source:** Finding 0028
+
+**What happens**: `follow_link(link_id, endpoint)` returns the complete, original SpecSet for the requested endpoint, regardless of how the link was discovered. Even when a link is found via partial I-address overlap from a transclusion, `follow_link` returns the full endpoint as it was specified at link creation time. The link is an immutable entity that does not adapt to the discovery context.
+
+**Why it matters for spec**: The postcondition for `follow_link` is: `follow_link(L, SOURCE) == L.source_specset` and `follow_link(L, TARGET) == L.target_specset`, where these specsets are the exact values provided at `create_link` time. There is no filtering, subsetting, or adaptation based on the caller's document or the search that discovered the link. This is a direct consequence of link immutability (SS-LINK-ENDPOINT).
+
+**Code references**: Test `partial_vcopy_of_linked_span` — document contains "link" (4 chars), `follow_link` returns "hyperlink text" (14 chars, the full original source)
+
+**Concrete example**:
+```
+Link L created with source = "hyperlink text" (14 chars) in Document A
+Document C transcludes "link" (4 chars) from A
+
+find_links(C) → {L}  (discovered via partial I-address overlap)
+follow_link(L, SOURCE) → SpecSet referencing A at original position for 14 chars
+retrieve_contents(follow_link result) → "hyperlink text"  (NOT "link")
+
+The link returns its full source, not the subset that enabled discovery.
+```
+
+**Provenance**: Finding 0028b §3
+**Co-occurring entries:** [SS-ADDRESS-SPACE], [SS-LINK-ENDPOINT], [SS-LINK-SPACE], [PRE-LINK-CREATE], [PRE-ZERO-WIDTH], [ST-FIND-LINKS], [FC-DOC-ISOLATION], [INV-IDENTITY-OVERLAP], [INV-SINGLE-CHAR-GRANULARITY], [INV-VSPAN-CONSOLIDATION], [INT-LINK-TRANSCLUSION], [EC-SELF-COMPARISON], [EC-SELF-TRANSCLUSION]
+
+---
+
+### SS-RETRIEVE-ENDSETS
+
+**Source:** Finding 0035
+
+**What happens:** RETRIEVEENDSETS (opcode 28) takes a specset (V-spec of a content region) and returns three specsets simultaneously: from-endset, to-endset, and three-endset. It works through the spanfilade, not the link orgl. The call chain: `retrieveendsetsfromspanf()` converts the input specset to a sporglset (V-to-I translation), defines three search spaces using ORGLRANGE prefixes (LINKFROMSPAN=1, LINKTOSPAN=2, LINKTHREESPAN=3), then for each endset type calls `retrievesporglsetinrange()` which searches the spanfilade with SPANRANGE and ORGLRANGE restrictions.
+
+**Why it matters for spec:** RETRIEVEENDSETS is fundamentally different from FOLLOWLINK. FOLLOWLINK takes a known link ID and reads one endset from the link's orgl. RETRIEVEENDSETS searches by content identity through the spanfilade, discovering all link endpoints that intersect a content region. This is the content-identity-based link discovery mechanism — links are discoverable from any document sharing content identity (transclusion, versioning). The three-endset is conditionally retrieved (only if requested).
+
+**Code references:**
+- `retrieveendsetsfromspanf()`: `backend/spanf1.c:190-235`
+- `specset2sporglset()`: converts V-addresses to I-addresses
+- `linksporglset2specset()`: converts I-addresses back to V-specs using querying document's docid
+
+**Concrete example:**
+- Input: specset describing a text region in document D1
+- Output: three specsets — from-endset (links whose from-end intersects the region), to-endset (links whose to-end intersects), three-endset (links whose three-end intersects)
+- Key: endsets are resolved in terms of the querying document's V-space, not the link's home document
+
+| Aspect | FOLLOWLINK | RETRIEVEENDSETS |
+|--------|-----------|-----------------|
+| Input | link ISA + which-end | specset (content region) |
+| Lookup | link orgl direct | spanfilade search |
+| Returns | one endset | all three endsets |
+| Resolution | link's perspective | querying document's perspective |
+
+**Provenance:** Finding 0035 (section 3)
+**Co-occurring entries:** [SS-VSPAN-VS-VSPANSET], [ST-FIND-LINKS], [ST-PAGINATE-LINKS], [INT-SPORGL-LINK-INDEX], [EC-CURSOR-INVALIDATION], [EC-VSPAN-MISLEADING-SIZE]
+
+---
+
+### SS-PAGINATE-LINKS
+
+**Source:** Finding 0035
+
+**What happens:** FINDNEXTNLINKSFROMTOTHREE (opcode 31) implements stateless cursor-based pagination over link search results. On each call it: (1) re-executes the full `findlinksfromtothreesp()` search, (2) if cursor is zero-tumbler, starts from beginning; otherwise linearly scans the result list for an exact tumbler match, (3) if cursor not found, returns empty set with count=0, (4) destructively truncates the list at N items by setting `linkset->next = NULL`.
+
+**Why it matters for spec:** The pagination cursor is a link ISA tumbler, not a positional offset. This means: if the cursor link is deleted between calls, the cursor becomes invalid and an empty result is returned (not an error). The operation is stateless — no server-side cursor state persists between calls. The page size parameter is input/output: input is requested size, output is actual count returned. For specification, the postcondition is: `result = take(N, dropUntilAfter(cursor, fullSearchResult))` where `fullSearchResult` is identical to what FINDLINKSFROMTOTHREE would return. Disabled in safe mode (`init.c:76`).
+
+**Code references:**
+- `findnextnlinksfromtothreesp()`: `backend/spanf1.c:117-149`
+- Cursor check: `iszerotumbler()` at line 126
+- Cursor walk: linear scan with `tumblereq()` match
+- Destructive truncation: `linkset->next = NULL` at the N-th item
+- Safe mode disable: `backend/init.c:76`
+
+**Concrete example:**
+- Full search returns links [L1, L2, L3, L4, L5], cursor=L2, N=2
+- Result: [L3, L4], actual count=2
+- If cursor=L_deleted (not in result set): returns [], count=0
+- If cursor=zero: returns [L1, L2], count=2
+
+**Provenance:** Finding 0035 (section 5)
+**Co-occurring entries:** [SS-VSPAN-VS-VSPANSET], [ST-FIND-LINKS], [ST-RETRIEVE-ENDSETS], [INT-SPORGL-LINK-INDEX], [EC-CURSOR-INVALIDATION], [EC-VSPAN-MISLEADING-SIZE]
+
+---
+
+### SS-FOLLOWLINK
+
+**Source:** Finding 0048
+
+**What happens:** FOLLOWLINK retrieves link endset I-addresses from the link orgl, then converts them to V-addresses using a specified document's POOM. The call chain is: `link2sporglset()` extracts I-addresses from the link orgl at the requested endset position (0.1, 0.2, or 0.3) via `retrieverestricted()` — no POOM check occurs at this stage. Then `linksporglset2specset()` converts I-addresses to V-addresses by looking them up in the specified `homedoc`'s POOM. The conversion calls `span2spanset()` which uses `retrieverestricted()` against the document's orgl. If an I-address has no POOM mapping, `retrieverestricted` returns NULL and the I-address is silently dropped — no V-span is added to the result.
+
+**Why it matters for spec:** FOLLOWLINK's postcondition is not simply "return the endset" — it is filtered through a specific document's POOM. The result depends on which document's POOM is queried (the `homedoc` parameter). The same link endset can produce different V-address results (or empty results) depending on which document context is used. Formally: `followlink(link, whichend, homedoc) = { v | ∃ i ∈ endset(link, whichend) : poom.homedoc(v) = i }`. If no such v exists for any i, the result is empty.
+
+**Code references:**
+- `link2sporglset()`: `backend/sporgl.c:67-95` — extracts I-addresses from link orgl, no POOM check
+- `linksporglset2specset()`: `backend/sporgl.c:97+` — converts I-addresses to V-specs via homedoc POOM
+- `span2spanset()`: `backend/orglinks.c:425-449` — if `retrieverestricted` returns NULL, I-address silently dropped (lines 446-448)
+- `dofollowlink()`: `backend/do1.c:227-236` — orchestrates the two-phase process
+
+**Concrete example:**
+- Link L has to-endset containing I-address `a`
+- Document D1 has `poom.D1(1.5) = a` → FOLLOWLINK(L, TO, D1) returns `[1.5]`
+- Document D2 has no POOM mapping for `a` → FOLLOWLINK(L, TO, D2) returns `[]`
+- Content deleted from all documents → FOLLOWLINK(L, TO, any) returns `[]`, operation succeeds
+
+**Provenance:** Finding 0048
+**Co-occurring entries:** [PRE-FOLLOWLINK], [INV-ITOV-FILTERING], [EC-GHOST-LINK]
+
+---
+
+### SS-SPLIT
+
+**Source:** Finding 0070
+
+**What happens:** `splitcrumupwards` at `split.c:16-43` loops while `toomanysons(ptr)` returns TRUE. Before each iteration, the function checks `isfullcrum(ptr)` to decide the split strategy:
+
+- If `isfullcrum` is TRUE (node is the root/apex): calls `levelpush` to create a new root level above, then splits the old root into children of the new root.
+- If `isfullcrum` is FALSE (node is internal): calls `splitcrum` to split the node within its current level, distributing children between the original node and a new sibling.
+
+Despite its name, `isfullcrum` tests whether the crum is the **fullcrum** (root/apex node), not whether it is "full" in the occupancy sense. It is implemented as `((typecorecrum *)(x))->isapex`.
+
+**Why it matters for spec:** The split operation has a branching precondition: at the root it changes tree height (structural), while at internal nodes it changes tree width (local). The formal model needs both cases:
+- `split_root(tree)`: height' = height + 1, new root has 2 children
+- `split_internal(node)`: parent gains one child, node loses some children to new sibling
+
+**Code references:**
+- `backend/split.c:16-43` — `splitcrumupwards` loop with `isfullcrum` dispatch
+- `backend/genf.c:239-242` — `toomanysons` predicate (loop guard)
+
+**Provenance:** Finding 0070
+**Co-occurring entries:** [SS-ENFILADE-BRANCHING], [INV-ENFILADE-OCCUPANCY], [EC-GRAN-BOTTOM-SINGLETON]
+
+---
+
 ## Preconditions
 
 > When an operation is valid — what must hold before
@@ -2197,71 +2776,6 @@ The fix adds a prefix-match check: after finding the highest address below the u
 
 ---
 
-### PRE-FIND-LINKS
-
-**Sources:** Findings 0025, 0029, 0069
-
-#### Finding 0025
-
-**What happens**: The `find_links` operation accepts a `homedocids` filter parameter. This parameter must be passed as I-spans (identity spans with start address + width), not as plain addresses. Passing a plain address causes a protocol hang. This is consistent with other query mechanisms in Xanadu — all filtering uses span-based specifications.
-
-Correct usage:
-```python
-home_span = Span(doc_address, Offset(0, 1))
-results = session.find_links(source_specs, NOSPECS, NOSPECS, [home_span])
-```
-
-**Why it matters for spec**: The precondition for `find_links` with home document filtering requires: `forall spec ∈ homedocids :: spec is ISpan`. This is a type constraint on the query interface. The spec should model query filters uniformly as span-based specifications rather than bare addresses.
-
-**Code references**: Test `links/find_links_filter_by_homedocid`; `do1.c:386-391` — `dofindlinksfromtothree()`.
-
-**Provenance**: Finding 0025
-
-#### Finding 0029
-
-**What happens:** `find_links()` requires that the searched endpoint content exists in the V-stream (visible view) to discover a link. The operation performs an intersection between the search specset and the link's endpoint specset; if the linked content has been deleted from the V-stream, the intersection is empty and the link is not found. Partial deletion is tolerated — as long as any portion of the original linked span remains, the link is discoverable.
-
-**Why it matters for spec:** Defines the precondition for link discoverability. A link exists permanently but is only discoverable via `find_links()` when its endpoint content is present in the V-stream. This is not a precondition for validity (the call succeeds either way), but a precondition for non-empty results. Formalizable as: `find_links(spec) ≠ ∅ → ∃ overlap(spec ∩ V-stream, link.endpoint ∩ V-stream)`.
-
-**Code references:** Test scenarios in `febe/scenarios/links/search_endpoint_removal.py`. Golden files in `golden/links/search_*.json`.
-
-**Concrete example:**
-- Before delete: `find_links(source_spec)` → `[link_id]`
-- After deleting source content: `find_links(source_spec)` → `[]`
-- Partial delete ("hyper" from "hyperlink"): remaining "link" still in V-stream → `[link_id]` still returned
-
-**Provenance:** Finding 0029, sections 1, 3, 8
-
-#### Finding 0069
-
-**What happens:** The `find_links` operation accepts an orgl range parameter that is supposed to restrict which orgls (documents/links) are searched. However, `sporglset2linkset()` in `sporgl.c:222-237` contains a dead-code guard `if (TRUE||!homeset)` that always evaluates true, replacing whatever orgl range the caller provides with a hardcoded range of width 100 starting at tumbler zero. The original intent was `if (!homeset)` — supply a default range only when none is specified — but the `TRUE||` prefix makes the parameter permanently ignored. The caller `findlinksfromtothreesp()` in `spanf1.c:56-103` faithfully passes its `orglrange` argument through, but the callee discards it.
-
-**Why it matters for spec:** The spec must document that `find_links` has no effective orgl-dimension precondition in the implementation. A formal spec could define `find_links(from_spec, to_spec, three_spec, orgl_range)` where `orgl_range` constrains results, but the implementation behaves as `find_links(from_spec, to_spec, three_spec, _)` — the orgl range is accepted syntactically but has no semantic effect. This is a known deviation: the specified interface promises scoping that the implementation does not deliver. A spec should either (a) model the intended behavior (orgl filtering works) and flag this as a known bug, or (b) model the actual behavior (orgl range ignored, search is global in the orgl dimension).
-
-**Code references:**
-- `sporgl.c:220-230` — `sporglset2linkset()` with the `TRUE||` always-true guard
-- `spanf1.c:56-103` — `findlinksfromtothreesp()` passes `orglrange` to `sporglset2linkset`
-- `retrie.c:56-85` — `retrieverestricted()` converts range to start/end spans (downstream of the override)
-
-**Concrete example:**
-```
-Caller requests: find_links(orgl_range = document 1.1.0.1.0.1 only)
-
-Expected behavior:
-  Search restricted to links whose orgls are within document 1.1.0.1.0.1
-
-Actual behavior:
-  homeset parameter replaced with {stream: 0, width: 100}
-  Search covers all orgls from 0 to 100 in the orgl dimension
-  Links from any document are returned if they match on the span dimension
-```
-
-**Provenance:** Finding 0069
-
-**Co-occurring entries:** [SS-LINK-HOME-DOCUMENT], [SS-SPANF-OPERATIONS], [ST-ADDRESS-ALLOC], [ST-FIND-LINKS], [FC-LINK-DELETE-ISOLATION], [INV-LINK-PERMANENCE], [INT-TRANSCLUSION-LINK-SEARCH], [EC-FIND-LINKS-GLOBAL], [EC-HOMEDOCIDS-FILTER-BROKEN], [EC-SEARCH-SPEC-BEYOND-BOUNDS], [EC-TYPE-FILTER-NONFUNCTIONAL]
-
----
-
 ### PRE-ZERO-WIDTH
 
 **Source:** Finding 0028
@@ -2384,46 +2898,150 @@ Result: TEXTATOM content at V:2.1 (link subspace)
 
 ---
 
-### PRE-VERSION-OWNERSHIP
+### PRE-SUBSPACE-CONVENTION
 
-**Source:** Finding 0068
+**Sources:** Findings 0009, 0010, 0011, 0015, 0038, 0049, 0051, 0054
 
-**What happens:** The VERSION operation checks ownership before choosing the allocation strategy. The predicate `tumbleraccounteq(isaptr, wheretoputit) && isthisusersdocument(isaptr)` determines whether the version is allocated under the source document (owned) or under the creating user's account (unowned). This is not a precondition that rejects the operation — both paths succeed — but it is a precondition on the allocation path that determines where the new address lands.
+#### Finding 0009
 
-**Why it matters for spec:** The allocation rule is conditional: `if owns(user, doc) then allocate_under(doc) else allocate_under(user.account)`. This is a branching postcondition keyed on the ownership predicate. The spec must model both paths. The ownership check uses account-level tumbler comparison (`tumbleraccounteq`), meaning ownership is determined by account prefix matching, not by an explicit permissions table.
+**What happens**: The system enforces by convention (not by runtime check) that V-positions `0.x` contain only link orgl ISAs as I-addresses, and V-positions `1.x` contain only permascroll I-addresses. No code in the enfilade storage path validates this invariant — it is maintained by callers (`docreatelink` writes to `0.x`, `doinsert`/`docopy` for text writes to `1.x`). The `permute()`, `retrieverestricted()`, and `docopy()` functions are all type-agnostic.
 
-**Code references:** `do1.c:272-280` — ownership branch in `docreatenewversion`. `tumbleraccounteq` — compares account components of two tumbler addresses. `isthisusersdocument` — verifies the document belongs to the current user.
+**Why it matters for spec**: This is a convention-over-enforcement invariant. The spec should state it as a property that holds across all well-formed operations, but note that the storage layer does not enforce it. This is the kind of invariant that Dafny can verify as a postcondition of each operation rather than as a storage-layer check.
 
-**Concrete example:**
-- User A (account `1.1.0.1`) versions own doc `1.1.0.1.0.1` → ownership check passes → child allocation `1.1.0.1.0.1.1`
-- User B (account `1.1.0.2`) versions A's doc `1.1.0.1.0.1` → ownership check fails → account allocation `1.1.0.2.0.1`
+**Code references**:
+- `do1.c:215-216` — `findnextlinkvsa` + `docopy` for link storage (caller ensures `0.x`)
+- `do2.c:151-167` — `findnextlinkvsa` hardcodes first link at `0.1`
 
-**Provenance:** Finding 0068
-**Co-occurring entries:** [SS-ADDRESS-SPACE], [SS-VERSION-ADDRESS], [ST-ADDRESS-ALLOC], [FC-GRANF-ON-DELETE], [INV-MONOTONIC]
+**Provenance**: Finding 0009
 
----
+#### Finding 0010
 
-### PRE-SPLIT
+**What happens**: The unified enfilade storage model treats all V→I mappings identically — `insertpm`, `docopy`, `retrieverestricted`, and `permute` are all type-agnostic. The convention that V-position `0.x` holds link orgl ISAs and `1.x` holds permascroll I-addresses is enforced solely by callers. The validation function `acceptablevsa()` in `do2.c:110-113` unconditionally returns `TRUE`, providing no runtime enforcement. This means it is possible to: (a) insert text at position `0.x`, corrupting the link subspace; (b) insert link references at position `1.x`, corrupting the text subspace; (c) create semantically invalid documents that violate the subspace convention.
 
-**Source:** Finding 0070
+**Why it matters for spec**: The convention-over-enforcement design means the subspace invariant is not a storage-layer property but a property that must be verified as a postcondition of every well-formed operation. In Dafny, this would be modeled as a `requires` clause on document mutation operations asserting that text content targets `V >= 1.0` and link references target `V < 1.0`. The `acceptablevsa` stub is a clear signal that enforcement was intended but never implemented.
 
-**What happens:** `splitcrumupwards` at `split.c:16-43` loops while `toomanysons(ptr)` returns TRUE. Before each iteration, the function checks `isfullcrum(ptr)` to decide the split strategy:
+**Code references**:
+- `do2.c:110-113` — `acceptablevsa()` always returns `TRUE`
+- `do1.c:45-65` — `docopy()` calls `acceptablevsa()` but gets no validation
+- `do1.c:162-171` — `dodeletevspan()` performs no subspace check
 
-- If `isfullcrum` is TRUE (node is the root/apex): calls `levelpush` to create a new root level above, then splits the old root into children of the new root.
-- If `isfullcrum` is FALSE (node is internal): calls `splitcrum` to split the node within its current level, distributing children between the original node and a new sibling.
+**Concrete example**:
+```
+acceptablevsa(vsaptr, orglptr) always returns TRUE
 
-Despite its name, `isfullcrum` tests whether the crum is the **fullcrum** (root/apex node), not whether it is "full" in the occupancy sense. It is implemented as `((typecorecrum *)(x))->isapex`.
+Consequence: docopy(doc, vsa=0.5, text_ispanset) succeeds
+  → permascroll I-address stored in link subspace
+  → retrieve_contents on 0.x returns garbage (permascroll addr treated as link ISA)
+  → find_links on 0.x finds no valid link orgl
 
-**Why it matters for spec:** The split operation has a branching precondition: at the root it changes tree height (structural), while at internal nodes it changes tree width (local). The formal model needs both cases:
-- `split_root(tree)`: height' = height + 1, new root has 2 children
-- `split_internal(node)`: parent gains one child, node loses some children to new sibling
+Similarly: docopy(doc, vsa=1.5, link_ispanset) succeeds
+  → link orgl ISA stored in text subspace
+  → retrieve_contents on 1.x dereferences link ISA in permascroll → NULL/garbage
+```
+
+**Provenance**: Finding 0010, also Finding 0009
+
+#### Finding 0011
+
+**What happens:** The subspace convention (V-position 0.x = links, 1.x = text) is a social contract enforced by convention, not by runtime checks. The unified enfilade storage treats all data uniformly — the system does not distinguish between link I-addresses and content I-addresses at the type level. Both are just tumblers. Dereferencing a link ISA as content produces garbage, but no error is raised.
+
+**Why it matters for spec:** The formal specification must model subspace membership as a type-level distinction even though the implementation uses untyped tumblers. This invariant — that data at 0.x V-positions are links and data at 1.x V-positions are text — must be stated as a global invariant in the spec. Every operation that reads or writes V-positions should preserve this invariant. The spec makes explicit what the code leaves implicit.
 
 **Code references:**
-- `backend/split.c:16-43` — `splitcrumupwards` loop with `isfullcrum` dispatch
-- `backend/genf.c:239-242` — `toomanysons` predicate (loop guard)
+- `backend/green/do2.c:110-113` — `acceptablevsa` does not enforce subspace rules
+- `specset2ispanset` and `ispanset2vstuffset` treat all I-addresses uniformly
 
-**Provenance:** Finding 0070
-**Co-occurring entries:** [SS-ENFILADE-BRANCHING], [INV-ENFILADE-OCCUPANCY], [EC-GRAN-BOTTOM-SINGLETON]
+**Provenance:** Finding 0011
+
+#### Finding 0015
+
+**What happens**: The finding provides a decision table confirming the subspace convention's implications for `compare_versions`:
+
+| V-Position | Contains | I-Address Type | Has "Common Origin"? | Included in compare_versions? |
+|------------|----------|----------------|---------------------|-------------------------------|
+| 0.x | Link references | Link orgl ISAs | No | No |
+| 1.x | Text content | Permascroll addresses | Yes | Yes |
+
+Links have no "common origin" for three reasons: (1) link ISAs are unique identities, not content origins — two documents cannot share the same link ISA via transclusion; (2) links are metadata about content, not content itself; (3) comparing link ISAs is semantically undefined — even if they matched, it wouldn't mean "shared content."
+
+**Why it matters for spec**: This strengthens the subspace convention invariant with a semantic justification: the link/text partition is not merely a storage convention but reflects a fundamental type distinction. Operations defined over "content with common origin" (compare_versions, and potentially others) must be restricted to the text subspace by definition, not by workaround.
+
+**Code references**:
+- `correspond.c` — does not implement subspace filtering
+- `do1.c:199-225` — `docreatelink()` creates unique link ISAs (non-shareable)
+
+**Provenance**: Finding 0015, also Finding 0009
+
+#### Finding 0038
+
+**What happens**: The three-subspace convention uses mantissa[0] to encode content type: `1` = text, `2` = link, `3` = link type endpoint. This is constructed in `setlinkvsas()` which hardcodes digit-0 values of 1, 2, and 3 for the FROM, TO, and THREE endpoints respectively. The convention extends beyond the two-subspace model (text vs. links) documented in finding 0009 to include a third subspace for type endpoints. Each subspace maintains its own contiguous numbering independently (links at 2.1, 2.2, ...; text at 1.1, 1.2, ...).
+
+**Why it matters for spec**: The formal model of V-address space needs three partitions, not two. The invariant is: `mantissa[0] in {1, 2, 3}` for all valid V-addresses, with each value mapping to a distinct content type. Contiguity within each subspace is maintained independently — inserting at 1.5 shifts 1.6+ but does not affect 2.x numbering.
+
+**Code references**:
+- `do2.c:169-183` — `setlinkvsas()` constructs all three subspace positions
+
+**Provenance**: Finding 0038
+
+#### Finding 0049
+
+**What happens:** Finding 0049 provides direct experimental confirmation that the subspace partition (text at 1.x, links at 2.x) is not enforced. INSERT at V-position 2.1 with text content succeeds, and the content is stored and retrievable. The vspanset after insertion shows two disjoint spans crossing subspace boundaries. This demonstrates the convention is purely caller-enforced — the back end treats all V-positions uniformly.
+
+**Why it matters for spec:** The subspace convention must be modeled as a precondition on every V-position-accepting operation, not as a storage-layer invariant. The spec invariant `INV-SUBSPACE: ∀ v ∈ doc.vspan_set: (type(content_at(v)) == TEXT) ⟹ v.head == 1` holds only if all callers cooperate. A well-formed system state requires this invariant, but the implementation provides no enforcement. For Dafny, this means the invariant must appear as a `requires` clause on every public operation, with a proof obligation that each operation preserves it.
+
+**Code references:**
+- `backend/do2.c:110-113` — `acceptablevsa()` stub that was presumably intended for validation
+- `backend/do1.c:121-124` — `doinsert()` sets `TEXTATOM` element type but V-position is independent
+
+**Concrete example:**
+```
+INSERT text at V:2.1 → succeeds
+retrieve_contents(V:2.1, width:0.19) → "TextAtLinkPosition"
+  → text bytes occupying link subspace
+  → no error, no warning, no distinction from normal text insertion
+```
+
+**Provenance:** Finding 0049
+
+#### Finding 0051
+
+**What happens:** Finding 0051 demonstrates a second violation path for the subspace convention. While finding 0049 showed INSERT can place text at link-subspace positions, finding 0051 shows REARRANGE can *move* previously correctly-placed text into the wrong subspace. After a pivot with cross-subspace cuts, `retrieve_contents` at 2.x returns text bytes ("ABC") — identical behavior to a direct misplacement via INSERT. The back end draws no distinction between content that was placed at 2.x directly vs. content that was moved there by rearrangement.
+
+**Why it matters for spec:** The subspace invariant `∀ v ∈ doc.vspan_set: type(content_at(v)) == TEXT ⟹ v.head == 1` can be violated by at least two operations: INSERT (finding 0049) and REARRANGE (this finding). For Dafny verification, the proof that this invariant is preserved must cover every V-position-mutating operation, not just content-placing ones. REARRANGE is particularly insidious because content may be correctly placed initially and only later displaced across the boundary. The preservation proof must show that the displacement arithmetic for every affected orgl stays within the original subspace.
+
+**Code references:**
+- `backend/edit.c:125` — `tumbleradd` displaces V-position without subspace guard
+- `backend/do2.c:110-113` — `acceptablevsa()` (from finding 0049) — even if this were fixed, REARRANGE would bypass it since it modifies V-positions in-place rather than going through `acceptablevsa()`
+
+**Concrete example:**
+```
+Initial state: "ABC" correctly at V:1.1–1.3 (text subspace) — invariant holds
+After pivot [1.1, 1.4, 2.5]: "ABC" at V:2.2–2.4 (link subspace) — invariant violated
+
+Two violation paths now known:
+  1. INSERT at V:2.1 with text  (finding 0049) — direct misplacement
+  2. REARRANGE pivot across subspace boundary (finding 0051) — displacement into wrong subspace
+```
+
+**Provenance:** Finding 0051, also Finding 0049
+
+#### Finding 0054
+
+**What happens:** The subspace isolation property generalizes across all three subspaces. For ANY insertion at `N.x` (where `N` is the subspace digit), the second blade is `(N+1).1`, restricting shifts to the `N.x` subspace only:
+- INSERT at `1.x` → blades `[1.x, 2.1)` → shifts only text
+- INSERT at `2.x` → blades `[2.x, 3.1)` → shifts only links
+- INSERT at `3.x` → blades `[3.x, 4.1)` → shifts only type endpoints
+
+Each subspace is a self-contained shift domain. This is a structural consequence of `findaddressofsecondcutforinsert()` computing `(N+1).1` regardless of the fractional part of the insertion position.
+
+**Why it matters for spec:** The invariant `∀ N ∈ {1,2,3}, ∀ op = INSERT(N.x) : shift_region(op) ⊆ [N.1, (N+1).1)` holds for all insertions. This can be verified in Dafny as a lemma about `findaddressofsecondcutforinsert`: for input `N.x`, the output is always `(N+1).1`, which combined with the knife classification logic guarantees subspace isolation.
+
+**Code references:**
+- `insertnd.c:174-183` — `findaddressofsecondcutforinsert()` generalizes across subspaces
+
+**Provenance:** Finding 0054
+
+**Co-occurring entries:** [SS-CONTENT-IDENTITY], [SS-DUAL-ENFILADE], [SS-TWO-BLADE-KNIFE], [PRE-COMPARE-VERSIONS], [PRE-DELETE], [PRE-ENF0-PLACEMENT-GAP], [PRE-INSERT], [PRE-REARRANGE], [PRE-RETRIEVE-CONTENTS], [PRE-VCOPY], [ST-COMPARE-VERSIONS], [ST-INSERT], [ST-REARRANGE], [FC-SUBSPACE], [INT-LINK-RETRIEVAL], [EC-COMPARE-VERSIONS-LINK-CRASH], [EC-ERROR-ABORT], [EC-RETRIEVE-VSPANSET-BOTH-SUBSPACES], [EC-VSPAN-NORMALIZATION]
 
 ---
 
@@ -3310,64 +3928,6 @@ Hypothetical: If insertion point were forced to 2.1 (before link1):
 
 ---
 
-### ST-VSPAN-TO-SPORGL
-
-**Source:** Finding 0013
-
-**What happens:** The function `vspanset2sporglset()` converts a set of V-address spans within a document into sporgls. For each vspan, it: (1) converts V-addresses to I-addresses via the document's enfilade (`vspanset2ispanset`); (2) attaches the source document ISA to each resulting I-span, producing a sporgl. The output sporglset preserves the content identity (I-address) while adding provenance (which document). The reverse operation `linksporglset2specset()` converts sporgls back to V-address specs for display or user-facing operations.
-
-**Why it matters for spec:** This is a key state transition in many compound operations. The conversion is: `vspan_to_sporgl(doc, vspan) = { origin: V_to_I(doc, vspan.start), width: vspan.width, source_doc: doc.isa }`. The postcondition is that the I-address range in the sporgl exactly corresponds to the content at the given V-positions in the document. This conversion is a pure function over the document's current V→I mapping — it reads the enfilade but does not modify it. The inverse `linksporglset2specset` is also pure: it looks up the sporgl's I-address in the source document's enfilade to recover V-positions.
-
-**Code references:**
-- `sporgl.c:35-65` — `vspanset2sporglset()` implementation
-- `sporgl.c:97+` — `linksporglset2specset()` reverse conversion
-
-**Concrete example:**
-```
-Input:
-  doc ISA = 1.1.0.1.0.1
-  vspan = V-range 1.1..1.15 (first 15 characters)
-
-vspanset2sporglset(doc, vspan):
-  Step 1: vspanset2ispanset → I-span at 2.1.0.5.0.100 for 0.15
-  Step 2: attach doc ISA → sporgl(origin=2.1.0.5.0.100, width=0.15, doc=1.1.0.1.0.1)
-
-Output: sporglset with one sporgl carrying both I-address and document provenance
-```
-
-**Provenance:** Finding 0013
-**Co-occurring entries:** [SS-SPORGL], [INT-SPORGL-LINK-INDEX], [INT-SPORGL-TRANSCLUSION], [INT-SPORGL-VERSION-COMPARE]
-
----
-
-### ST-COMPARE-VERSIONS
-
-**Source:** Finding 0015
-
-**What happens**: The `compare_versions` operation (FEBE opcode 10: SHOWRELATIONOF2VERSIONS) answers the question: "What text content do these two documents share by common origin?" The operation produces a list of ordered pairs of V-spans — one from each document — where the paired spans reference the same permascroll I-address range. The semantic definition is: two spans correspond if and only if they map to the same permascroll content identities.
-
-**Why it matters for spec**: This is the postcondition for `compare_versions`. Each pair `(span_a, span_b)` in the result satisfies: `VSpanToISpan(doc_a, span_a) == VSpanToISpan(doc_b, span_b)` where both I-spans are permascroll addresses. The result is complete: every shared permascroll address range appears in exactly one pair. The result covers only text content — link references are excluded by definition, not by accident.
-
-**Code references**:
-- `correspond.c` — nested loop computing I-span intersections and mapping back to V-spans
-
-**Concrete example**:
-```
-Document A: "Hello World" (text at V 1.1..1.11, permascroll I-addrs P₁..P₁₁)
-Document B: version of A, then insert "Dear " at position 6
-  → "Hello Dear World" (V 1.1..1.16)
-  → "Hello" has permascroll I-addrs P₁..P₅, "World" has P₆..P₁₁
-
-compare_versions(A, B) returns:
-  [(A: V 1.1 for 5, B: V 1.1 for 5),     // "Hello" — same P₁..P₅
-   (A: V 1.6 for 6, B: V 1.11 for 6)]    // "World" — same P₆..P₁₁
-```
-
-**Provenance**: Finding 0015
-**Co-occurring entries:** [SS-CONTENT-IDENTITY], [PRE-COMPARE-VERSIONS], [INV-SUBSPACE-CONVENTION]
-
----
-
 ### ST-LINK-CREATE
 
 **Sources:** Findings 0020, 0037
@@ -3818,191 +4378,6 @@ For a deletion that spans exactly one crum from grasp to reach, neither boundary
 
 ---
 
-### ST-FIND-LINKS
-
-**Sources:** Findings 0028, 0029, 0035
-
-#### Finding 0028
-
-**What happens**: `find_links(search_specset)` discovers links by I-address intersection, not by document or V-address matching. The search specset is converted to I-addresses, and links are returned if any I-address in the search overlaps with I-addresses in a link endpoint. Partial overlap suffices — a search specset that shares even one I-address with a link endpoint will discover that link. The search is purely set-intersection on I-addresses: `find_links(S) = { L | I-addresses(S) ∩ I-addresses(L.source) ≠ ∅ }`.
-
-**Why it matters for spec**: The postcondition for `find_links` is: return the set of all links whose source endpoint I-addresses have non-empty intersection with the search specset's I-addresses. Document identity plays no role — a document that was not involved in link creation can discover the link if it shares content identity (via transclusion) with an endpoint. This is the formal mechanism by which transclusion enables link discovery.
-
-**Code references**: Test `partial_vcopy_of_linked_span` — `find_links` on a document containing only "link" (4 chars transcluded from "hyperlink text") discovers the link created on "hyperlink text"
-
-**Concrete example**:
-```
-Document A: "ABCDEFGHIJ" (I-addresses I.1 through I.10)
-Link source: "DEF" (I-addresses I.4, I.5, I.6)
-
-Document C transcludes "EF" from A via vcopy:
-  C contains: "Copy: EF"
-  C's "EF" has I-addresses I.5, I.6 (shared with A)
-
-find_links(specset covering C's "EF"):
-  I-addresses of search: {I.5, I.6}
-  I-addresses of link source: {I.4, I.5, I.6}
-  Intersection: {I.5, I.6} ≠ ∅
-  → Link returned (partial overlap is sufficient)
-```
-
-**Provenance**: Finding 0028b §2
-
-#### Finding 0029
-
-**What happens:** `find_links()` uses AND semantics when called with multiple criteria. When both source and target specs are provided, both endpoints must have V-stream presence for the link to be found. Single-endpoint search (passing NOSPECS for the other) requires only that endpoint's presence.
-
-Cross-endpoint search matrix:
-
-| Source State | Target State | Search by Source | Search by Target |
-|--------------|--------------|------------------|------------------|
-| Intact       | Intact       | Found            | Found            |
-| Deleted      | Intact       | Not found        | Found            |
-| Intact       | Deleted      | Found            | Not found        |
-| Deleted      | Deleted      | Not found        | Not found        |
-
-When multiple links share a target, deleting one source removes only that link from source-based search; target-based search still finds all links (the link objects themselves are unaffected).
-
-**Why it matters for spec:** Defines the state-transition semantics of `find_links()` — specifically how delete operations on document content transitively affect link discoverability without modifying the links themselves. The AND semantics for multi-criteria search is a key behavioral property: `find_links(source_spec, target_spec)` ≡ `find_links(source_spec) ∩ find_links(target_spec)`.
-
-**Code references:** Tests `search_by_both_endpoints_one_removed`, `search_multiple_links_selective_removal` in `febe/scenarios/links/search_endpoint_removal.py`.
-
-**Concrete example:**
-- `find_links(source, target)` before delete → `[link_id]`
-- Delete source content
-- `find_links(source, target)` → `[]` (AND fails)
-- `find_links(NOSPECS, target)` → `[link_id]` (target-only still works)
-
-**Provenance:** Finding 0029, sections 2, 5, 7
-
-#### Finding 0035
-
-**What happens:** FINDNUMOFLINKSFROMTOTHREE (opcode 29) is a trivial wrapper around FINDLINKSFROMTOTHREE. It calls `findlinksfromtothreesp()` to materialize the complete linked list of matching links, then walks the list counting elements. There is no count-only optimization — the full search executes (V-to-I translation, spanfilade search per endset, intersection of result sets), then the list is linearly counted.
-
-**Why it matters for spec:** For formal specification, FINDNUMOFLINKSFROMTOTHREE has identical preconditions and search semantics to FINDLINKSFROMTOTHREE. Its postcondition is simply `|result| = count` where `result` is the set FINDLINKSFROMTOTHREE would return. No additional state transitions or side effects. Both operations are disabled in safe mode (`init.c:75`).
-
-**Code references:**
-- `findnumoflinksfromtothreesp()`: `backend/spanf1.c:105-115` — calls full search then counts
-- `findlinksfromtothreesp()`: shared search implementation
-- `intersectlinksets()`: `backend/spanf2.c:46-120` — O(n*m) or O(n*m*p) intersection
-- Safe mode disable: `backend/init.c:75`
-
-**Provenance:** Finding 0035 (section 4)
-
-**Co-occurring entries:** [SS-ADDRESS-SPACE], [SS-LINK-ENDPOINT], [SS-LINK-SPACE], [SS-VSPAN-VS-VSPANSET], [PRE-FIND-LINKS], [PRE-LINK-CREATE], [PRE-ZERO-WIDTH], [ST-FOLLOW-LINK], [ST-PAGINATE-LINKS], [ST-RETRIEVE-ENDSETS], [FC-DOC-ISOLATION], [FC-LINK-DELETE-ISOLATION], [INV-IDENTITY-OVERLAP], [INV-LINK-PERMANENCE], [INV-SINGLE-CHAR-GRANULARITY], [INV-VSPAN-CONSOLIDATION], [INT-LINK-TRANSCLUSION], [INT-SPORGL-LINK-INDEX], [INT-TRANSCLUSION-LINK-SEARCH], [EC-CURSOR-INVALIDATION], [EC-SEARCH-SPEC-BEYOND-BOUNDS], [EC-SELF-COMPARISON], [EC-SELF-TRANSCLUSION], [EC-TYPE-FILTER-NONFUNCTIONAL], [EC-VSPAN-MISLEADING-SIZE]
-
----
-
-### ST-FOLLOW-LINK
-
-**Source:** Finding 0028
-
-**What happens**: `follow_link(link_id, endpoint)` returns the complete, original SpecSet for the requested endpoint, regardless of how the link was discovered. Even when a link is found via partial I-address overlap from a transclusion, `follow_link` returns the full endpoint as it was specified at link creation time. The link is an immutable entity that does not adapt to the discovery context.
-
-**Why it matters for spec**: The postcondition for `follow_link` is: `follow_link(L, SOURCE) == L.source_specset` and `follow_link(L, TARGET) == L.target_specset`, where these specsets are the exact values provided at `create_link` time. There is no filtering, subsetting, or adaptation based on the caller's document or the search that discovered the link. This is a direct consequence of link immutability (SS-LINK-ENDPOINT).
-
-**Code references**: Test `partial_vcopy_of_linked_span` — document contains "link" (4 chars), `follow_link` returns "hyperlink text" (14 chars, the full original source)
-
-**Concrete example**:
-```
-Link L created with source = "hyperlink text" (14 chars) in Document A
-Document C transcludes "link" (4 chars) from A
-
-find_links(C) → {L}  (discovered via partial I-address overlap)
-follow_link(L, SOURCE) → SpecSet referencing A at original position for 14 chars
-retrieve_contents(follow_link result) → "hyperlink text"  (NOT "link")
-
-The link returns its full source, not the subset that enabled discovery.
-```
-
-**Provenance**: Finding 0028b §3
-**Co-occurring entries:** [SS-ADDRESS-SPACE], [SS-LINK-ENDPOINT], [SS-LINK-SPACE], [PRE-LINK-CREATE], [PRE-ZERO-WIDTH], [ST-FIND-LINKS], [FC-DOC-ISOLATION], [INV-IDENTITY-OVERLAP], [INV-SINGLE-CHAR-GRANULARITY], [INV-VSPAN-CONSOLIDATION], [INT-LINK-TRANSCLUSION], [EC-SELF-COMPARISON], [EC-SELF-TRANSCLUSION]
-
----
-
-### ST-RETRIEVE-ENDSETS
-
-**Source:** Finding 0035
-
-**What happens:** RETRIEVEENDSETS (opcode 28) takes a specset (V-spec of a content region) and returns three specsets simultaneously: from-endset, to-endset, and three-endset. It works through the spanfilade, not the link orgl. The call chain: `retrieveendsetsfromspanf()` converts the input specset to a sporglset (V-to-I translation), defines three search spaces using ORGLRANGE prefixes (LINKFROMSPAN=1, LINKTOSPAN=2, LINKTHREESPAN=3), then for each endset type calls `retrievesporglsetinrange()` which searches the spanfilade with SPANRANGE and ORGLRANGE restrictions.
-
-**Why it matters for spec:** RETRIEVEENDSETS is fundamentally different from FOLLOWLINK. FOLLOWLINK takes a known link ID and reads one endset from the link's orgl. RETRIEVEENDSETS searches by content identity through the spanfilade, discovering all link endpoints that intersect a content region. This is the content-identity-based link discovery mechanism — links are discoverable from any document sharing content identity (transclusion, versioning). The three-endset is conditionally retrieved (only if requested).
-
-**Code references:**
-- `retrieveendsetsfromspanf()`: `backend/spanf1.c:190-235`
-- `specset2sporglset()`: converts V-addresses to I-addresses
-- `linksporglset2specset()`: converts I-addresses back to V-specs using querying document's docid
-
-**Concrete example:**
-- Input: specset describing a text region in document D1
-- Output: three specsets — from-endset (links whose from-end intersects the region), to-endset (links whose to-end intersects), three-endset (links whose three-end intersects)
-- Key: endsets are resolved in terms of the querying document's V-space, not the link's home document
-
-| Aspect | FOLLOWLINK | RETRIEVEENDSETS |
-|--------|-----------|-----------------|
-| Input | link ISA + which-end | specset (content region) |
-| Lookup | link orgl direct | spanfilade search |
-| Returns | one endset | all three endsets |
-| Resolution | link's perspective | querying document's perspective |
-
-**Provenance:** Finding 0035 (section 3)
-**Co-occurring entries:** [SS-VSPAN-VS-VSPANSET], [ST-FIND-LINKS], [ST-PAGINATE-LINKS], [INT-SPORGL-LINK-INDEX], [EC-CURSOR-INVALIDATION], [EC-VSPAN-MISLEADING-SIZE]
-
----
-
-### ST-PAGINATE-LINKS
-
-**Source:** Finding 0035
-
-**What happens:** FINDNEXTNLINKSFROMTOTHREE (opcode 31) implements stateless cursor-based pagination over link search results. On each call it: (1) re-executes the full `findlinksfromtothreesp()` search, (2) if cursor is zero-tumbler, starts from beginning; otherwise linearly scans the result list for an exact tumbler match, (3) if cursor not found, returns empty set with count=0, (4) destructively truncates the list at N items by setting `linkset->next = NULL`.
-
-**Why it matters for spec:** The pagination cursor is a link ISA tumbler, not a positional offset. This means: if the cursor link is deleted between calls, the cursor becomes invalid and an empty result is returned (not an error). The operation is stateless — no server-side cursor state persists between calls. The page size parameter is input/output: input is requested size, output is actual count returned. For specification, the postcondition is: `result = take(N, dropUntilAfter(cursor, fullSearchResult))` where `fullSearchResult` is identical to what FINDLINKSFROMTOTHREE would return. Disabled in safe mode (`init.c:76`).
-
-**Code references:**
-- `findnextnlinksfromtothreesp()`: `backend/spanf1.c:117-149`
-- Cursor check: `iszerotumbler()` at line 126
-- Cursor walk: linear scan with `tumblereq()` match
-- Destructive truncation: `linkset->next = NULL` at the N-th item
-- Safe mode disable: `backend/init.c:76`
-
-**Concrete example:**
-- Full search returns links [L1, L2, L3, L4, L5], cursor=L2, N=2
-- Result: [L3, L4], actual count=2
-- If cursor=L_deleted (not in result set): returns [], count=0
-- If cursor=zero: returns [L1, L2], count=2
-
-**Provenance:** Finding 0035 (section 5)
-**Co-occurring entries:** [SS-VSPAN-VS-VSPANSET], [ST-FIND-LINKS], [ST-RETRIEVE-ENDSETS], [INT-SPORGL-LINK-INDEX], [EC-CURSOR-INVALIDATION], [EC-VSPAN-MISLEADING-SIZE]
-
----
-
-### ST-INSERT-ACCUMULATE
-
-**Source:** Finding 0036
-
-**What happens:** Multiple INSERT operations on the same document each create their own DOCISPAN entries. Each insertion allocates fresh I-addresses and adds corresponding DOCISPAN mappings. The DOCISPAN entries from earlier inserts are not disturbed by later ones — they accumulate monotonically.
-
-**Why it matters for spec:** This confirms that INSERT's DOCISPAN creation is additive: `DOCISPAN_after = DOCISPAN_before ∪ {new_i_addrs → doc}`. Combined with INV-IADDRESS-PERMANENT (from Finding 0023), the DOCISPAN index for a document only grows.
-
-**Concrete example:**
-```
-INSERT "First " at V:1.1  → DOCISPAN: {α₁..α₆ → doc}
-INSERT "Second " after     → DOCISPAN: {α₁..α₆ → doc, β₁..β₇ → doc}
-INSERT "Third" after       → DOCISPAN: {α₁..α₆ → doc, β₁..β₇ → doc, γ₁..γ₅ → doc}
-
-find_documents("First")  → [doc]
-find_documents("Second") → [doc]
-find_documents("Third")  → [doc]
-```
-
-**Code references:**
-- Test: `golden/discovery/insert_multiple_times_accumulates_docispan.json`
-
-**Provenance:** Finding 0036.
-**Co-occurring entries:** [SS-DOCISPAN], [PRE-INSERT], [ST-INSERT], [FC-CONTENT-SPANF-ISOLATION], [EC-APPEND-NO-DOCISPAN]
-
----
-
 ### ST-COPY
 
 **Sources:** Findings 0047, 0064
@@ -4054,31 +4429,6 @@ This means "undo delete" in the Xanadu model is not `INSERT(deleted_text)` but `
 **Provenance**: Finding 0064
 
 **Co-occurring entries:** [SS-DOCISPAN], [ST-DELETE], [ST-INSERT], [FC-DELETE-CROSS-DOC], [INV-DELETE-NOT-INVERSE], [INV-IADDR-IMMUTABILITY], [INV-SPANF-GROWTH]
-
----
-
-### ST-FOLLOWLINK
-
-**Source:** Finding 0048
-
-**What happens:** FOLLOWLINK retrieves link endset I-addresses from the link orgl, then converts them to V-addresses using a specified document's POOM. The call chain is: `link2sporglset()` extracts I-addresses from the link orgl at the requested endset position (0.1, 0.2, or 0.3) via `retrieverestricted()` — no POOM check occurs at this stage. Then `linksporglset2specset()` converts I-addresses to V-addresses by looking them up in the specified `homedoc`'s POOM. The conversion calls `span2spanset()` which uses `retrieverestricted()` against the document's orgl. If an I-address has no POOM mapping, `retrieverestricted` returns NULL and the I-address is silently dropped — no V-span is added to the result.
-
-**Why it matters for spec:** FOLLOWLINK's postcondition is not simply "return the endset" — it is filtered through a specific document's POOM. The result depends on which document's POOM is queried (the `homedoc` parameter). The same link endset can produce different V-address results (or empty results) depending on which document context is used. Formally: `followlink(link, whichend, homedoc) = { v | ∃ i ∈ endset(link, whichend) : poom.homedoc(v) = i }`. If no such v exists for any i, the result is empty.
-
-**Code references:**
-- `link2sporglset()`: `backend/sporgl.c:67-95` — extracts I-addresses from link orgl, no POOM check
-- `linksporglset2specset()`: `backend/sporgl.c:97+` — converts I-addresses to V-specs via homedoc POOM
-- `span2spanset()`: `backend/orglinks.c:425-449` — if `retrieverestricted` returns NULL, I-address silently dropped (lines 446-448)
-- `dofollowlink()`: `backend/do1.c:227-236` — orchestrates the two-phase process
-
-**Concrete example:**
-- Link L has to-endset containing I-address `a`
-- Document D1 has `poom.D1(1.5) = a` → FOLLOWLINK(L, TO, D1) returns `[1.5]`
-- Document D2 has no POOM mapping for `a` → FOLLOWLINK(L, TO, D2) returns `[]`
-- Content deleted from all documents → FOLLOWLINK(L, TO, any) returns `[]`, operation succeeds
-
-**Provenance:** Finding 0048
-**Co-occurring entries:** [PRE-FOLLOWLINK], [INV-ITOV-FILTERING], [EC-GHOST-LINK]
 
 ---
 
@@ -4203,42 +4553,6 @@ POOM enfilade node with children:
 
 ---
 
-### ST-INSERT-VWIDTH-ENCODING
-
-**Source:** Finding 0076
-
-**What happens:** During INSERT, `insertpm` computes the V-width of a POOM bottom crum by extracting the integer value from the I-width and re-encoding it as a tumbler at V-space precision. The three-step process is:
-
-1. `shift = tumblerlength(vsaptr) - 1` — compute exponent from V-address length
-2. `inc = tumblerintdiff(&lwidth, &zero)` — extract integer value from I-width
-3. `tumblerincrement(&zero, shift, inc, &crumwidth.dsas[V])` — create V-width tumbler with `exp = -shift`, `mantissa[0] = inc`
-
-This produces a tumbler representing `inc * 10^(-shift)`. The I-width is copied directly without transformation: `movetumbler(&lwidth, &crumwidth.dsas[I])`.
-
-**Why it matters for spec:** The INSERT postcondition on POOM crums must specify that V-width and I-width are not equal as tumblers, even though they encode the same numeric width. Formally: `value(crum.width.dsas[V]) == value(crum.width.dsas[I])` but `crum.width.dsas[V] != crum.width.dsas[I]` as tumbler representations. The V-width exponent is determined by the V-address length, not the I-address length. This is a derived encoding, not a copy.
-
-**Code references:**
-- `orglinks.c:105-117` — V-width computation in `insertpm`
-- `tumble.c:599-623` — `tumblerincrement` zero-tumbler special case: sets `exp = -rightshift`, `mantissa[0] = bint`
-
-**Concrete example:**
-```
-Input: vsaptr = "1.1" (tumblerlength = 2), lwidth represents 11 characters
-
-Step 1: shift = tumblerlength("1.1") - 1 = 2 - 1 = 1
-Step 2: inc = tumblerintdiff(lwidth, zero) = 11
-Step 3: tumblerincrement(zero, 1, 11, &V-width)
-        → V-width tumbler: exp = -1, mantissa[0] = 11
-        → Tumbler notation: 0.11
-
-Meanwhile: I-width = 0.0.0.0.0.0.0.0.11 (copied directly)
-```
-
-**Provenance:** Finding 0076
-**Co-occurring entries:** [SS-POOM-BOTTOM-CRUM], [INV-WIDTH-VALUE-EQUIVALENCE], [EC-VWIDTH-ZERO-ADDRESS]
-
----
-
 ### ST-VERSION
 
 **Source:** Finding 0077
@@ -4266,65 +4580,9 @@ After:  doc2 has "ABC" mapped to SAME I-addresses I.1, I.2, I.3
 
 ---
 
-## Frame Conditions
+### ST-VCOPY-CONTIGUITY
 
-> What an operation leaves unchanged
-
-### FC-DOC-ISOLATION
-
-**Sources:** Findings 0002, 0007, 0028, 0033, 0065, 0067
-
-#### Finding 0002
-
-**What happens:** Modifications to a source document (both insertions and deletions) do not affect documents that have transcluded content from it. After vcopy, the target holds its own references to the content identities. Subsequent changes to the source document's reference set have no effect on the target's reference set. Each document's view is independent.
-
-**Why it matters for spec:** This is a frame condition on insert and remove: `forall doc_other != doc_modified :: references(doc_other) is unchanged`. The formal spec must assert that insert and remove operations on one document do not alter any other document's reference set. This is a direct consequence of content immutability — since operations create/remove references rather than mutating content, and each document has its own reference set, cross-document interference is impossible.
-
-**Concrete example:**
-- Source: "Original content here", Target transcluded "Original content"
-- Insert "NEW: " at start of source → Source: "NEW: Original content here"
-- Target: still "Target: Original content" (unchanged)
-- Delete "Delete this." from source → Source loses that reference
-- Target that transcluded "Delete this." still has it (its reference is independent)
-
-**Code references:** `scenario_vcopy_source_modified` at `febe/scenarios/content/vcopy.py:312-317`, `scenario_vcopy_source_deleted` at `febe/scenarios/content/vcopy.py:388-395`
-
-**Provenance:** Finding 0002
-
-#### Finding 0007
-
-**What happens:** Once a version is created, modifications to either the original or the version do not affect the other. This holds for all mutation operations: insertion into the version leaves the original unchanged, deletion from the version leaves the original unchanged, insertion into the original leaves the version unchanged, deletion from the original leaves the version unchanged. Both documents can be modified independently and concurrently. This extends the FC-DOC-ISOLATION frame condition from Finding 0002 to cover versioning specifically.
-
-**Why it matters for spec:** The frame condition is: `forall op on doc_A where doc_B = version_of(doc_A) or doc_A = version_of(doc_B) :: references(doc_B) is unchanged`. This is not a new axiom — it follows from FC-DOC-ISOLATION and the fact that version-create produces a document with its own independent reference set. But the finding confirms it holds for the full matrix of scenarios (insert/delete on original/version, both modified).
-
-**Concrete example:**
-- Original: "Shared base content", Version: "Shared base content" (same identities)
-- Delete from version: Original still reads "Shared base content"
-- Delete from original: Version still reads "Shared base content"
-- Modify both independently: each has its own state, neither affected by the other
-
-**Code references:** Tests `version_delete_preserves_original`, `delete_from_original_check_version`, `modify_original_after_version`, `both_versions_modified`
-
-**Provenance:** Finding 0007
-
-#### Finding 0028
-
-**What happens**: Documents created independently (not via version or vcopy) share no content identity, even if they contain identical text. `compare_versions` between two independently-created documents with different text returns an empty list. The I-positions assigned to typed content are unique per insertion event.
-
-**Why it matters for spec**: Reinforces the identity-by-origin invariant: `forall doc1, doc2 : Document :: independent(doc1, doc2) => compare_versions(doc1, doc2) == []`. "Independent" means no version or transclusion relationship exists between them. Even character-for-character identical text produces distinct I-positions when typed independently. This is a frame condition on document creation: `create_document` produces a document with I-positions disjoint from all existing I-positions.
-
-**Code references**: Test `edgecases/disjoint_documents_comparison`
-
-**Concrete example**:
-```
-doc1 = create_document(); insert(doc1, "First content")
-doc2 = create_document(); insert(doc2, "Second content")
-compare_versions(doc1, doc2) → []  — no shared identity despite both being text
-```
-
-**Provenance**: Finding 0028 §8
-
-#### Finding 0033
+**Source:** Finding 0033
 
 **What happens:** When a partial vcopy is performed from a fragmented-insert document (e.g., copying only positions 3–7 from a 10-character document), the result is still 1 I-span in the target, not 5. The I-space contiguity of the source is preserved through the vcopy into the target's V-to-I mapping.
 
@@ -4337,62 +4595,103 @@ compare_versions(doc1, doc2) → []  — no shared identity despite both being t
 
 **Provenance:** Finding 0033
 
-#### Finding 0065
+---
 
-**Detail level: Essential**
+### ST-APPEND-NO-DOCISPAN
 
-MAKELINK on document B does not affect the link I-address allocation state of document A. The allocation counter is implicit (derived from bounded query), and the query bound is constructed from the target document's own I-address. Therefore, link creation in one document is a no-op with respect to all other documents' link allocation state.
+**Source:** Finding 0036
 
-**What happens:** The `upperbound` in `findisatoinsertmolecule` is derived from `hintptr->hintisa` (the document's I-address), not from any global state. The `findpreviousisagr` search is bounded to `[lowerbound, docISA.2.3)`, so it only sees entries in the target document's link subspace.
+**What happens:** APPEND (`doappend`) does NOT create DOCISPAN entries. The source code shows `insertspanf(taskptr,spanf,docptr,textset,DOCISPAN)` is explicitly commented out in the APPEND implementation, with a note suggesting `appendpm` may include the spanf insertion internally (though the comment is ambiguous: `/*zzz dies this put in granf?*/`). This means content added via APPEND is not discoverable through `find_documents`.
 
-**Why it matters for spec:** Frame condition for MAKELINK: `forall d': Document | d' != d => link_state(d') unchanged after MAKELINK(d)`. This enables independent reasoning about per-document operations and confirms there is no global link allocation bottleneck or shared mutable state.
+**Why it matters for spec:** APPEND and INSERT have different postconditions regarding discoverability:
+- INSERT: content discoverable (`DOCISPAN` entries created)
+- APPEND: content NOT discoverable (`DOCISPAN` entries omitted)
 
-**Code references:**
-- `backend/granf2.c:162` — upperbound constructed from document-specific `hintisa`
-- `backend/granf2.c:164` — `findpreviousisagr` confined to document's address subspace
-- `backend/do1.c:211` — `makehint` binds allocation to specific document
-
-**Provenance:** Finding 0065
-
-#### Finding 0067
-
-**What happens:** Document operations (INSERT, DELETE, COPY) have no cross-document side effects. Each document's orgl is an independent enfilade tree stored in granf. All mutation functions (`insertnd`, `deletend`, `rearrangend`) receive `typecuc *fullcrumptr` — a pointer to the target document's orgl root crum — and all tree traversal uses local pointers (`findleftson`, `findrightbro`, `findfather`). No code path in any mutation function accesses another document's orgl. This was confirmed both by code inspection and by 6 empirical test scenarios covering INSERT, DELETE, and COPY across multiple documents with transclusions.
-
-COPY (`docopy`) reads the source document's I-addresses via `specset2ispanset` (a read-only operation) and writes only to the target document's orgl via `insertpm`. The source document's orgl is never modified.
-
-**Why it matters for spec:** This is the central frame axiom F0: `∀d ∈ D, ∀op ∈ {INSERT, DELETE, COPY}, ∀d' ∈ D where d ≠ d': op(d, ...) ⟹ D_seq'(d') = D_seq(d')`. The implementation guarantees this structurally — cross-document mutation is physically impossible because mutation functions only receive and traverse a single orgl tree. For Dafny verification, this can be expressed as: `forall d' :: d' != d ==> poom(d') == old(poom(d'))` as a postcondition on all document operations. No global mutable state is shared between documents (crum allocation is append-only and semantics-free).
+The spec must distinguish these operations. APPEND postcondition should explicitly state: `spanf' = spanf` (no DOCISPAN change). This is a significant semantic distinction — APPEND creates content that exists in the granf but is invisible to reverse-index queries.
 
 **Code references:**
-- `insertnd.c:15-111` — `insertnd` takes single `fullcrumptr`, all mutations local to that tree
-- `edit.c:30-75` — `deletend` takes single `fullcrumptr`, traversal via `findleftson`/`findrightbro`
-- `do1.c:45-65` — `docopy` reads source (via `specset2ispanset`), writes target only (via `insertpm` + `insertspanf`)
-- `orglinks.c:144-151` — `deletevspanpm` calls `deletend` on single orgl, no spanf call
+- `do1.c:25-31` — `doappend()` with commented-out `insertspanf` call
+- Comment: `/*zzz dies this put in granf?*/` — suggests uncertainty about whether `appendpm` handles DOCISPAN internally
 
 **Concrete example:**
 ```
-Pre-state:
-  Doc A: text "Hello" at 1.1-1.5
-  Doc B: text "World" at 1.1-1.5
-
-Operation: INSERT "XYZ" into Doc A at 1.3
-
-Post-state:
-  Doc A: text "HeXYZllo" at 1.1-1.8 (modified)
-  Doc B: text "World" at 1.1-1.5 (UNCHANGED — identical content and vspanset)
-
-Operation: COPY from Doc A to Doc C
-Post-state:
-  Doc A: UNCHANGED (read-only access to source)
-  Doc C: contains transcluded content from A
+APPEND "Some text" to document D
+  granf: D's orgl updated with new content
+  spanf: unchanged — no DOCISPAN entries created
+  find_documents("Some text") → []   # not discoverable
 ```
 
-**Provenance:** Finding 0067
-
-**Co-occurring entries:** [SS-ADDRESS-SPACE], [SS-CONTENT-IDENTITY], [SS-LINK-ENDPOINT], [SS-LINK-SPACE], [SS-VERSION-ADDRESS], [PRE-LINK-CREATE], [PRE-ZERO-WIDTH], [ST-ADDRESS-ALLOC], [ST-FIND-LINKS], [ST-FOLLOW-LINK], [ST-INSERT], [ST-REMOVE], [ST-VCOPY], [ST-VERSION-CREATE], [FC-SUBSPACE], [INV-CONTENT-IMMUTABILITY], [INV-IDENTITY-OVERLAP], [INV-MONOTONIC], [INV-SINGLE-CHAR-GRANULARITY], [INV-SPANF-WRITE-ONLY], [INV-TRANSITIVE-IDENTITY], [INV-VSPAN-CONSOLIDATION], [INT-LINK-TRANSCLUSION], [INT-VERSION-TRANSCLUSION], [EC-EMPTY-DOC], [EC-GHOST-LINK-ENDPOINT], [EC-SELF-COMPARISON], [EC-SELF-TRANSCLUSION]
+**Provenance:** Finding 0036.
+**Co-occurring entries:** [SS-DOCISPAN], [PRE-INSERT], [ST-INSERT], [ST-INSERT-ACCUMULATE], [FC-CONTENT-SPANF-ISOLATION]
 
 ---
 
-### FC-SPECSET-COMPARE
+### ST-CRUM-BOUND
+
+**Sources:** Findings 0062, 0063
+
+#### Finding 0062
+
+**What happens:** Continuous interior typing at a single cursor position costs exactly +2 crums for the first character, then +0 for every subsequent character. This gives a tight upper bound on crum count: `c ≤ 1 + 2C + 3R + 3P`, where C is the number of distinct cursor repositionings (each incurs the +2 split cost once), R is the number of rearrangements (cut-paste), and P is the number of pastes. The coefficient 2 for C reflects the verified cost: each new typing position pays the split penalty exactly once, after which all further characters at that position coalesce at zero cost.
+
+This bound is tight because:
+- The initial document has 1 crum (the original content)
+- Each cursor repositioning to a new interior position creates a split (+2 crums)
+- Sequential typing at the same cursor position coalesces (+0 crums per character)
+- The ONMYRIGHTBORDER + isanextensionnd mechanism is what makes the coefficient 2 (not 2N for N characters)
+
+**Why it matters for spec:** This is a universally quantified complexity invariant: `forall doc : Doc, ops : Seq<Op> :: crum_count(apply(doc, ops)) ≤ 1 + 2*cursor_repositions(ops) + 3*rearrangements(ops) + 3*pastes(ops)`. It can be verified in Dafny as a lemma over operation sequences, with the coalescing behavior (ST-INSERT above) as the key inductive step. The invariant depends on three verified facts: (1) ONMYRIGHTBORDER prevents knife cuts at crum boundaries, (2) `isanextensionnd` merges contiguous same-homedoc insertions, (3) extension is rightward-only.
+
+**Code references:**
+- `retrie.c:345-372` — `whereoncrum()` boundary classification
+- `insertnd.c:137-143` — `makegappm()` early exit at boundary
+- `insertnd.c:293-301` — `isanextensionnd()` extension check
+
+**Concrete example:**
+```
+Start: "ABCDEFGH" → 1 crum
+Type "12345" at position 5 (interior):
+  "1" at 1.5: +2 crums → 3 crums  (split + new)
+  "2" at 1.6: +0 crums → 3 crums  (coalesce)
+  "3" at 1.7: +0 crums → 3 crums  (coalesce)
+  "4" at 1.8: +0 crums → 3 crums  (coalesce)
+  "5" at 1.9: +0 crums → 3 crums  (coalesce)
+Result: "ABCD12345EFGH" with 3 crums, matching 1 + 2*1 = 3
+
+Verified by golden test: single contiguous vspan from 1.1 with width 0.13.
+```
+
+**Provenance:** Finding 0062
+
+#### Finding 0063
+
+**What happens:** CREATELINK breaks `isanextensionnd` coalescing for subsequent text INSERTs. After CREATELINK consumes I-address space, the next INSERT's text I-addresses are non-contiguous with the previous INSERT's text I-addresses. When `isanextensionnd` checks whether the new content's origin equals the existing crum's reach, the check fails — the new text I-addresses start in a different range from the link orgl allocation. This forces creation of new crums, equivalent to a cursor repositioning.
+
+Each CREATELINK followed by text INSERT incurs the same +2 crum cost as a cursor repositioning. The crum bound `c ≤ 1 + 2C + 3R + 3P` from Finding 0062 should account for link creation events either in the C term (treating CREATELINK as an implicit repositioning) or via a separate L term: `c ≤ 1 + 2C + 2L + 3R + 3P`, where L is the number of CREATELINK operations interleaved with text INSERTs.
+
+**Why it matters for spec:** The crum bound invariant needs refinement. CREATELINK is an "invisible cursor repositioning" from the I-address perspective — it does not change the V-space insertion point, but it disrupts I-space contiguity required for coalescing. The Dafny lemma for crum bound must include CREATELINK in the set of coalescing-breaking operations: `coalesce_breakers = cursor_repositions ∪ createlink_events`.
+
+**Code references:**
+- `insertnd.c:293-301` — `isanextensionnd()` checks reach == origin; fails after CREATELINK because origin jumps past link orgl's I-address range
+
+**Concrete example:**
+```
+INSERT "ABC" at v:    crum₁ [v, v+0.3), I-addr 1.1–1.3. crums = 1
+CREATELINK:           link orgl allocated at I-addr ~2. No V-space text effect.
+INSERT "DEF" at v+0.3:
+  isanextensionnd checks: crum₁.reach (I-addr 1.4) == new origin (I-addr 2.1)?
+  FALSE — link orgl consumed I-space between 1.3 and 2.1
+  New crum₂ created: +2 crums → 3 crums
+  (Same cost as if user had repositioned cursor)
+```
+
+**Provenance:** Finding 0063
+
+**Co-occurring entries:** [SS-WHEREONCRUM], [PRE-INSERT], [ST-INSERT], [FC-GRANF-ON-DELETE], [INV-MONOTONIC], [INT-LINK-INSERT], [EC-BOUNDARY-INSERT-CLASSIFICATION]
+
+---
+
+### ST-SPECSET-COMPARE
 
 **Source:** Finding 0003
 
@@ -4412,6 +4711,29 @@ Post-state:
 **Co-occurring entries:** [SS-SPECSET], [ST-VCOPY], [INV-SPECSET-ORDER]
 
 ---
+
+### ST-VERSION-OWNERSHIP
+
+**Source:** Finding 0068
+
+**What happens:** The VERSION operation checks ownership before choosing the allocation strategy. The predicate `tumbleraccounteq(isaptr, wheretoputit) && isthisusersdocument(isaptr)` determines whether the version is allocated under the source document (owned) or under the creating user's account (unowned). This is not a precondition that rejects the operation — both paths succeed — but it is a precondition on the allocation path that determines where the new address lands.
+
+**Why it matters for spec:** The allocation rule is conditional: `if owns(user, doc) then allocate_under(doc) else allocate_under(user.account)`. This is a branching postcondition keyed on the ownership predicate. The spec must model both paths. The ownership check uses account-level tumbler comparison (`tumbleraccounteq`), meaning ownership is determined by account prefix matching, not by an explicit permissions table.
+
+**Code references:** `do1.c:272-280` — ownership branch in `docreatenewversion`. `tumbleraccounteq` — compares account components of two tumbler addresses. `isthisusersdocument` — verifies the document belongs to the current user.
+
+**Concrete example:**
+- User A (account `1.1.0.1`) versions own doc `1.1.0.1.0.1` → ownership check passes → child allocation `1.1.0.1.0.1.1`
+- User B (account `1.1.0.2`) versions A's doc `1.1.0.1.0.1` → ownership check fails → account allocation `1.1.0.2.0.1`
+
+**Provenance:** Finding 0068
+**Co-occurring entries:** [SS-ADDRESS-SPACE], [SS-VERSION-ADDRESS], [ST-ADDRESS-ALLOC], [FC-GRANF-ON-DELETE], [INV-MONOTONIC]
+
+---
+
+## Frame Conditions
+
+> What an operation leaves unchanged
 
 ### FC-LINK-PERSISTENCE
 
@@ -4708,6 +5030,64 @@ Note: even Source is still found — the spanf index retains the mapping despite
 
 **Provenance:** Finding 0016
 
+---
+
+### FC-APPEND-NO-DOCISPAN
+
+**Source:** Finding 0036
+
+**What happens:** APPEND (`doappend`) does NOT create DOCISPAN entries. The source code shows `insertspanf(taskptr,spanf,docptr,textset,DOCISPAN)` is explicitly commented out in the APPEND implementation, with a note suggesting `appendpm` may include the spanf insertion internally (though the comment is ambiguous: `/*zzz dies this put in granf?*/`). This means content added via APPEND is not discoverable through `find_documents`.
+
+**Why it matters for spec:** APPEND and INSERT have different postconditions regarding discoverability:
+- INSERT: content discoverable (`DOCISPAN` entries created)
+- APPEND: content NOT discoverable (`DOCISPAN` entries omitted)
+
+The spec must distinguish these operations. APPEND postcondition should explicitly state: `spanf' = spanf` (no DOCISPAN change). This is a significant semantic distinction — APPEND creates content that exists in the granf but is invisible to reverse-index queries.
+
+**Code references:**
+- `do1.c:25-31` — `doappend()` with commented-out `insertspanf` call
+- Comment: `/*zzz dies this put in granf?*/` — suggests uncertainty about whether `appendpm` handles DOCISPAN internally
+
+**Concrete example:**
+```
+APPEND "Some text" to document D
+  granf: D's orgl updated with new content
+  spanf: unchanged — no DOCISPAN entries created
+  find_documents("Some text") → []   # not discoverable
+```
+
+**Provenance:** Finding 0036.
+**Co-occurring entries:** [SS-DOCISPAN], [PRE-INSERT], [ST-INSERT], [ST-INSERT-ACCUMULATE], [FC-CONTENT-SPANF-ISOLATION]
+
+---
+
+### FC-POOM-MUTABILITY
+
+**Source:** Finding 0072
+
+**What happens**: The POOM (Permutation of the Original Material) enfilade for each document is a mutable tree structure. It is the only mutable layer in the data model — the granfilade is append-only and the spanfilade is write-only. The POOM maps V-addresses to I-addresses and is modified in-place by INSERT (adds new leaf nodes), DELETE (removes and frees leaf nodes), and REARRANGE (restructures mappings). There are no copy-on-write semantics, no shadow copies, and no journaling at the POOM level.
+
+**Why it matters for spec**: The state model must distinguish mutable from immutable components:
+
+```
+State = {
+  granfilade: I-addr → byte          -- immutable, append-only
+  spanfilade: I-addr → {doc-ISA}     -- immutable, write-only (no delete)
+  pooms: doc-ISA → (V-addr → I-addr) -- MUTABLE, modified in-place
+}
+```
+
+The POOM is the sole locus of destructive mutation. All state transitions (ST-INSERT, ST-DELETE, ST-REARRANGE) operate on POOMs. Invariants about content permanence (INV-IADDR-IMMUTABILITY) hold because they apply to the granfilade, not the POOM.
+
+**Code references**:
+- `backend/orglinks.c:145-152` — `deletevspanpm`: calls `deletend` on the document's POOM orgl directly
+- `backend/edit.c:31-76` — `deletend`: mutates the POOM tree in-place
+
+**Provenance**: Finding 0072
+**Co-occurring entries:** [ST-DELETE], [ST-VERSION-CREATE], [FC-VERSION-ISOLATION], [INV-DELETE-NOT-INVERSE]
+
+---
+
 ## Omit
 
 The following sections of Finding 0016 are omitted:
@@ -4789,22 +5169,6 @@ After DELETEVSPAN(2.1) on document:
 
 **Provenance**: Finding 0030
 **Co-occurring entries:** [ST-INSERT], [INV-IADDR-IMMUTABILITY], [INT-LINK-INSERT], [INT-TRANSCLUSION]
-
----
-
-### FC-ENFILADE-QUERY-INDEPENDENCE
-
-**Source:** Finding 0041
-
-Query operations (`retrieve`, `retrieveinspan`) return results that are independent of the physical tree structure. Different insertion orderings produce different tree shapes (sibling ordering, split points, disk layout) but identical query results. The widdative summaries (`cwid` fields) maintain the same logical intervals regardless of tree shape.
-
-**Why it matters for spec:** This is a frame condition on the observation functions — the physical tree structure is not observable through the query interface. The spec can treat the enfilade as an abstract set without modeling tree internals, and refinement proofs need only show that queries over any valid tree shape produce the same results.
-
-**Code references:**
-- `backend/retrie.c:167-188` — `findcbcseqcrum()` returns same logical content regardless of sibling order
-
-**Provenance:** Finding 0041
-**Co-occurring entries:** [SS-DUAL-ENFILADE], [PRE-CONCURRENT-INSERT], [INV-ENFILADE-CONFLUENCE]
 
 ---
 
@@ -4953,23 +5317,6 @@ This is what makes versions useful as recovery snapshots — the version's state
 
 **Provenance:** Finding 0077
 **Co-occurring entries:** [SS-ADDRESS-SPACE], [ST-VERSION], [INV-MONOTONIC]
-
----
-
-### FC-RETRIEVAL-TREE-INDEPENDENCE
-
-**Source:** Finding 0078
-
-**What happens:** The V-ordering of retrieval results is independent of the internal B-tree structure. Even if split/rebalance operations (Finding 0071) or out-of-order insertions (Finding 0041) produce a tree where sibling order does not match V-address order, the `incontextlistnd` insertion-sort re-establishes V-ordering during retrieval. Tree structure affects storage and traversal efficiency, but not the ordering of results.
-
-**Why it matters for spec:** This is a frame condition: tree-internal reorganization (splits, rebalances, rotations) does not change the observable result ordering of retrieval operations. The formal spec can abstract away tree structure entirely for correctness proofs — the sorted-result postcondition holds for any tree that stores the same set of `(V-position, I-address)` entries. This simplifies verification: one need only prove that `incontextlistnd` produces a sorted list from any input order, not that the tree itself maintains any particular sibling ordering.
-
-**Code references:**
-- `context.c:75-111` — `incontextlistnd()` sorts independently of discovery order
-- `retrie.c:252-265` — `findcbcinarea2d()` traverses left-to-right via `getrightbro`, but this order is not guaranteed to be V-sorted
-
-**Provenance:** Finding 0078
-**Co-occurring entries:** [SS-CONTEXT-LIST], [INV-RETRIEVAL-V-SORTED]
 
 ---
 
@@ -6145,45 +6492,6 @@ After splitcrum(Node1):
 
 ---
 
-### INV-DURABILITY-BOUNDARY
-
-**Source:** Finding 0059
-
-**What happens:** Durability guarantees depend on session lifecycle, not on individual operations:
-
-1. **On clean session exit:** `writeenfilades()` recursively writes all modified crums from both granfilade and spanfilade to disk. This is called from `bed.c:134` during daemon shutdown.
-2. **On crash/kill:** Only crums previously evicted by the grim reaper survive. Recent INSERTs still in cache are lost.
-3. **No fsync:** `write()` syscalls go to OS buffers; no explicit `fsync()` guarantees.
-4. **No transaction log:** Within-session consistency comes from the in-memory cache, not from disk state.
-
-**Why it matters for spec:** A formal specification must distinguish between "operation completed" (in-memory postcondition holds) and "operation is durable" (survives crash). The system provides session-level durability (all-or-nothing at session boundary), not operation-level durability. This is the key durability invariant: `writeenfilades() → ∀ modified crums c: c is on disk`. But absent `writeenfilades()`, durability is best-effort via grim reaper eviction.
-
-**Code references:**
-- `backend/corediskout.c:68-88` — `writeenfilades()` writes granf and spanf roots
-- `backend/bed.c:134,183` — daemon exit calls `writeenfilades(); closediskfile()`
-- `backend/disk.c:300-338` — `actuallywriteloaf` does synchronous `write()` with no `fsync`
-
-**Concrete example:**
-```
-Session timeline:
-  t0: INSERT("hello") → crum in RAM, modified=TRUE
-  t1: RETRIEVE → "hello" (from cache) ✓
-  t2: [crash]
-  t3: restart, RETRIEVE → fails (crum never written to disk)
-
-vs.
-
-  t0: INSERT("hello") → crum in RAM, modified=TRUE
-  t1: RETRIEVE → "hello" (from cache) ✓
-  t2: clean exit → writeenfilades() flushes to disk
-  t3: restart, RETRIEVE → "hello" ✓
-```
-
-**Provenance:** Finding 0059
-**Co-occurring entries:** [SS-CACHE-MECHANISM], [SS-UNIFIED-STORAGE], [ST-INSERT], [EC-CRASH-MID-WRITE], [EC-CROSS-ENFILADE-EVICTION], [EC-NO-STARTUP-VALIDATION]
-
----
-
 ### INV-NO-IADDR-REUSE
 
 **Source:** Finding 0061
@@ -6202,71 +6510,6 @@ vs.
 
 **Provenance:** Finding 0061
 **Co-occurring entries:** [SS-ADDRESS-SPACE], [FC-GRANF-ON-DELETE], [INV-MONOTONIC]
-
----
-
-### INV-CRUM-BOUND
-
-**Sources:** Findings 0062, 0063
-
-#### Finding 0062
-
-**What happens:** Continuous interior typing at a single cursor position costs exactly +2 crums for the first character, then +0 for every subsequent character. This gives a tight upper bound on crum count: `c ≤ 1 + 2C + 3R + 3P`, where C is the number of distinct cursor repositionings (each incurs the +2 split cost once), R is the number of rearrangements (cut-paste), and P is the number of pastes. The coefficient 2 for C reflects the verified cost: each new typing position pays the split penalty exactly once, after which all further characters at that position coalesce at zero cost.
-
-This bound is tight because:
-- The initial document has 1 crum (the original content)
-- Each cursor repositioning to a new interior position creates a split (+2 crums)
-- Sequential typing at the same cursor position coalesces (+0 crums per character)
-- The ONMYRIGHTBORDER + isanextensionnd mechanism is what makes the coefficient 2 (not 2N for N characters)
-
-**Why it matters for spec:** This is a universally quantified complexity invariant: `forall doc : Doc, ops : Seq<Op> :: crum_count(apply(doc, ops)) ≤ 1 + 2*cursor_repositions(ops) + 3*rearrangements(ops) + 3*pastes(ops)`. It can be verified in Dafny as a lemma over operation sequences, with the coalescing behavior (ST-INSERT above) as the key inductive step. The invariant depends on three verified facts: (1) ONMYRIGHTBORDER prevents knife cuts at crum boundaries, (2) `isanextensionnd` merges contiguous same-homedoc insertions, (3) extension is rightward-only.
-
-**Code references:**
-- `retrie.c:345-372` — `whereoncrum()` boundary classification
-- `insertnd.c:137-143` — `makegappm()` early exit at boundary
-- `insertnd.c:293-301` — `isanextensionnd()` extension check
-
-**Concrete example:**
-```
-Start: "ABCDEFGH" → 1 crum
-Type "12345" at position 5 (interior):
-  "1" at 1.5: +2 crums → 3 crums  (split + new)
-  "2" at 1.6: +0 crums → 3 crums  (coalesce)
-  "3" at 1.7: +0 crums → 3 crums  (coalesce)
-  "4" at 1.8: +0 crums → 3 crums  (coalesce)
-  "5" at 1.9: +0 crums → 3 crums  (coalesce)
-Result: "ABCD12345EFGH" with 3 crums, matching 1 + 2*1 = 3
-
-Verified by golden test: single contiguous vspan from 1.1 with width 0.13.
-```
-
-**Provenance:** Finding 0062
-
-#### Finding 0063
-
-**What happens:** CREATELINK breaks `isanextensionnd` coalescing for subsequent text INSERTs. After CREATELINK consumes I-address space, the next INSERT's text I-addresses are non-contiguous with the previous INSERT's text I-addresses. When `isanextensionnd` checks whether the new content's origin equals the existing crum's reach, the check fails — the new text I-addresses start in a different range from the link orgl allocation. This forces creation of new crums, equivalent to a cursor repositioning.
-
-Each CREATELINK followed by text INSERT incurs the same +2 crum cost as a cursor repositioning. The crum bound `c ≤ 1 + 2C + 3R + 3P` from Finding 0062 should account for link creation events either in the C term (treating CREATELINK as an implicit repositioning) or via a separate L term: `c ≤ 1 + 2C + 2L + 3R + 3P`, where L is the number of CREATELINK operations interleaved with text INSERTs.
-
-**Why it matters for spec:** The crum bound invariant needs refinement. CREATELINK is an "invisible cursor repositioning" from the I-address perspective — it does not change the V-space insertion point, but it disrupts I-space contiguity required for coalescing. The Dafny lemma for crum bound must include CREATELINK in the set of coalescing-breaking operations: `coalesce_breakers = cursor_repositions ∪ createlink_events`.
-
-**Code references:**
-- `insertnd.c:293-301` — `isanextensionnd()` checks reach == origin; fails after CREATELINK because origin jumps past link orgl's I-address range
-
-**Concrete example:**
-```
-INSERT "ABC" at v:    crum₁ [v, v+0.3), I-addr 1.1–1.3. crums = 1
-CREATELINK:           link orgl allocated at I-addr ~2. No V-space text effect.
-INSERT "DEF" at v+0.3:
-  isanextensionnd checks: crum₁.reach (I-addr 1.4) == new origin (I-addr 2.1)?
-  FALSE — link orgl consumed I-space between 1.3 and 2.1
-  New crum₂ created: +2 crums → 3 crums
-  (Same cost as if user had repositioned cursor)
-```
-
-**Provenance:** Finding 0063
-
-**Co-occurring entries:** [SS-WHEREONCRUM], [PRE-INSERT], [ST-INSERT], [FC-GRANF-ON-DELETE], [INV-MONOTONIC], [INT-LINK-INSERT], [EC-BOUNDARY-INSERT-CLASSIFICATION]
 
 ---
 
@@ -6534,6 +6777,136 @@ Result is V-sorted regardless of tree structure.
 
 **Provenance:** Finding 0078
 **Co-occurring entries:** [SS-CONTEXT-LIST], [FC-RETRIEVAL-TREE-INDEPENDENCE]
+
+---
+
+### INV-DOC-ISOLATION-IDENTITY
+
+**Source:** Finding 0028
+
+**What happens**: Documents created independently (not via version or vcopy) share no content identity, even if they contain identical text. `compare_versions` between two independently-created documents with different text returns an empty list. The I-positions assigned to typed content are unique per insertion event.
+
+**Why it matters for spec**: Reinforces the identity-by-origin invariant: `forall doc1, doc2 : Document :: independent(doc1, doc2) => compare_versions(doc1, doc2) == []`. "Independent" means no version or transclusion relationship exists between them. Even character-for-character identical text produces distinct I-positions when typed independently. This is a frame condition on document creation: `create_document` produces a document with I-positions disjoint from all existing I-positions.
+
+**Code references**: Test `edgecases/disjoint_documents_comparison`
+
+**Concrete example**:
+```
+doc1 = create_document(); insert(doc1, "First content")
+doc2 = create_document(); insert(doc2, "Second content")
+compare_versions(doc1, doc2) → []  — no shared identity despite both being text
+```
+
+**Provenance**: Finding 0028 §8
+
+---
+
+### INV-GRAN-BOTTOM-SINGLETON
+
+**Source:** Finding 0070
+
+**What happens:** GRAN (1D) enfilades have `MAXBCINLOAF = 1`, meaning bottom crums hold exactly one entry. The comment in `enf.h` says "so text will fit." This makes the granfilade bottom level effectively a linked list: each bottom crum contains a single text entry, with B-tree fan-out only at upper levels (where `MAXUCINLOAF = 6` still applies).
+
+This asymmetry means the threshold functions behave differently at the bottom of a GRAN enfilade:
+- `toomanysons` triggers at > 1 (any bottom node with 2+ children must split)
+- `roomformoresons` returns TRUE only when sons = 0 (empty)
+- `toofewsons` returns TRUE when sons < 1 (i.e., the node is empty)
+
+**Why it matters for spec:** The formal model must handle GRAN bottom crums as a degenerate case of the B-tree structure. The occupancy invariant at the bottom level of a GRAN is `sons = 1` (exactly one entry per bottom crum), which is much tighter than the upper-level bound. This also means GRAN bottom crums never undergo merge/steal operations in the usual sense — they're always at their only valid occupancy.
+
+**Code references:**
+- `backend/enf.h:28` — `MAXBCINLOAF` = 1, with comment "so text will fit"
+- `backend/genf.c:239-261` — threshold functions selecting `MAXBCINLOAF` for GRAN bottom crums
+
+**Provenance:** Finding 0070
+**Co-occurring entries:** [SS-ENFILADE-BRANCHING], [PRE-SPLIT], [INV-ENFILADE-OCCUPANCY]
+
+---
+
+### INV-RETRIEVAL-TREE-INDEPENDENCE
+
+**Source:** Finding 0078
+
+**What happens:** The V-ordering of retrieval results is independent of the internal B-tree structure. Even if split/rebalance operations (Finding 0071) or out-of-order insertions (Finding 0041) produce a tree where sibling order does not match V-address order, the `incontextlistnd` insertion-sort re-establishes V-ordering during retrieval. Tree structure affects storage and traversal efficiency, but not the ordering of results.
+
+**Why it matters for spec:** This is a frame condition: tree-internal reorganization (splits, rebalances, rotations) does not change the observable result ordering of retrieval operations. The formal spec can abstract away tree structure entirely for correctness proofs — the sorted-result postcondition holds for any tree that stores the same set of `(V-position, I-address)` entries. This simplifies verification: one need only prove that `incontextlistnd` produces a sorted list from any input order, not that the tree itself maintains any particular sibling ordering.
+
+**Code references:**
+- `context.c:75-111` — `incontextlistnd()` sorts independently of discovery order
+- `retrie.c:252-265` — `findcbcinarea2d()` traverses left-to-right via `getrightbro`, but this order is not guaranteed to be V-sorted
+
+**Provenance:** Finding 0078
+**Co-occurring entries:** [SS-CONTEXT-LIST], [INV-RETRIEVAL-V-SORTED]
+
+---
+
+### INV-ENFILADE-QUERY-INDEPENDENCE
+
+**Source:** Finding 0041
+
+Query operations (`retrieve`, `retrieveinspan`) return results that are independent of the physical tree structure. Different insertion orderings produce different tree shapes (sibling ordering, split points, disk layout) but identical query results. The widdative summaries (`cwid` fields) maintain the same logical intervals regardless of tree shape.
+
+**Why it matters for spec:** This is a frame condition on the observation functions — the physical tree structure is not observable through the query interface. The spec can treat the enfilade as an abstract set without modeling tree internals, and refinement proofs need only show that queries over any valid tree shape produce the same results.
+
+**Code references:**
+- `backend/retrie.c:167-188` — `findcbcseqcrum()` returns same logical content regardless of sibling order
+
+**Provenance:** Finding 0041
+**Co-occurring entries:** [SS-DUAL-ENFILADE], [PRE-CONCURRENT-INSERT], [INV-ENFILADE-CONFLUENCE]
+
+---
+
+### INV-INSERT-ACCUMULATE
+
+**Source:** Finding 0036
+
+**What happens:** Multiple INSERT operations on the same document each create their own DOCISPAN entries. Each insertion allocates fresh I-addresses and adds corresponding DOCISPAN mappings. The DOCISPAN entries from earlier inserts are not disturbed by later ones — they accumulate monotonically.
+
+**Why it matters for spec:** This confirms that INSERT's DOCISPAN creation is additive: `DOCISPAN_after = DOCISPAN_before ∪ {new_i_addrs → doc}`. Combined with INV-IADDRESS-PERMANENT (from Finding 0023), the DOCISPAN index for a document only grows.
+
+**Concrete example:**
+```
+INSERT "First " at V:1.1  → DOCISPAN: {α₁..α₆ → doc}
+INSERT "Second " after     → DOCISPAN: {α₁..α₆ → doc, β₁..β₇ → doc}
+INSERT "Third" after       → DOCISPAN: {α₁..α₆ → doc, β₁..β₇ → doc, γ₁..γ₅ → doc}
+
+find_documents("First")  → [doc]
+find_documents("Second") → [doc]
+find_documents("Third")  → [doc]
+```
+
+**Code references:**
+- Test: `golden/discovery/insert_multiple_times_accumulates_docispan.json`
+
+**Provenance:** Finding 0036.
+**Co-occurring entries:** [SS-DOCISPAN], [PRE-INSERT], [ST-INSERT], [FC-CONTENT-SPANF-ISOLATION], [EC-APPEND-NO-DOCISPAN]
+
+---
+
+### INV-POOM-MUTABILITY
+
+**Source:** Finding 0072
+
+**What happens**: The POOM (Permutation of the Original Material) enfilade for each document is a mutable tree structure. It is the only mutable layer in the data model — the granfilade is append-only and the spanfilade is write-only. The POOM maps V-addresses to I-addresses and is modified in-place by INSERT (adds new leaf nodes), DELETE (removes and frees leaf nodes), and REARRANGE (restructures mappings). There are no copy-on-write semantics, no shadow copies, and no journaling at the POOM level.
+
+**Why it matters for spec**: The state model must distinguish mutable from immutable components:
+
+```
+State = {
+  granfilade: I-addr → byte          -- immutable, append-only
+  spanfilade: I-addr → {doc-ISA}     -- immutable, write-only (no delete)
+  pooms: doc-ISA → (V-addr → I-addr) -- MUTABLE, modified in-place
+}
+```
+
+The POOM is the sole locus of destructive mutation. All state transitions (ST-INSERT, ST-DELETE, ST-REARRANGE) operate on POOMs. Invariants about content permanence (INV-IADDR-IMMUTABILITY) hold because they apply to the granfilade, not the POOM.
+
+**Code references**:
+- `backend/orglinks.c:145-152` — `deletevspanpm`: calls `deletend` on the document's POOM orgl directly
+- `backend/edit.c:31-76` — `deletend`: mutates the POOM tree in-place
+
+**Provenance**: Finding 0072
+**Co-occurring entries:** [ST-DELETE], [ST-VERSION-CREATE], [FC-VERSION-ISOLATION], [INV-DELETE-NOT-INVERSE]
 
 ---
 
@@ -6930,6 +7303,25 @@ find_links(Version) → [link₁]  (same link, via shared I-addresses)
 **Code references:** `bert.c:43-50` (return value -1 semantics), version creation logic in backend
 
 **Provenance:** Finding 0014
+
+---
+
+### INT-CROSS-ENFILADE-EVICTION
+
+**Source:** Finding 0059
+
+**What happens:** Because all enfilades share a single cache (grim reaper list), memory pressure from operations on one enfilade can evict modified crums from another. For example, a large link search loading many spanfilade nodes could cause eviction of recently-inserted but not-yet-written granfilade text atoms. The grim reaper selects victims by age, not by enfilade type.
+
+**Why it matters for spec:** This creates a subtle interaction between subsystems. The order in which crums are evicted (and thus written to disk) is determined by access patterns across all enfilades, not by any per-enfilade policy. In crash scenarios, this means durability of content depends on unrelated link operations — a cross-subsystem dependency that a specification should acknowledge.
+
+**Code references:**
+- `backend/credel.c:106-162` — grim reaper scans entire circular list regardless of `denftype`
+- `backend/credel.c:147` — `isreapable` checks age/modified but not enfilade type
+
+**Provenance:** Finding 0059
+**Co-occurring entries:** [SS-CACHE-MECHANISM], [SS-UNIFIED-STORAGE], [ST-INSERT], [INV-DURABILITY-BOUNDARY], [EC-CRASH-MID-WRITE], [EC-NO-STARTUP-VALIDATION]
+
+---
 
 ## Omit
 
@@ -7874,6 +8266,34 @@ Commented-out code in `fns.c` shows the correct pattern for `deletevspan()` as w
 **Provenance:** Finding 0050
 **Co-occurring entries:** [SS-BERT], [PRE-INSERT], [INV-WRITE-EXCLUSIVITY], [INT-BERT-FEBE]
 
+#### Finding 0050 (from SS-BERT)
+
+**What happens:** The BERT access control mechanism is architecturally advisory, not enforced. The back end contains the `checkforopen`/`findorgl` machinery described in Finding 0014, but for state-modifying operations (INSERT, DELETEVSPAN, REARRANGE, COPY), the BERT check occurs *after* the success response has already been sent to the front end. The BERT table exists as state, but it functions as a coordination hint rather than an access gate.
+
+The back end handler pattern for mutations is:
+1. `getXXX()` — parse the request
+2. `putXXX()` — send success response to front end
+3. `doXXX()` — attempt the actual operation (which calls `findorgl(..., WRITEBERT)`)
+
+When `findorgl` returns FALSE (BERT check fails), the operation is silently skipped — the front end has already received success. This means the BERT table's state does not actually gate mutations; it only determines whether the `doXXX` path executes internally.
+
+**Why it matters for spec:** The specification must model two distinct things: (1) the BERT state structure (as in Finding 0014), and (2) the fact that BERT enforcement is a front-end protocol obligation, not a back-end invariant. The spec should distinguish between the *intended* access control semantics (which BERT represents) and the *actual* enforcement boundary (which is the front end). A formal model might express this as: the back end's postconditions for mutations hold *only if* the front end has satisfied BERT preconditions — they are conditional postconditions, not unconditional guarantees.
+
+**Code references:**
+- `fns.c:84-98` — `insert()` handler: `putinsert()` before `doinsert()`
+- `fns.c:333-347` — `deletevspan()` handler: same response-before-check pattern
+- `granf1.c:17-41` — `findorgl()` checks BERT via `checkforopen()`, returns FALSE on failure
+- `bert.c:52-87` — `checkforopen()` actual BERT checking logic
+
+**Concrete example:**
+- Before: Front end sends INSERT without acquiring WRITEBERT token
+- Expected (if enforced): Back end rejects the operation, sends failure response
+- Actual: Back end sends success response immediately via `putinsert()`, then `doinsert()` calls `findorgl()` which returns FALSE, operation is silently skipped. Front end believes the insert succeeded. Document is unchanged.
+
+**Provenance:** Finding 0050
+
+**Co-occurring entries:** [PRE-INSERT], [PRE-OPEN-DOC], [INV-READ-SHARING], [INV-WRITE-EXCLUSIVITY], [INT-BERT-FEBE], [INT-BERT-VERSION], [EC-RESPONSE-BEFORE-CHECK]
+
 ---
 
 ### EC-CONCURRENT-LINK-CREATION
@@ -8072,45 +8492,6 @@ On restart:
 
 ---
 
-### EC-CROSS-ENFILADE-EVICTION
-
-**Source:** Finding 0059
-
-**What happens:** Because all enfilades share a single cache (grim reaper list), memory pressure from operations on one enfilade can evict modified crums from another. For example, a large link search loading many spanfilade nodes could cause eviction of recently-inserted but not-yet-written granfilade text atoms. The grim reaper selects victims by age, not by enfilade type.
-
-**Why it matters for spec:** This creates a subtle interaction between subsystems. The order in which crums are evicted (and thus written to disk) is determined by access patterns across all enfilades, not by any per-enfilade policy. In crash scenarios, this means durability of content depends on unrelated link operations — a cross-subsystem dependency that a specification should acknowledge.
-
-**Code references:**
-- `backend/credel.c:106-162` — grim reaper scans entire circular list regardless of `denftype`
-- `backend/credel.c:147` — `isreapable` checks age/modified but not enfilade type
-
-**Provenance:** Finding 0059
-**Co-occurring entries:** [SS-CACHE-MECHANISM], [SS-UNIFIED-STORAGE], [ST-INSERT], [INV-DURABILITY-BOUNDARY], [EC-CRASH-MID-WRITE], [EC-NO-STARTUP-VALIDATION]
-
----
-
-### EC-GRAN-MB-ONE
-
-**Source:** Finding 0060
-
-**What happens:** The granfilade's `MAXBCINLOAF = 1` creates a degenerate B-tree structure where every height-1 non-root node holds exactly one bottom crum. This means the height-1 layer adds no fan-out — it is effectively a pass-through that maps each height-2 child pointer to exactly one bottom crum. The tree is taller than necessary: a granfilade with N bottom crums needs height `⌈log₆(N)⌉ + 1` (the extra +1 for the pass-through height-1 layer) rather than the `⌈log₆(N)⌉` that a uniform M=6 tree would require.
-
-The code comment `/* so text will fit *//* as you wish */` on the `MAXBCINLOAF` definition suggests this is a deliberate trade-off: bottom crums can hold up to `GRANTEXTLENGTH = 950` bytes of text, and limiting each height-1 node to one bottom crum simplifies loaf management at the cost of tree depth.
-
-The POOM and SPAN enfilades avoid this degenerate case because `MAX2DBCINLOAF = 4` permits useful fan-out at height-1.
-
-**Why it matters for spec:** Models should treat the height-1 layer of a GRAN enfilade as a trivial 1:1 mapping layer, not a branching layer. Complexity and lookup cost analysis must account for this extra level. The choice is architecturally significant: it means the granfilade is always at least 1 level taller than a comparable POOM for the same number of leaf entries.
-
-**Code references:**
-- `backend/enf.h:27` — `#define MAXBCINLOAF 1  /* so text will fit *//* as you wish */`
-- `backend/enf.h:26` — `#define MAXUCINLOAF 6`
-- `backend/enf.h:28` — `#define MAX2DBCINLOAF 4`
-
-**Provenance:** Finding 0060
-**Co-occurring entries:** [SS-ENFILADE-TREE], [ST-INSERT], [INV-ENFILADE-MINIMALITY]
-
----
-
 ### EC-BOUNDARY-INSERT-CLASSIFICATION
 
 **Source:** Finding 0062
@@ -8189,6 +8570,83 @@ Post-state:
 
 **Provenance:** Finding 0069
 **Co-occurring entries:** [SS-SPANF-OPERATIONS], [PRE-FIND-LINKS]
+
+#### Finding 0069 (from SS-SPANF-OPERATIONS)
+
+**What happens:** The spanfilade search operates in two dimensions: the span dimension (I-address content matching) and the orgl dimension (document/link origin scoping). The span dimension filter works correctly — `find_links` returns only links whose endpoints share I-addresses with the query. However, the orgl dimension filter is disabled by a code bug (`TRUE||!homeset` in `sporglset2linkset`). The actual search boundary in the orgl dimension is a hardcoded width of 100 tumbler digits starting from zero, set via `nullhomeset.width.mantissa[0] = 100`. This is effectively unbounded for any realistic deployment.
+
+**Why it matters for spec:** The `SpanEnfilade` query model from Finding 0012 (`find_links(specset) = {link | endpoints(link) ∩ query_range ≠ ∅}`) is correct for the span dimension. But the intended 2D query — filtering by both content identity AND orgl origin — is reduced to a 1D query on content identity alone. The spec should model `find_links` as: `find_links(from, to, three) = {link ∈ all_links | endpoint_iaddrs(link) ∩ query_iaddrs ≠ ∅}` with no orgl scoping, reflecting the actual implementation. If the spec intends to model the design rather than the code, the orgl-range parameter should be included but annotated as unimplemented.
+
+**Code references:**
+- `sporgl.c:222-237` — `sporglset2linkset()` replaces homeset with hardcoded range
+- `sporgl.c:239-269` — `sporglset2linksetinrange()` performs actual search using the overridden range
+
+**Provenance:** Finding 0069
+
+**Co-occurring entries:** [SS-DUAL-ENFILADE], [SS-GRANF-OPERATIONS], [PRE-FIND-LINKS], [ST-CREATE-LINK], [FC-CONTENT-SPANF-ISOLATION], [INV-DUAL-ENFILADE-CONSISTENCY], [EC-FIND-LINKS-GLOBAL]
+
+#### PRE-FIND-LINKS (moved from Preconditions)
+
+**Sources:** Findings 0025, 0029, 0069
+
+#### Finding 0025
+
+**What happens**: The `find_links` operation accepts a `homedocids` filter parameter. This parameter must be passed as I-spans (identity spans with start address + width), not as plain addresses. Passing a plain address causes a protocol hang. This is consistent with other query mechanisms in Xanadu — all filtering uses span-based specifications.
+
+Correct usage:
+```python
+home_span = Span(doc_address, Offset(0, 1))
+results = session.find_links(source_specs, NOSPECS, NOSPECS, [home_span])
+```
+
+**Why it matters for spec**: The precondition for `find_links` with home document filtering requires: `forall spec ∈ homedocids :: spec is ISpan`. This is a type constraint on the query interface. The spec should model query filters uniformly as span-based specifications rather than bare addresses.
+
+**Code references**: Test `links/find_links_filter_by_homedocid`; `do1.c:386-391` — `dofindlinksfromtothree()`.
+
+**Provenance**: Finding 0025
+
+#### Finding 0029
+
+**What happens:** `find_links()` requires that the searched endpoint content exists in the V-stream (visible view) to discover a link. The operation performs an intersection between the search specset and the link's endpoint specset; if the linked content has been deleted from the V-stream, the intersection is empty and the link is not found. Partial deletion is tolerated — as long as any portion of the original linked span remains, the link is discoverable.
+
+**Why it matters for spec:** Defines the precondition for link discoverability. A link exists permanently but is only discoverable via `find_links()` when its endpoint content is present in the V-stream. This is not a precondition for validity (the call succeeds either way), but a precondition for non-empty results. Formalizable as: `find_links(spec) ≠ ∅ → ∃ overlap(spec ∩ V-stream, link.endpoint ∩ V-stream)`.
+
+**Code references:** Test scenarios in `febe/scenarios/links/search_endpoint_removal.py`. Golden files in `golden/links/search_*.json`.
+
+**Concrete example:**
+- Before delete: `find_links(source_spec)` → `[link_id]`
+- After deleting source content: `find_links(source_spec)` → `[]`
+- Partial delete ("hyper" from "hyperlink"): remaining "link" still in V-stream → `[link_id]` still returned
+
+**Provenance:** Finding 0029, sections 1, 3, 8
+
+#### Finding 0069
+
+**What happens:** The `find_links` operation accepts an orgl range parameter that is supposed to restrict which orgls (documents/links) are searched. However, `sporglset2linkset()` in `sporgl.c:222-237` contains a dead-code guard `if (TRUE||!homeset)` that always evaluates true, replacing whatever orgl range the caller provides with a hardcoded range of width 100 starting at tumbler zero. The original intent was `if (!homeset)` — supply a default range only when none is specified — but the `TRUE||` prefix makes the parameter permanently ignored. The caller `findlinksfromtothreesp()` in `spanf1.c:56-103` faithfully passes its `orglrange` argument through, but the callee discards it.
+
+**Why it matters for spec:** The spec must document that `find_links` has no effective orgl-dimension precondition in the implementation. A formal spec could define `find_links(from_spec, to_spec, three_spec, orgl_range)` where `orgl_range` constrains results, but the implementation behaves as `find_links(from_spec, to_spec, three_spec, _)` — the orgl range is accepted syntactically but has no semantic effect. This is a known deviation: the specified interface promises scoping that the implementation does not deliver. A spec should either (a) model the intended behavior (orgl filtering works) and flag this as a known bug, or (b) model the actual behavior (orgl range ignored, search is global in the orgl dimension).
+
+**Code references:**
+- `sporgl.c:220-230` — `sporglset2linkset()` with the `TRUE||` always-true guard
+- `spanf1.c:56-103` — `findlinksfromtothreesp()` passes `orglrange` to `sporglset2linkset`
+- `retrie.c:56-85` — `retrieverestricted()` converts range to start/end spans (downstream of the override)
+
+**Concrete example:**
+```
+Caller requests: find_links(orgl_range = document 1.1.0.1.0.1 only)
+
+Expected behavior:
+  Search restricted to links whose orgls are within document 1.1.0.1.0.1
+
+Actual behavior:
+  homeset parameter replaced with {stream: 0, width: 100}
+  Search covers all orgls from 0 to 100 in the orgl dimension
+  Links from any document are returned if they match on the span dimension
+```
+
+**Provenance:** Finding 0069
+
+**Co-occurring entries:** [SS-LINK-HOME-DOCUMENT], [SS-SPANF-OPERATIONS], [ST-ADDRESS-ALLOC], [ST-FIND-LINKS], [FC-LINK-DELETE-ISOLATION], [INV-LINK-PERMANENCE], [INT-TRANSCLUSION-LINK-SEARCH], [EC-FIND-LINKS-GLOBAL], [EC-HOMEDOCIDS-FILTER-BROKEN], [EC-SEARCH-SPEC-BEYOND-BOUNDS], [EC-TYPE-FILTER-NONFUNCTIONAL]
 
 ---
 
