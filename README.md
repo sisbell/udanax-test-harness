@@ -39,25 +39,30 @@ make compare ACTUAL=/tmp/my-golden CATEGORY=content  # Filter by category
 ## Project Structure
 
 ```
-├── backend/     # C backend (Udanax Green enfilade server)
-├── febe/        # Python FEBE protocol client and test generator
-├── golden/      # Generated golden test files (not in source control)
-├── bugs/        # Bug reports discovered during testing
-├── findings/    # Semantic findings from test results
-├── docs/        # Documentation
-├── Makefile     # Build orchestration
-└── LICENSE      # Project license
+├── backend/        # C backend (Udanax Green enfilade server)
+├── febe/           # Python FEBE protocol client and test generator
+├── golden/         # Generated golden test files (not in source control)
+├── bugs/           # Bug reports discovered during testing
+├── findings/       # Semantic findings from test results
+├── knowledge-base/ # Pre-processed knowledge bases for spec writing
+├── scripts/        # KB pipeline scripts and prompts
+├── docs/           # Documentation
+├── Makefile        # Build orchestration
+└── LICENSE         # Project license
 ```
 
 ## Documentation
 
 | Doc | When to read it |
 |-----|-----------------|
+| [KB Pipeline](docs/kb-pipeline.md) | How findings become knowledge bases for spec writing |
 | [Golden Tests](docs/golden-tests.md) | Run tests, read output, understand how operations affect state |
 | [Writing Scenarios](docs/writing-scenarios.md) | Add new test scenarios to the suite |
 | [Integrating an Enfilade Server](docs/integrating-enfilade-server.md) | Connect a custom enfilade server to the FEBE protocol |
 | [FEBE Protocol](docs/febe-protocol.md) | Wire format reference for the front-end/back-end protocol |
+| [FEBE Protocol Comparison](docs/febe-protocol-comparison.md) | Literary Machines spec vs actual implementation |
 | [Client API](docs/client-api.md) | Python client methods and their wire mappings |
+| [Tumbler Technical](docs/tumbler-technical.md) | Tumbler data type internals |
 
 ## Origin
 
