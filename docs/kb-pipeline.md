@@ -10,11 +10,11 @@ This pipeline transforms raw findings into two knowledge bases, each serving a d
 
 ## Two Knowledge Bases
 
-### `kb-digest.md` — Cross-cutting synthesis
+### `kb-synthesis.md` — Cross-cutting synthesis
 
-The digest exists to capture relationships *between* findings. When you're specifying an insert operation, you need to know: what happens to links? How does the address space shift? What about transclusions into the affected region? These cross-cutting concerns are invisible when looking at findings individually — they only emerge when all findings are seen together in one context.
+The synthesis KB exists to capture relationships *between* findings. When you're specifying an insert operation, you need to know: what happens to links? How does the address space shift? What about transclusions into the affected region? These cross-cutting concerns are invisible when looking at findings individually — they only emerge when all findings are seen together in one context.
 
-The digest is built in a single LLM pass over all raw findings. It produces a cross-referenced narrative where entries cite each other (`[ST-INSERT]`, `[FC-SUBSPACE]`, `[INV-MONOTONIC]`). During spec writing, these cross-references guide agents to related concerns they might otherwise miss.
+The synthesis KB is built in a single LLM pass over all raw findings. It produces a cross-referenced narrative where entries cite each other (`[ST-INSERT]`, `[FC-SUBSPACE]`, `[INV-MONOTONIC]`). During spec writing, these cross-references guide agents to related concerns they might otherwise miss.
 
 ### `kb-formal.md` — Formal property extraction
 
@@ -24,11 +24,11 @@ The formal KB does not deal in cross-cutting concerns. Its job is depth: get the
 
 ### Together
 
-The digest tells you what connects. The formal KB tells you what's precise. Together they give spec-writing agents both the map and the evidence.
+The synthesis KB tells you what connects. The formal KB tells you what's precise. Together they give spec-writing agents both the map and the evidence.
 
 ## Pipeline
 
-This pipeline produces `kb-formal.md`. The digest is produced separately by `build-kb-digest.py` in a single pass over all raw findings.
+This pipeline produces `kb-formal.md`. The synthesis KB is produced separately by `build-kb-synthesis.py` in a single pass over all raw findings.
 
 ## Flow
 
@@ -131,6 +131,6 @@ python scripts/kb-pipeline.py --reanalyze 036,042
 # Preview without running
 python scripts/kb-pipeline.py --dry-run
 
-# Digest KB (separate from pipeline)
-python scripts/build-kb-digest.py
+# Synthesis KB (separate from pipeline)
+python scripts/build-kb-synthesis.py
 ```

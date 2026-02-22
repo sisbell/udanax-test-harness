@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 """
-Build the digest knowledge base — all findings in one Opus context.
+Build the synthesis knowledge base — all findings in one Opus context.
 
 Reads all raw findings, injects them into the prompt, and produces
-knowledge-base/kb-digest.md in a single call. The LLM sees everything
+knowledge-base/kb-synthesis.md in a single call. The LLM sees everything
 at once, enabling cross-finding synthesis and cross-references.
 
 This is separate from the formal KB pipeline (kb-pipeline.py) which
 analyzes findings incrementally.
 
 Usage:
-    python scripts/build-kb-digest.py
-    python scripts/build-kb-digest.py --dry-run
+    python scripts/build-kb-synthesis.py
+    python scripts/build-kb-synthesis.py --dry-run
 """
 
 import argparse
@@ -25,12 +25,11 @@ from pathlib import Path
 
 HARNESS_ROOT = Path(__file__).resolve().parent.parent
 FINDINGS_DIR = HARNESS_ROOT / "findings"
-KB_PATH = HARNESS_ROOT / "knowledge-base" / "kb-digest.md"
+KB_PATH = HARNESS_ROOT / "knowledge-base" / "kb-synthesis.md"
 PROMPTS_DIR = Path(__file__).resolve().parent / "prompts"
-PROMPT_PATH = PROMPTS_DIR / "kb-digest-instructions.md"
+PROMPT_PATH = PROMPTS_DIR / "kb-synthesis-instructions.md"
 
 MODEL = "claude-opus-4-6"
-TIMEOUT_SECONDS = 3600
 
 
 def abort(message):
@@ -51,7 +50,7 @@ def get_all_findings():
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Build the digest KB — all findings in one Opus context"
+        description="Build the synthesis KB — all findings in one Opus context"
     )
     parser.add_argument("--dry-run", action="store_true",
                         help="Show stats without running")
@@ -82,7 +81,7 @@ def main():
     prompt_size = len(prompt.encode())
     print(f"Findings: {len(findings)} ({findings[0][0]:04d}–{findings[-1][0]:04d})")
     print(f"Prompt size: {prompt_size:,} bytes (~{prompt_size // 4:,} tokens)")
-    print(f"Model: {MODEL} | Thinking: max | Timeout: {TIMEOUT_SECONDS}s")
+    print(f"Model: {MODEL} | Thinking: max")
 
     if args.dry_run:
         print("\nDry run — not running")
@@ -103,18 +102,15 @@ def main():
 
     start = time.time()
 
-    try:
-        result = subprocess.run(
-            cmd,
-            input=prompt,
-            capture_output=True,
-            text=True,
-            env=env,
-            cwd=str(HARNESS_ROOT),
-            timeout=TIMEOUT_SECONDS,
-        )
-    except subprocess.TimeoutExpired:
-        abort(f"Timed out after {TIMEOUT_SECONDS}s")
+    result = subprocess.run(
+        cmd,
+        input=prompt,
+        capture_output=True,
+        text=True,
+        env=env,
+        cwd=str(HARNESS_ROOT),
+        timeout=None,
+    )
 
     elapsed = time.time() - start
 
@@ -145,7 +141,7 @@ def main():
         kb_size = KB_PATH.stat().st_size
         print(f"KB written to {KB_PATH} ({kb_size:,} bytes)")
     else:
-        print("WARNING: kb-digest.md was not created", file=sys.stderr)
+        print("WARNING: kb-synthesis.md was not created", file=sys.stderr)
 
 
 if __name__ == "__main__":

@@ -34,7 +34,6 @@ PROMPTS_DIR = Path(__file__).resolve().parent / "prompts"
 PROMPT_PATH = PROMPTS_DIR / "kb-audit-instructions.md"
 
 MODEL = "claude-opus-4-6"
-TIMEOUT_SECONDS = 3600
 
 STANDARD_PREFIXES = {"SS", "PRE", "ST", "FC", "INV", "INT", "EC"}
 
@@ -200,19 +199,15 @@ def run_opus_miscategorization():
 
     start = time.time()
 
-    try:
-        result = subprocess.run(
-            cmd,
-            input=prompt,
-            capture_output=True,
-            text=True,
-            env=env,
-            cwd=str(HARNESS_ROOT),
-            timeout=TIMEOUT_SECONDS,
-        )
-    except subprocess.TimeoutExpired:
-        print(f"WARNING: Opus timed out after {TIMEOUT_SECONDS}s", file=sys.stderr)
-        return None
+    result = subprocess.run(
+        cmd,
+        input=prompt,
+        capture_output=True,
+        text=True,
+        env=env,
+        cwd=str(HARNESS_ROOT),
+        timeout=None,
+    )
 
     elapsed = time.time() - start
 

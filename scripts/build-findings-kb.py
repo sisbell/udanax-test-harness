@@ -38,7 +38,6 @@ PROMPTS_DIR = Path(__file__).resolve().parent / "prompts"
 PROMPT_PATH = PROMPTS_DIR / "findings-kb-instructions.md"
 
 MODEL = "claude-opus-4-6"
-TIMEOUT_SECONDS = 3600
 
 
 def abort(message, finding_num=None):
@@ -92,18 +91,15 @@ def analyze_finding(finding_num, finding_path, usage):
 
     start = time.time()
 
-    try:
-        result = subprocess.run(
-            cmd,
-            input=prompt,
-            capture_output=True,
-            text=True,
-            env=env,
-            cwd=str(HARNESS_ROOT),
-            timeout=TIMEOUT_SECONDS,
-        )
-    except subprocess.TimeoutExpired:
-        abort(f"Timed out after {TIMEOUT_SECONDS}s", finding_num)
+    result = subprocess.run(
+        cmd,
+        input=prompt,
+        capture_output=True,
+        text=True,
+        env=env,
+        cwd=str(HARNESS_ROOT),
+        timeout=None,
+    )
 
     elapsed = time.time() - start
 
@@ -208,7 +204,7 @@ def main():
 
     print(f"Analyzing {len(to_process)} findings "
           f"({to_process[0][0]:04d}–{to_process[-1][0]:04d})")
-    print(f"Model: {MODEL} | Thinking: max | Timeout: {TIMEOUT_SECONDS}s")
+    print(f"Model: {MODEL} | Thinking: max")
 
     if args.dry_run:
         for num, path in to_process:

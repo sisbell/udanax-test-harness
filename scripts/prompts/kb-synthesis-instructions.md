@@ -1,6 +1,6 @@
-# KB Digest — Synthesize All Findings
+# KB Synthesis — Synthesize All Findings
 
-You are building a digest knowledge base from {{finding_count}} implementation findings about udanax-green. This KB is the map — synthesize all findings into integrated, cross-referenced descriptions that show how the system's components connect.
+You are building a synthesis knowledge base from {{finding_count}} implementation findings about udanax-green. This KB is the map — synthesize all findings into integrated, cross-referenced descriptions that show how the system's components connect.
 
 ## Process
 
@@ -8,7 +8,7 @@ You are building a digest knowledge base from {{finding_count}} implementation f
 2. Classify each finding into one or more categories.
 3. Synthesize entries — weave complementary findings into integrated descriptions.
 4. Add cross-references between related entries (`[ST-INSERT]`, `[FC-SUBSPACE]`, etc.).
-5. Write the KB to `knowledge-base/kb-digest.md`.
+5. Write the KB to `knowledge-base/kb-synthesis.md`.
 
 ## Categories
 
@@ -47,10 +47,10 @@ Do NOT include:
 
 ## Output Format
 
-Write to `knowledge-base/kb-digest.md`:
+Write to `knowledge-base/kb-synthesis.md`:
 
 ```markdown
-# Digest Knowledge Base
+# Synthesis Knowledge Base
 <!-- last-finding: {{last_finding}} -->
 
 > Implementation knowledge about udanax-green, synthesized for specification writing.
