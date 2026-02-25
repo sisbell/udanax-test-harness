@@ -49,6 +49,7 @@ Do NOT include:
 - Implementation performance details (cache strategy, memory layout)
 - Test infrastructure specifics (how to run tests, FEBE opcodes)
 - Speculative claims — only documented behavior
+- References to EWD-numbered documents (these are from a prior project version; use only the finding content itself)
 
 ## Analysis File Format
 

@@ -44,6 +44,7 @@ Do NOT include:
 - Test infrastructure specifics (how to run tests, FEBE opcodes)
 - Speculative claims — only documented behavior
 - Duplicate information across entries — cross-reference instead
+- References to EWD-numbered documents (these are from a prior project version; use only finding content and code evidence)
 
 ## Output Format
 

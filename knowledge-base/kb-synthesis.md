@@ -1031,7 +1031,7 @@ Zero-width queries return empty results without error. Zero-width pieces cannot 
 
 ### EC-NEGATIVE-VPOSITION
 
-DELETE shifting via `tumblersub` can produce negative V-position tumblers when the deletion width exceeds an entry's position offset within the same exponent class. Negative tumblers are valid in the tumbler type and sort before all positive values in `tumblercmp`, but they violate the expected POOM bijectivity invariant I₁ from EWD-018.
+DELETE shifting via `tumblersub` can produce negative V-position tumblers when the deletion width exceeds an entry's position offset within the same exponent class. Negative tumblers are valid in the tumbler type and sort before all positive values in `tumblercmp`, but they violate the expected POOM bijectivity invariant I₁.
 
 In practice, the exponent guard in `strongsub` prevents most cross-subspace negative results [FC-SUBSPACE]. Negative V-positions can only arise from same-subspace operations where the deletion width exceeds the surviving entry's relative position.
 

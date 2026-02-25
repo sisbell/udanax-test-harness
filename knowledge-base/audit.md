@@ -181,7 +181,7 @@ KB: 189 entries, 79 findings referenced
 ### INV-POOM-BIJECTIVITY
 **Current category:** INV
 **Suggested category:** EC
-**Reason:** Primary content documents that the classical POOM bijectivity invariant (EWD-018 I1) **can be violated** by DELETE creating negative V-positions. The entry says the invariant "does not hold after certain DELETE sequences." The discovery that the nominal invariant is broken is an edge case, not a statement of what always holds.
+**Reason:** Primary content documents that the classical POOM bijectivity invariant (I1) **can be violated** by DELETE creating negative V-positions. The entry says the invariant "does not hold after certain DELETE sequences." The discovery that the nominal invariant is broken is an edge case, not a statement of what always holds.
 **Finding(s):** Finding 0053
 
 ---

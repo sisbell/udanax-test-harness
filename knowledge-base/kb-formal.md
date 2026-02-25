@@ -843,7 +843,7 @@ The depth of version nesting is unlimited — the address simply grows by one co
 
 There is no single global "next" counter (no Σ.next). Allocation is stateless query-and-increment on different tumbler ranges via `findpreviousisagr`.
 
-**Why it matters for spec:** The formal model should NOT use a single `Σ.next` counter. Instead, allocation is a family of independent functions partitioned by tumbler range: `next_doc_addr(granf, parent) = max_child(granf, parent) + 1` and `next_content_addr(granf, doc) = max_content(granf, doc) + 1`. Both query the same granfilade tree but search different subtrees. The EWD simplification of a single counter does not match the implementation.
+**Why it matters for spec:** The formal model should NOT use a single `Σ.next` counter. Instead, allocation is a family of independent functions partitioned by tumbler range: `next_doc_addr(granf, parent) = max_child(granf, parent) + 1` and `next_content_addr(granf, doc) = max_content(granf, doc) + 1`. Both query the same granfilade tree but search different subtrees. The simplification of a single counter does not match the implementation.
 
 **Code references:** `findisatoinsertgr` in `backend/granf2.c:130-156` — dispatches to molecule (content) vs non-molecule (document) allocation. `findisatoinsertmolecule` in `backend/granf2.c:158-181` — content allocation. `findisatoinsertnonmolecule` in `backend/granf2.c:203-242` — document allocation.
 
@@ -2510,7 +2510,7 @@ This means link "permanence" within a document's POOM is a front-end convention,
 **Code references:**
 - `orglinks.c:145-152` — `deletevspanpm()` only checks for zero-width, no subspace guard
 
-**Provenance:** Finding 0040, Code Evidence section and EWD Specifications section.
+**Provenance:** Finding 0040, Code Evidence section.
 
 #### Finding 0053
 
@@ -2616,7 +2616,7 @@ DELETE [1.2, 1.4):   (start interior, end aligned)
 
 **What happens:** I-address allocation via `findisatoinsertgr()` uses a global search-and-increment to find fresh addresses. This is safe without locking because the single-threaded event loop guarantees no concurrent allocations.
 
-**Why it matters for spec:** The precondition for INSERT includes that the allocated I-address is globally unique. This property (called P1/Freshness in EWD-025) is guaranteed by sequential execution rather than by an explicit uniqueness check. A formal spec should state the freshness precondition explicitly even though the implementation achieves it structurally.
+**Why it matters for spec:** The precondition for INSERT includes that the allocated I-address is globally unique. This property (freshness) is guaranteed by sequential execution rather than by an explicit uniqueness check. A formal spec should state the freshness precondition explicitly even though the implementation achieves it structurally.
 
 **Code references:**
 - `backend/granf2.c:203-242` — I-address allocation via search-and-increment
@@ -3285,7 +3285,7 @@ Post-state:
 - Case 1: crum is between `blade[0]` and `blade[1]` — shift right by insertion width
 - Case 2: crum is at or beyond `blade[1]` — no shift
 
-This corrects EWD-037's claim that `insertcutsectionnd` shifts ALL crums after the insertion point via lexicographic comparison. The actual behavior is bounded: only crums in the same subspace as the insertion point are affected.
+This corrects the claim that `insertcutsectionnd` shifts ALL crums after the insertion point via lexicographic comparison. The actual behavior is bounded: only crums in the same subspace as the insertion point are affected.
 
 **Why it matters for spec:** The postcondition for INSERT's V-position shifting is bounded, not global: `∀ entry ∈ poom(doc) : blade[0] ≤ entry.vpos < blade[1] ⟹ entry.vpos' = entry.vpos + insert_width`. Entries outside this range are unchanged. This is a stronger (more precise) postcondition than "all entries after insertion point shift," and it is what the implementation actually enforces.
 
@@ -3783,7 +3783,7 @@ After:  version at 1.1.0.1.0.1.1 contains "Hello world" (same I-addresses α₁.
 
 **What happens**: `CREATENEWVERSION(d)` copies only the text subspace (`1.x` V-positions) from the source document's POOM into the new version. The link subspace (`0.x` / internally `2.x`) is not copied. The mechanism is in `docreatenewversion` which calls `doretrievedocvspanfoo` to obtain a single vspan, then passes it to `docopyinternal`. The function `retrievedocumentpartofvspanpm` returns only the document's V-dimension displacement and width — `cdsp.dsas[V]` and `cwid.dsas[V]` — which point to position `1` (the text subspace start). The link subspace at positions before `1` is structurally outside this vspan.
 
-**Why it matters for spec**: This refines the ST-VERSION-CREATE postcondition from finding 0007. The postcondition is not `references(version) = references(original)` unconditionally — it is `text_references(version) = text_references(original) AND link_references(version) = {}`. The version starts with all text content identity from the original but an empty link subspace. This is intentional behavior per EWD-021. The formal spec must distinguish between text-subspace copying (which happens) and link-subspace copying (which does not).
+**Why it matters for spec**: This refines the ST-VERSION-CREATE postcondition from finding 0007. The postcondition is not `references(version) = references(original)` unconditionally — it is `text_references(version) = text_references(original) AND link_references(version) = {}`. The version starts with all text content identity from the original but an empty link subspace. This is intentional behavior. The formal spec must distinguish between text-subspace copying (which happens) and link-subspace copying (which does not).
 
 **Concrete example**:
 ```
@@ -6338,7 +6338,7 @@ is_native(doc_C, i₁) = false  (doc_C only references i₁)
 
 **Code references:**
 - `spanf1.c:38-48` — one `insertnd` per I-span, not per byte
-- Finding references EWD-031 (The Storage Problem) as confirming this storage model
+- Finding confirms this storage model
 
 **Provenance:** Finding 0047
 **Co-occurring entries:** [SS-DOCISPAN], [ST-COPY], [ST-INSERT]
@@ -6367,7 +6367,7 @@ is_native(doc_C, i₁) = false  (doc_C only references i₁)
 
 **Source:** Finding 0053
 
-**What happens:** The POOM is designed to maintain a bijection between V-addresses and I-addresses (EWD-018 invariant I₁: `poom_d` is a bijection). DELETE can violate this invariant by creating POOM entries with negative V-positions. A negative V-position is in the domain of the stored POOM map but does not correspond to any valid V-address in the document's V-stream (which is defined over non-negative tumblers only). The entry occupies tree space and has a valid I-address target, but its V-address key is outside the legal V-space.
+**What happens:** The POOM is designed to maintain a bijection between V-addresses and I-addresses (invariant I₁: `poom_d` is a bijection). DELETE can violate this invariant by creating POOM entries with negative V-positions. A negative V-position is in the domain of the stored POOM map but does not correspond to any valid V-address in the document's V-stream (which is defined over non-negative tumblers only). The entry occupies tree space and has a valid I-address target, but its V-address key is outside the legal V-space.
 
 The system allows these I₁ violations to persist — there is no integrity check or cleanup mechanism. The violations are silent: no error is raised, and the entries are simply unreachable by any V-space query.
 
@@ -6421,7 +6421,7 @@ The system allows these I₁ violations to persist — there is no integrity che
 
 #### Finding 0058
 
-**What happens:** The enfilade design (per EWD-006) calls for tree minimality: the tree should be as shallow as possible, with no unnecessary intermediate nodes. `levelpull` was intended to enforce this by collapsing the tree when the fullcrum has only one child and height > 1. The commented-out code in `genf.c:318-342` shows the algorithm: check `numberofsons > 1` (if so, no pull needed), check `height <= 1` (if so, already minimal), then disown the single child, decrement height, transfer grandchildren up, and free the former child.
+**What happens:** The enfilade design calls for tree minimality: the tree should be as shallow as possible, with no unnecessary intermediate nodes. `levelpull` was intended to enforce this by collapsing the tree when the fullcrum has only one child and height > 1. The commented-out code in `genf.c:318-342` shows the algorithm: check `numberofsons > 1` (if so, no pull needed), check `height <= 1` (if so, already minimal), then disown the single child, decrement height, transfer grandchildren up, and free the former child.
 
 Because `levelpull` is disabled, minimality is violated after any delete-everything operation. The tree retains whatever height it reached during content growth, even when all content is removed.
 
