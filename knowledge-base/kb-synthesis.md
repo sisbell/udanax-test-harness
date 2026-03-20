@@ -45,7 +45,7 @@ tumblersub(1.2, 0.10):
 
 ### SS-ADDRESS-SPACE
 
-Documents have a multi-subspace virtual address space. Text content occupies subspace `1.x`, links occupy subspace `2.x` (stored as `0.2.x` internally, with the leading zero digit indicating subspace 2). A third subspace `3.x` is reserved for types. These subspaces are independent: insertions in one subspace do not renumber positions in the other [FC-SUBSPACE].
+Documents have a multi-subspace virtual address space. Text content occupies subspace `1.x`, links occupy subspace `2.x` internally (the `0` in I-addresses like `docISA.0.2.N` is a tumbler field separator per T4, not a subspace identifier; `retrievedocvspanset` normalizes link positions to `0.x` in output when text is present, but the internal V-position is `2.x`). A third subspace `3.x` is reserved for types. These subspaces are independent: insertions in one subspace do not renumber positions in the other [FC-SUBSPACE].
 
 The document address hierarchy follows a tumbler convention: `Node.0.User.0.Doc.0.Element`. Document-level vs. element-level addressing is a predicate, not a type distinction. Document addresses like `1.1.0.1.0.2` have no element field; element addresses like `1.1.0.1.0.1.0.2.1` specify positions within a document.
 
@@ -219,7 +219,7 @@ DOCISPAN entries in the spanfilade track which documents contain which I-address
 
 Links are permanent, immutable objects stored in the granfilade. Each link has three endsets: source (from), target (to), and type. Endsets contain I-address spans — they reference content by identity, not by position.
 
-A link's address is allocated in the document's link subspace: `docISA.0.2.N` where N increments per document. The link's type is registered at `1.0.2.x` in the global type namespace. Link allocation is per-document — each document has an independent link counter.
+A link's I-address (ISA) follows the tumbler convention: `docISA.0.2.N` where `.0.` is a field separator (T4), `2` is the start of the element field, and N increments per document. The internal V-position is `2.N`. The link's type is registered at `1.0.2.x` in the global type namespace. Link allocation is per-document — each document has an independent link counter.
 
 Links are stored in two places: (1) the link orgl is created in the granfilade, and (2) the link's endset I-spans are indexed in the spanfilade for discovery. The POOM gets a V→I entry for the link orgl at the document's link subspace position.
 
@@ -606,7 +606,7 @@ After:
 CREATENEWVERSION of document `d`:
 
 1. **New document address**: Allocated as child of source (`d.0.1`, `d.0.2`, etc.) if owned, or under user's account if not.
-2. **POOM**: New document's POOM is a copy of source's **text subspace only** (`1.x`). Link subspace (`0.x`/`2.x`) is NOT copied.
+2. **POOM**: New document's POOM is a copy of source's **text subspace only** (`1.x`). Link subspace (`2.x`) is NOT copied.
 3. **Spanfilade**: DOCISPAN entries created for the new document, recording its I-address spans.
 4. **Granfilade**: Unchanged — no new content created. The version shares I-addresses with the original.
 5. **I-address allocation**: NOT advanced — CREATENEWVERSION does not call `findisatoinsertgr`.
@@ -1113,7 +1113,7 @@ There is no automatic edit history. DELETE is destructive — it permanently mut
 
 `compare_versions` (SHOWRELATIONOF2VERSIONS) crashes when either document contains links. The version comparison logic in `correspond.c` does not handle link subspace entries correctly — it assumes all POOM entries are text content with permascroll I-addresses, but link orgls have different address structure.
 
-The fix requires restricting comparison to text subspace only (`V ≥ 1`), excluding the link subspace (`0.x`).
+The fix requires restricting comparison to text subspace only (`V ≥ 1`), excluding the link subspace (`2.x` internally).
 
 **Provenance:** Findings 0015, 0010 (Bug 0009)
 

@@ -381,13 +381,13 @@ This extends SS-VERSION-ADDRESS from Finding 0007 with the ownership-sensitive a
 
 #### Finding 0009
 
-**What happens**: A document's virtual address space is partitioned into two subspaces distinguished by the first tumbler digit. V-position `0.x` is the **link subspace** (stores references to link orgls). V-position `1.x` is the **text subspace** (stores actual document content mapped to permascroll I-addresses). The enfilade itself is uniform — it stores V-to-I mappings without type metadata. The subspace identity is encoded purely by V-position convention.
+**What happens**: A document's virtual address space is partitioned into two subspaces distinguished by the first tumbler digit. V-position `2.x` is the **link subspace** (stores references to link orgls). V-position `1.x` is the **text subspace** (stores actual document content mapped to permascroll I-addresses). The enfilade itself is uniform — it stores V-to-I mappings without type metadata. The subspace identity is encoded purely by V-position convention. (Note: `retrievedocvspanset` normalizes the link subspace to `0` in output when text is also present — this is a display convention, not the internal address.)
 
 **Why it matters for spec**: This is the fundamental state structure that all document operations act on. A document is not simply a sequence of characters; it is a two-subspace mapping. Any specification of document state must model these subspaces explicitly. The type of the I-address (permascroll address vs. link orgl ISA) is determined by which V-subspace it falls in — this is an implicit invariant that the storage layer does not enforce.
 
 **Code references**:
-- `do2.c:151-167` — `findnextlinkvsa()` constructs first link position at `0.1`
-- `do1.c:199-225` — `docreatelink()` stores link references via `docopy()` into `0.x`
+- `do2.c:151-167` — `findnextlinkvsa()` constructs first link position at `2.1`
+- `do1.c:199-225` — `docreatelink()` stores link references via `docopy()` into `2.x`
 
 **Concrete example**:
 
@@ -400,7 +400,8 @@ Document vspanset: <VSpec in 1.1.0.1.0.1, at 1.1 for 0.16>
 After link creation:
 ```
 Document vspanset: <VSpec in 1.1.0.1.0.1, at 0 for 0.1, at 1 for 1>
-  V-range 0.x → link orgl ISA (link reference)
+  (Note: "at 0" is retrievedocvspanset normalized output; internal V-position is 2.x)
+  V-range 2.x → link orgl ISA (link reference) [displayed as 0.x in normalized output]
   V-range 1.x → permascroll I-addresses (text content)
 ```
 
@@ -408,7 +409,7 @@ Document vspanset: <VSpec in 1.1.0.1.0.1, at 0 for 0.1, at 1 for 1>
 
 #### Finding 0011
 
-**What happens:** The enfilade storage is unified — a single data structure stores both text content and links. V-position subspace (0.x vs 1.x) is the only discriminator, and it is a convention, not a type. I-addresses likewise have no type distinction: permascroll I-addresses (content) and document ISAs (references) are both tumblers with no runtime type tag.
+**What happens:** The enfilade storage is unified — a single data structure stores both text content and links. V-position subspace (2.x vs 1.x) is the only discriminator, and it is a convention, not a type. I-addresses likewise have no type distinction: permascroll I-addresses (content) and document ISAs (references) are both tumblers with no runtime type tag.
 
 **Why it matters for spec:** The specification must introduce type distinctions that the implementation lacks. The dual-enfilade model should formally distinguish between content-bearing I-addresses and reference I-addresses, and between link V-spans and text V-spans, even though the implementation represents all of these as untyped tumblers. This is the central modeling challenge: adding types to a typeless system.
 
@@ -442,7 +443,7 @@ After inserting text into document 1.1.0.1.0.1:
   spanf: unchanged (no links created)
 
 After creating a link:
-  granf: new link orgl + link reference in document's 0.x subspace
+  granf: new link orgl + link reference in document's 2.x subspace
   spanf: new index entries mapping endpoint I-addresses → link
 ```
 
@@ -611,9 +612,9 @@ BertTable: Map<(ConnectionId, Tumbler), BertEntry>
 
 #### Finding 0017
 
-**What happens**: The system provides two distinct retrieval operations for querying a document's virtual extent. `RETRIEVEDOCVSPAN` (opcode 14) returns a single span — a bounding range that covers the entire document's V-space. `RETRIEVEDOCVSPANSET` (opcode 1) returns a set of spans, one per occupied subspace region. For text-only documents, the two operations return equivalent results (a single span covering `1.x`). For documents with mixed content (text + links), the results diverge: `retrieve_vspan` returns a single span that attempts to bridge both subspaces (e.g., `1.1 for 1.2`), while `retrieve_vspanset` returns separate spans for each subspace (e.g., `{0.1 for 0.1, 1.1 for 0.11}`).
+**What happens**: The system provides two distinct retrieval operations for querying a document's virtual extent. `RETRIEVEDOCVSPAN` (opcode 14) returns a single span — a bounding range that covers the entire document's V-space. `RETRIEVEDOCVSPANSET` (opcode 1) returns a set of spans, one per occupied subspace region. For text-only documents, the two operations return equivalent results (a single span covering `1.x`). For documents with mixed content (text + links), the results diverge: `retrieve_vspan` returns a single span that attempts to bridge both subspaces (e.g., `1.1 for 1.2`), while `retrieve_vspanset` returns separate spans for each subspace (e.g., `{0.1 for 0.1, 1.1 for 0.11}` — where `0.1` is a normalized output position; internal link position is `2.x`).
 
-**Why it matters for spec**: These two operations have different return types with different information content. The single-span result from `retrieve_vspan` is lossy — it represents a bounding box over a potentially discontiguous address space, hiding the gap between the `0.x` and `1.x` subspaces. The spanset result preserves the subspace partition. Any specification of document extent querying must model both operations and note that the single-span result is an approximation that discards structural information. Operations that need accurate content enumeration (iteration, size calculation, content retrieval) require the spanset form.
+**Why it matters for spec**: These two operations have different return types with different information content. The single-span result from `retrieve_vspan` is lossy — it represents a bounding box over a potentially discontiguous address space, hiding the gap between the `2.x` and `1.x` subspaces. The spanset result preserves the subspace partition. Any specification of document extent querying must model both operations and note that the single-span result is an approximation that discards structural information. Operations that need accurate content enumeration (iteration, size calculation, content retrieval) require the spanset form.
 
 **Code references**:
 - Golden tests: `golden/documents/retrieve_vspan*.json`
@@ -628,14 +629,14 @@ Document with "Hello World" (text only):
 Document with "Click here" + one link:
   retrieve_vspan:    1.1 for 1.2   (bounding span across both subspaces)
   retrieve_vspanset: [{start: 0, width: 0.1}, {start: 1, width: 1}]
-  → Different: spanset reveals 0.x (link) and 1.x (text) separately
+  → Different: spanset reveals link (normalized to 0.x in output; internal 2.x) and 1.x (text) separately
 ```
 
 **Provenance**: Finding 0017
 
 #### Finding 0035
 
-**What happens:** Two distinct operations retrieve document extent in V-space. RETRIEVEDOCVSPAN (opcode 14) reads the raw root node's V-dimension displacement and width directly via `retrievevspanpm()` — no processing, no subspace awareness. RETRIEVEDOCVSPANSET (opcode 1) uses `retrievevspansetpm()` which tests `is1story()` to detect whether content spans multiple subspaces. For text-only documents both return the same single span. For documents containing links, RETRIEVEDOCVSPAN returns a meaningless bounding-box width spanning both 0.x and 1.x subspaces, while RETRIEVEDOCVSPANSET correctly decomposes into separate link-subspace and text-subspace spans.
+**What happens:** Two distinct operations retrieve document extent in V-space. RETRIEVEDOCVSPAN (opcode 14) reads the raw root node's V-dimension displacement and width directly via `retrievevspanpm()` — no processing, no subspace awareness. RETRIEVEDOCVSPANSET (opcode 1) uses `retrievevspansetpm()` which tests `is1story()` to detect whether content spans multiple subspaces. For text-only documents both return the same single span. For documents containing links, RETRIEVEDOCVSPAN returns a meaningless bounding-box width spanning both subspaces, while RETRIEVEDOCVSPANSET correctly decomposes into separate link-subspace and text-subspace spans.
 
 **Why it matters for spec:** The state model must distinguish between raw root extent (an internal structural value) and semantic document extent (a set of per-subspace spans). Specs should use RETRIEVEDOCVSPANSET semantics for document extent queries. RETRIEVEDOCVSPAN's output is not a valid V-span for documents containing links — it violates the subspace convention.
 
@@ -648,7 +649,7 @@ Document with "Click here" + one link:
 **Concrete example:**
 - Document with 10 chars of text and 1 link:
   - RETRIEVEDOCVSPAN returns: `1.1 for 1.2` (meaningless bounding box, Bug 0011)
-  - RETRIEVEDOCVSPANSET returns: `[{0, 0.1}, {1, 1}]` (correct: link subspace + text subspace)
+  - RETRIEVEDOCVSPANSET returns: `[{0, 0.1}, {1, 1}]` (correct: link subspace + text subspace; "0" is normalized output, internal link position is 2.x)
 - Text-only "Hello World": both return `1.1 for 0.11`
 - Empty document: RETRIEVEDOCVSPAN returns zeros; RETRIEVEDOCVSPANSET returns NULL (empty set)
 
@@ -693,11 +694,11 @@ The `makehint` function encodes the hierarchy depth:
 
 #### Finding 0024
 
-**What happens:** Links occupy a separate address subspace (0.2.x) within their home document, distinct from the text subspace (1.x). A link address is structured as `{home_doc}.0.2.{link_number}`. For example, document `1.1.0.1.0.1` contains link `1.1.0.1.0.1.0.2.1` — the home document ID followed by `.0.2.1` identifying link subspace entry 1.
+**What happens:** Links occupy a separate address subspace (V-position `2.x`) within their home document, distinct from the text subspace (1.x). A link's I-address (ISA) is structured as `{home_doc}.0.2.{link_number}` — for example, document `1.1.0.1.0.1` contains link ISA `1.1.0.1.0.1.0.2.1`. In this I-address, the `.0.` is a tumbler field separator (T4), and `2` is the start of the element field — it is not a subspace identifier. The internal V-position where this link is stored is `2.1` (subspace 2, entry 1).
 
 Links appear in the document's vspanset alongside text spans. After deleting all text from a document containing a link, the vspanset still reports a span `{"start": "2.1", "width": "0.1"}` — the link. Similarly, `retrieve_contents` returns the link as content: `{"link_id": "1.1.0.1.0.1.0.2.1"}`. This means a document with all text deleted is not "empty" if it contains links.
 
-**Why it matters for spec:** The state model for documents must represent two content subspaces: text at 1.x and links at 0.2.x. Any predicate `is_empty(doc)` must check both subspaces. The vspanset type must accommodate both text spans and link spans. Formally: `doc_content(D) = text_spans(D) ∪ link_spans(D)`, where `text_spans` use addresses in the 1.x range and `link_spans` use addresses in the 0.2.x range.
+**Why it matters for spec:** The state model for documents must represent two content subspaces: text at V-position 1.x and links at V-position 2.x. Any predicate `is_empty(doc)` must check both subspaces. The vspanset type must accommodate both text spans and link spans. Formally: `doc_content(D) = text_spans(D) ∪ link_spans(D)`, where `text_spans` use V-addresses in the 1.x range and `link_spans` use V-addresses in the 2.x range.
 
 **Concrete example:**
 ```
@@ -1650,21 +1651,21 @@ vs.
 
 #### Finding 0009
 
-**What happens**: The system enforces by convention (not by runtime check) that V-positions `0.x` contain only link orgl ISAs as I-addresses, and V-positions `1.x` contain only permascroll I-addresses. No code in the enfilade storage path validates this invariant — it is maintained by callers (`docreatelink` writes to `0.x`, `doinsert`/`docopy` for text writes to `1.x`). The `permute()`, `retrieverestricted()`, and `docopy()` functions are all type-agnostic.
+**What happens**: The system enforces by convention (not by runtime check) that V-positions `2.x` contain only link orgl ISAs as I-addresses, and V-positions `1.x` contain only permascroll I-addresses. No code in the enfilade storage path validates this invariant — it is maintained by callers (`docreatelink` writes to `2.x`, `doinsert`/`docopy` for text writes to `1.x`). The `permute()`, `retrieverestricted()`, and `docopy()` functions are all type-agnostic.
 
 **Why it matters for spec**: This is a convention-over-enforcement invariant. The spec should state it as a property that holds across all well-formed operations, but note that the storage layer does not enforce it. This is the kind of invariant that Dafny can verify as a postcondition of each operation rather than as a storage-layer check.
 
 **Code references**:
-- `do1.c:215-216` — `findnextlinkvsa` + `docopy` for link storage (caller ensures `0.x`)
-- `do2.c:151-167` — `findnextlinkvsa` hardcodes first link at `0.1`
+- `do1.c:215-216` — `findnextlinkvsa` + `docopy` for link storage (caller ensures `2.x`)
+- `do2.c:151-167` — `findnextlinkvsa` hardcodes first link at `2.1`
 
 **Provenance**: Finding 0009
 
 #### Finding 0010
 
-**What happens**: The unified enfilade storage model treats all V→I mappings identically — `insertpm`, `docopy`, `retrieverestricted`, and `permute` are all type-agnostic. The convention that V-position `0.x` holds link orgl ISAs and `1.x` holds permascroll I-addresses is enforced solely by callers. The validation function `acceptablevsa()` in `do2.c:110-113` unconditionally returns `TRUE`, providing no runtime enforcement. This means it is possible to: (a) insert text at position `0.x`, corrupting the link subspace; (b) insert link references at position `1.x`, corrupting the text subspace; (c) create semantically invalid documents that violate the subspace convention.
+**What happens**: The unified enfilade storage model treats all V→I mappings identically — `insertpm`, `docopy`, `retrieverestricted`, and `permute` are all type-agnostic. The convention that V-position `2.x` holds link orgl ISAs and `1.x` holds permascroll I-addresses is enforced solely by callers. The validation function `acceptablevsa()` in `do2.c:110-113` unconditionally returns `TRUE`, providing no runtime enforcement. This means it is possible to: (a) insert text at position `2.x`, corrupting the link subspace; (b) insert link references at position `1.x`, corrupting the text subspace; (c) create semantically invalid documents that violate the subspace convention.
 
-**Why it matters for spec**: The convention-over-enforcement design means the subspace invariant is not a storage-layer property but a property that must be verified as a postcondition of every well-formed operation. In Dafny, this would be modeled as a `requires` clause on document mutation operations asserting that text content targets `V >= 1.0` and link references target `V < 1.0`. The `acceptablevsa` stub is a clear signal that enforcement was intended but never implemented.
+**Why it matters for spec**: The convention-over-enforcement design means the subspace invariant is not a storage-layer property but a property that must be verified as a postcondition of every well-formed operation. In Dafny, this would be modeled as a `requires` clause on document mutation operations asserting that text content targets `V` in subspace `1.x` and link references target `V` in subspace `2.x`. The `acceptablevsa` stub is a clear signal that enforcement was intended but never implemented.
 
 **Code references**:
 - `do2.c:110-113` — `acceptablevsa()` always returns `TRUE`
@@ -1675,10 +1676,10 @@ vs.
 ```
 acceptablevsa(vsaptr, orglptr) always returns TRUE
 
-Consequence: docopy(doc, vsa=0.5, text_ispanset) succeeds
+Consequence: docopy(doc, vsa=2.5, text_ispanset) succeeds
   → permascroll I-address stored in link subspace
-  → retrieve_contents on 0.x returns garbage (permascroll addr treated as link ISA)
-  → find_links on 0.x finds no valid link orgl
+  → retrieve_contents on 2.x returns garbage (permascroll addr treated as link ISA)
+  → find_links on 2.x finds no valid link orgl
 
 Similarly: docopy(doc, vsa=1.5, link_ispanset) succeeds
   → link orgl ISA stored in text subspace
@@ -1689,9 +1690,9 @@ Similarly: docopy(doc, vsa=1.5, link_ispanset) succeeds
 
 #### Finding 0011
 
-**What happens:** The subspace convention (V-position 0.x = links, 1.x = text) is a social contract enforced by convention, not by runtime checks. The unified enfilade storage treats all data uniformly — the system does not distinguish between link I-addresses and content I-addresses at the type level. Both are just tumblers. Dereferencing a link ISA as content produces garbage, but no error is raised.
+**What happens:** The subspace convention (V-position 2.x = links, 1.x = text) is a social contract enforced by convention, not by runtime checks. The unified enfilade storage treats all data uniformly — the system does not distinguish between link I-addresses and content I-addresses at the type level. Both are just tumblers. Dereferencing a link ISA as content produces garbage, but no error is raised.
 
-**Why it matters for spec:** The formal specification must model subspace membership as a type-level distinction even though the implementation uses untyped tumblers. This invariant — that data at 0.x V-positions are links and data at 1.x V-positions are text — must be stated as a global invariant in the spec. Every operation that reads or writes V-positions should preserve this invariant. The spec makes explicit what the code leaves implicit.
+**Why it matters for spec:** The formal specification must model subspace membership as a type-level distinction even though the implementation uses untyped tumblers. This invariant — that data at 2.x V-positions are links and data at 1.x V-positions are text — must be stated as a global invariant in the spec. Every operation that reads or writes V-positions should preserve this invariant. The spec makes explicit what the code leaves implicit.
 
 **Code references:**
 - `backend/green/do2.c:110-113` — `acceptablevsa` does not enforce subspace rules
@@ -1705,7 +1706,7 @@ Similarly: docopy(doc, vsa=1.5, link_ispanset) succeeds
 
 | V-Position | Contains | I-Address Type | Has "Common Origin"? | Included in compare_versions? |
 |------------|----------|----------------|---------------------|-------------------------------|
-| 0.x | Link references | Link orgl ISAs | No | No |
+| 2.x | Link references | Link orgl ISAs | No | No |
 | 1.x | Text content | Permascroll addresses | Yes | Yes |
 
 Links have no "common origin" for three reasons: (1) link ISAs are unique identities, not content origins — two documents cannot share the same link ISA via transclusion; (2) links are metadata about content, not content itself; (3) comparing link ISAs is semantically undefined — even if they matched, it wouldn't mean "shared content."
@@ -2340,14 +2341,14 @@ Key rules:
 
 #### Finding 0015
 
-**What happens**: The `compare_versions` operation requires that input V-span sets be restricted to the text subspace (`V >= 1.0`). The finding specifies a concrete missing step: between retrieving V-spans and converting them to I-spans, the implementation must **filter to text subspace only**. Without this filter, link subspace V-spans (`0.x`) produce link orgl ISAs that are in a different address space from permascroll I-addresses. These will never intersect with text I-addresses (correct) but the code paths in `correspond.c` do not handle empty intersections gracefully (crash).
+**What happens**: The `compare_versions` operation requires that input V-span sets be restricted to the text subspace (`V >= 1.0`). The finding specifies a concrete missing step: between retrieving V-spans and converting them to I-spans, the implementation must **filter to text subspace only**. Without this filter, link subspace V-spans (`2.x` internally, normalized to `0.x` in output) produce link orgl ISAs that are in a different address space from permascroll I-addresses. These will never intersect with text I-addresses (correct) but the code paths in `correspond.c` do not handle empty intersections gracefully (crash).
 
 The finding frames this not as a defensive workaround but as the **semantically correct behavior**: the operation is defined over text content with common origin, and links have no "common origin" in this sense.
 
 **Why it matters for spec**: The precondition can be expressed two equivalent ways: (a) `requires forall span :: span in input_vspanset ==> span.start >= V_TEXT_START`, placing the obligation on the caller; or (b) the operation's first step is `vspanset = filter_to_text_subspace(vspanset)`, internalizing the constraint. The finding argues for (b) — filtering is part of the operation's definition, not an external precondition.
 
 **Code references**:
-- `correspond.c` — retrieves ALL V-spans including `0.x`, no filtering step before `vspanset2ispanset`
+- `correspond.c` — retrieves ALL V-spans including link subspace (internally `2.x`), no filtering step before `vspanset2ispanset`
 
 **Concrete example**:
 ```dafny
@@ -2379,7 +2380,7 @@ Correct algorithm:
 
 #### Finding 0010
 
-**What happens**: The `doretrievev` operation (`do1.c:376-384`) converts a specset to I-spans via `specset2ispanset`, then looks up content in the permascroll via `ispanset2vstuffset(taskptr, granf, ispanset, vstuffsetptr)`. It passes `granf` (the global enfilade) which expects permascroll I-addresses. If the specset includes V-positions from the link subspace (`0.x`), the corresponding I-addresses are link orgl ISAs, not permascroll addresses. Looking up a link ISA in the permascroll produces NULL or garbage bytes — a silent failure.
+**What happens**: The `doretrievev` operation (`do1.c:376-384`) converts a specset to I-spans via `specset2ispanset`, then looks up content in the permascroll via `ispanset2vstuffset(taskptr, granf, ispanset, vstuffsetptr)`. It passes `granf` (the global enfilade) which expects permascroll I-addresses. If the specset includes V-positions from the link subspace (`2.x` internally), the corresponding I-addresses are link orgl ISAs, not permascroll addresses. Looking up a link ISA in the permascroll produces NULL or garbage bytes — a silent failure.
 
 **Why it matters for spec**: This is a missing precondition. `doretrievev` requires that the input specset be restricted to the text subspace (`V >= 1.0`). The spec should either: (a) state this as a precondition, or (b) require the implementation to filter specset to text subspace before permascroll lookup. The silent failure mode (returning garbage rather than an error) makes this especially important for formal verification — an uncaught precondition violation produces unsound results rather than crashing.
 
@@ -2389,10 +2390,10 @@ Correct algorithm:
 
 **Concrete example**:
 ```
-Document has: V 0.1 → I 1.1.0.1.0.2 (link ISA)
+Document has: V 2.1 → I 1.1.0.1.0.2 (link ISA)
               V 1.1..1.16 → I 2.1.0.5.0.1.. (permascroll)
 
-doretrievev(specset covering V 0.0..2.0):
+doretrievev(specset covering V 1.0..3.0):
   specset2ispanset → includes I-address 1.1.0.1.0.2 from link subspace
   ispanset2vstuffset(granf, {1.1.0.1.0.2, 2.1.0.5.0...}):
     permascroll lookup of 1.1.0.1.0.2 → not a permascroll address → NULL/garbage
@@ -2440,9 +2441,9 @@ After open_document(doc_A):
 
 **Source:** Finding 0010
 
-**What happens**: The `docopy` operation (`do1.c:45-65`) copies I-spans from a source specset into a destination document at V-position `vsaptr`. It performs no validation that the source I-address types match the destination subspace. Text I-addresses (permascroll) can be copied into the link subspace (`0.x`), and link ISAs can be copied into the text subspace (`1.x`). The `acceptablevsa` check is a no-op. This is especially dangerous during transclusion from documents with links: `retrieve_vspanset` returns spans for both `0.x` and `1.x`, and if a caller creates a specset from the full vspanset, `vcopy` copies ALL content including link references to the destination.
+**What happens**: The `docopy` operation (`do1.c:45-65`) copies I-spans from a source specset into a destination document at V-position `vsaptr`. It performs no validation that the source I-address types match the destination subspace. Text I-addresses (permascroll) can be copied into the link subspace (`2.x`), and link ISAs can be copied into the text subspace (`1.x`). The `acceptablevsa` check is a no-op. This is especially dangerous during transclusion from documents with links: `retrieve_vspanset` returns spans for both subspaces, and if a caller creates a specset from the full vspanset, `vcopy` copies ALL content including link references to the destination.
 
-**Why it matters for spec**: The formal spec for `docopy` must include a precondition that the I-address types in the source specset are compatible with the destination V-subspace. Specifically: if `vsaptr` is in the text subspace (`>= 1.0`), all source I-addresses must be permascroll addresses; if in the link subspace (`< 1.0`), they must be link orgl ISAs. Without this, transclusion from a document with links silently copies link ISAs as text content, producing semantically meaningless bytes.
+**Why it matters for spec**: The formal spec for `docopy` must include a precondition that the I-address types in the source specset are compatible with the destination V-subspace. Specifically: if `vsaptr` is in the text subspace (`1.x`), all source I-addresses must be permascroll addresses; if in the link subspace (`2.x`), they must be link orgl ISAs. Without this, transclusion from a document with links silently copies link ISAs as text content, producing semantically meaningless bytes.
 
 **Code references**:
 - `do1.c:45-65` — `docopy()` with no type validation
@@ -2451,11 +2452,11 @@ After open_document(doc_A):
 
 **Concrete example**:
 ```
-Document A: V 0.1 → link ISA 1.1.0.1.0.2
+Document A: V 2.1 → link ISA 1.1.0.1.0.2
             V 1.1..1.16 → permascroll text
 
 User vcopies full content of A into document B at V 1.1:
-  retrieve_vspanset(A) → {0.1 for 0.1, 1.1 for 0.16}  (both subspaces)
+  retrieve_vspanset(A) → {0.1 for 0.1, 1.1 for 0.16}  (both subspaces; "0.1" is normalized output, internal position is 2.1)
   specset from full vspanset includes link ISA
   docopy(B, vsa=1.1, specset) → copies link ISA 1.1.0.1.0.2 into B's text subspace
   B now contains: V 1.1 → I 1.1.0.1.0.2 (link ISA masquerading as text)
@@ -2473,7 +2474,7 @@ User vcopies full content of A into document B at V 1.1:
 
 #### Finding 0010
 
-**What happens**: The `dodeletevspan` operation (`do1.c:162-171`) deletes a V-span from a document without checking which subspace the span falls in. Deleting V-range `0.x` removes link references from the document — the link orgls still exist in the system, but the document loses its references to them, creating orphaned links. The operation is technically valid but semantically dangerous: the document can no longer find its own links.
+**What happens**: The `dodeletevspan` operation (`do1.c:162-171`) deletes a V-span from a document without checking which subspace the span falls in. Deleting V-range `2.x` removes link references from the document — the link orgls still exist in the system, but the document loses its references to them, creating orphaned links. The operation is technically valid but semantically dangerous: the document can no longer find its own links.
 
 **Why it matters for spec**: The spec should note that `dodeletevspan` on the link subspace severs the document-to-link association without destroying the link itself. This is a weaker deletion than destroying the link — the link's endpoints still reference content, but the document has no record of the link. A formal model should distinguish: (a) deleting text content (removes V→I mappings for permascroll addresses), (b) deleting link references (removes V→I mappings for link ISAs, orphaning links).
 
@@ -2483,12 +2484,12 @@ User vcopies full content of A into document B at V 1.1:
 **Concrete example**:
 ```
 Pre-state:
-  Document has: V 0.1 → link ISA 1.1.0.1.0.2
+  Document has: V 2.1 → link ISA 1.1.0.1.0.2
                 V 1.1..1.16 → permascroll text
   Link orgl 1.1.0.1.0.2 exists with endpoints
 
-dodeletevspan(doc, vspan={0.1 for 0.1}):
-  Removes V 0.1 → I 1.1.0.1.0.2 mapping from document
+dodeletevspan(doc, vspan={2.1 for 0.1}):
+  Removes V 2.1 → I 1.1.0.1.0.2 mapping from document
 
 Post-state:
   Document has: V 1.1..1.16 → permascroll text (links gone)
@@ -2585,7 +2586,7 @@ DELETE [1.2, 1.4):   (start interior, end aligned)
 
 #### Finding 0011
 
-**What happens:** Preconditions for operations like insert, copy, and rearrange are implicit conventions, not enforced at runtime. The `acceptablevsa` function in `do2.c:110-113` always returns `TRUE`, meaning any V-position is accepted regardless of whether it follows the subspace convention (0.x for links, 1.x for text). Callers must know and follow the convention; the system does not validate.
+**What happens:** Preconditions for operations like insert, copy, and rearrange are implicit conventions, not enforced at runtime. The `acceptablevsa` function in `do2.c:110-113` always returns `TRUE`, meaning any V-position is accepted regardless of whether it follows the subspace convention (2.x for links, 1.x for text). Callers must know and follow the convention; the system does not validate.
 
 **Why it matters for spec:** Formal preconditions must be explicitly stated in the specification even though the implementation does not enforce them. Every operation that accepts a V-position has an implicit precondition that the V-position falls within the appropriate subspace for the data type being stored. Dafny `requires` clauses must capture what the C code merely assumes.
 
@@ -2595,7 +2596,7 @@ DELETE [1.2, 1.4):   (start interior, end aligned)
 
 **Concrete example:**
 - Before: System receives a store operation with V-position `0.1.5` and text content
-- Expected: Validation rejects (0.x is link subspace, not text)
+- Expected: Validation rejects (2.x is link subspace, not text)
 - Actual: Operation succeeds silently, placing text in the link subspace, corrupting the document's semantic structure
 
 **Provenance:** Finding 0011
@@ -2701,9 +2702,9 @@ INSERT at 1.5:  origin > reach  → NO knife cut (early exit, return 0)
 
 **Source:** Finding 0017
 
-**What happens**: To correctly iterate over all content in a document, callers must use `retrieve_vspanset` and process each span individually. Using the single bounding span from `retrieve_vspan` as a retrieval range will attempt to dereference V-positions in the gap between subspaces (producing empty or undefined results) and will mix link references (`0.x`) with text content (`1.x`) without distinguishing them. The finding prescribes per-span iteration as the correct access pattern.
+**What happens**: To correctly iterate over all content in a document, callers must use `retrieve_vspanset` and process each span individually. Using the single bounding span from `retrieve_vspan` as a retrieval range will attempt to dereference V-positions in the gap between subspaces (producing empty or undefined results) and will mix link references (`2.x` internally) with text content (`1.x`) without distinguishing them. The finding prescribes per-span iteration as the correct access pattern.
 
-**Why it matters for spec**: This establishes a usage precondition for document content access: correct iteration requires the spanset form, not the single-span form. Combined with the subspace convention (INV-SUBSPACE-CONVENTION), this means a caller must (1) retrieve the vspanset, (2) identify spans by subspace (`V < 1.0` → links, `V >= 1.0` → text), and (3) use appropriate retrieval operations per subspace. The spec for any "retrieve all content" operation should reference this two-step pattern.
+**Why it matters for spec**: This establishes a usage precondition for document content access: correct iteration requires the spanset form, not the single-span form. Combined with the subspace convention (INV-SUBSPACE-CONVENTION), this means a caller must (1) retrieve the vspanset, (2) identify spans by subspace (`V` in `2.x` → links, `V` in `1.x` → text), and (3) use appropriate retrieval operations per subspace. The spec for any "retrieve all content" operation should reference this two-step pattern.
 
 **Code references**:
 - Golden tests: `golden/documents/retrieve_vspan*.json`
@@ -2904,21 +2905,21 @@ Result: TEXTATOM content at V:2.1 (link subspace)
 
 #### Finding 0009
 
-**What happens**: The system enforces by convention (not by runtime check) that V-positions `0.x` contain only link orgl ISAs as I-addresses, and V-positions `1.x` contain only permascroll I-addresses. No code in the enfilade storage path validates this invariant — it is maintained by callers (`docreatelink` writes to `0.x`, `doinsert`/`docopy` for text writes to `1.x`). The `permute()`, `retrieverestricted()`, and `docopy()` functions are all type-agnostic.
+**What happens**: The system enforces by convention (not by runtime check) that V-positions `2.x` contain only link orgl ISAs as I-addresses, and V-positions `1.x` contain only permascroll I-addresses. No code in the enfilade storage path validates this invariant — it is maintained by callers (`docreatelink` writes to `2.x`, `doinsert`/`docopy` for text writes to `1.x`). The `permute()`, `retrieverestricted()`, and `docopy()` functions are all type-agnostic.
 
 **Why it matters for spec**: This is a convention-over-enforcement invariant. The spec should state it as a property that holds across all well-formed operations, but note that the storage layer does not enforce it. This is the kind of invariant that Dafny can verify as a postcondition of each operation rather than as a storage-layer check.
 
 **Code references**:
-- `do1.c:215-216` — `findnextlinkvsa` + `docopy` for link storage (caller ensures `0.x`)
-- `do2.c:151-167` — `findnextlinkvsa` hardcodes first link at `0.1`
+- `do1.c:215-216` — `findnextlinkvsa` + `docopy` for link storage (caller ensures `2.x`)
+- `do2.c:151-167` — `findnextlinkvsa` hardcodes first link at `2.1`
 
 **Provenance**: Finding 0009
 
 #### Finding 0010
 
-**What happens**: The unified enfilade storage model treats all V→I mappings identically — `insertpm`, `docopy`, `retrieverestricted`, and `permute` are all type-agnostic. The convention that V-position `0.x` holds link orgl ISAs and `1.x` holds permascroll I-addresses is enforced solely by callers. The validation function `acceptablevsa()` in `do2.c:110-113` unconditionally returns `TRUE`, providing no runtime enforcement. This means it is possible to: (a) insert text at position `0.x`, corrupting the link subspace; (b) insert link references at position `1.x`, corrupting the text subspace; (c) create semantically invalid documents that violate the subspace convention.
+**What happens**: The unified enfilade storage model treats all V→I mappings identically — `insertpm`, `docopy`, `retrieverestricted`, and `permute` are all type-agnostic. The convention that V-position `2.x` holds link orgl ISAs and `1.x` holds permascroll I-addresses is enforced solely by callers. The validation function `acceptablevsa()` in `do2.c:110-113` unconditionally returns `TRUE`, providing no runtime enforcement. This means it is possible to: (a) insert text at position `2.x`, corrupting the link subspace; (b) insert link references at position `1.x`, corrupting the text subspace; (c) create semantically invalid documents that violate the subspace convention.
 
-**Why it matters for spec**: The convention-over-enforcement design means the subspace invariant is not a storage-layer property but a property that must be verified as a postcondition of every well-formed operation. In Dafny, this would be modeled as a `requires` clause on document mutation operations asserting that text content targets `V >= 1.0` and link references target `V < 1.0`. The `acceptablevsa` stub is a clear signal that enforcement was intended but never implemented.
+**Why it matters for spec**: The convention-over-enforcement design means the subspace invariant is not a storage-layer property but a property that must be verified as a postcondition of every well-formed operation. In Dafny, this would be modeled as a `requires` clause on document mutation operations asserting that text content targets `V` in subspace `1.x` and link references target `V` in subspace `2.x`. The `acceptablevsa` stub is a clear signal that enforcement was intended but never implemented.
 
 **Code references**:
 - `do2.c:110-113` — `acceptablevsa()` always returns `TRUE`
@@ -2929,10 +2930,10 @@ Result: TEXTATOM content at V:2.1 (link subspace)
 ```
 acceptablevsa(vsaptr, orglptr) always returns TRUE
 
-Consequence: docopy(doc, vsa=0.5, text_ispanset) succeeds
+Consequence: docopy(doc, vsa=2.5, text_ispanset) succeeds
   → permascroll I-address stored in link subspace
-  → retrieve_contents on 0.x returns garbage (permascroll addr treated as link ISA)
-  → find_links on 0.x finds no valid link orgl
+  → retrieve_contents on 2.x returns garbage (permascroll addr treated as link ISA)
+  → find_links on 2.x finds no valid link orgl
 
 Similarly: docopy(doc, vsa=1.5, link_ispanset) succeeds
   → link orgl ISA stored in text subspace
@@ -2943,9 +2944,9 @@ Similarly: docopy(doc, vsa=1.5, link_ispanset) succeeds
 
 #### Finding 0011
 
-**What happens:** The subspace convention (V-position 0.x = links, 1.x = text) is a social contract enforced by convention, not by runtime checks. The unified enfilade storage treats all data uniformly — the system does not distinguish between link I-addresses and content I-addresses at the type level. Both are just tumblers. Dereferencing a link ISA as content produces garbage, but no error is raised.
+**What happens:** The subspace convention (V-position 2.x = links, 1.x = text) is a social contract enforced by convention, not by runtime checks. The unified enfilade storage treats all data uniformly — the system does not distinguish between link I-addresses and content I-addresses at the type level. Both are just tumblers. Dereferencing a link ISA as content produces garbage, but no error is raised.
 
-**Why it matters for spec:** The formal specification must model subspace membership as a type-level distinction even though the implementation uses untyped tumblers. This invariant — that data at 0.x V-positions are links and data at 1.x V-positions are text — must be stated as a global invariant in the spec. Every operation that reads or writes V-positions should preserve this invariant. The spec makes explicit what the code leaves implicit.
+**Why it matters for spec:** The formal specification must model subspace membership as a type-level distinction even though the implementation uses untyped tumblers. This invariant — that data at 2.x V-positions are links and data at 1.x V-positions are text — must be stated as a global invariant in the spec. Every operation that reads or writes V-positions should preserve this invariant. The spec makes explicit what the code leaves implicit.
 
 **Code references:**
 - `backend/green/do2.c:110-113` — `acceptablevsa` does not enforce subspace rules
@@ -2959,7 +2960,7 @@ Similarly: docopy(doc, vsa=1.5, link_ispanset) succeeds
 
 | V-Position | Contains | I-Address Type | Has "Common Origin"? | Included in compare_versions? |
 |------------|----------|----------------|---------------------|-------------------------------|
-| 0.x | Link references | Link orgl ISAs | No | No |
+| 2.x | Link references | Link orgl ISAs | No | No |
 | 1.x | Text content | Permascroll addresses | Yes | Yes |
 
 Links have no "common origin" for three reasons: (1) link ISAs are unique identities, not content origins — two documents cannot share the same link ISA via transclusion; (2) links are metadata about content, not content itself; (3) comparing link ISAs is semantically undefined — even if they matched, it wouldn't mean "shared content."
@@ -3087,7 +3088,7 @@ Each subspace is a self-contained shift domain. This is a structural consequence
 
 #### Finding 0009
 
-**What happens**: When a link is created via `docreatelink`, the operation: (1) creates a new link orgl via `createorglingranf()`, yielding a fresh ISA; (2) converts that ISA to an ispanset via `tumbler2spanset()`; (3) finds the next available V-position in the `0.x` subspace via `findnextlinkvsa()`; (4) copies the link's ISA into the document at that position via `docopy()`. This means link creation is a state transition that modifies **both** the link orgl space (new orgl) and the document's V-space (new entry in `0.x` subspace).
+**What happens**: When a link is created via `docreatelink`, the operation: (1) creates a new link orgl via `createorglingranf()`, yielding a fresh ISA; (2) converts that ISA to an ispanset via `tumbler2spanset()`; (3) finds the next available V-position in the `2.x` subspace via `findnextlinkvsa()`; (4) copies the link's ISA into the document at that position via `docopy()`. This means link creation is a state transition that modifies **both** the link orgl space (new orgl) and the document's V-space (new entry in `2.x` subspace).
 
 **Why it matters for spec**: Link creation is a compound state transition — it creates a new object AND modifies an existing document. The postcondition must specify both effects. Notably, `docopy()` is the same function used for text transclusion, so the spec for `docopy` must be parameterized over both text and link-reference use cases.
 
@@ -3107,7 +3108,7 @@ docreatelink(doc=1.1.0.1.0.1, ...)
 Post-state:
   New link orgl created at ISA 1.1.0.1.0.2
   Document 1.1.0.1.0.1 now has:
-    V-position 0.1 → I-address 1.1.0.1.0.2 (link reference)
+    V-position 2.1 → I-address 1.1.0.1.0.2 (link reference)
     V-positions 1.x → permascroll I-addresses (text, unchanged)
 ```
 
@@ -3781,22 +3782,22 @@ After:  version at 1.1.0.1.0.1.1 contains "Hello world" (same I-addresses α₁.
 
 #### Finding 0043
 
-**What happens**: `CREATENEWVERSION(d)` copies only the text subspace (`1.x` V-positions) from the source document's POOM into the new version. The link subspace (`0.x` / internally `2.x`) is not copied. The mechanism is in `docreatenewversion` which calls `doretrievedocvspanfoo` to obtain a single vspan, then passes it to `docopyinternal`. The function `retrievedocumentpartofvspanpm` returns only the document's V-dimension displacement and width — `cdsp.dsas[V]` and `cwid.dsas[V]` — which point to position `1` (the text subspace start). The link subspace at positions before `1` is structurally outside this vspan.
+**What happens**: `CREATENEWVERSION(d)` copies only the text subspace (`1.x` V-positions) from the source document's POOM into the new version. The link subspace (`2.x`) is not copied. The mechanism is in `docreatenewversion` which calls `doretrievedocvspanfoo` to obtain a single vspan, then passes it to `docopyinternal`. The function `retrievedocumentpartofvspanpm` returns only the document's V-dimension displacement and width — `cdsp.dsas[V]` and `cwid.dsas[V]` — which point to position `1` (the text subspace start). The link subspace at positions before `1` is structurally outside this vspan.
 
 **Why it matters for spec**: This refines the ST-VERSION-CREATE postcondition from finding 0007. The postcondition is not `references(version) = references(original)` unconditionally — it is `text_references(version) = text_references(original) AND link_references(version) = {}`. The version starts with all text content identity from the original but an empty link subspace. This is intentional behavior. The formal spec must distinguish between text-subspace copying (which happens) and link-subspace copying (which does not).
 
 **Concrete example**:
 ```
 Pre-state:
-  Source document vspanset:
-    at 0 for 0.1    (link subspace — link orgl ISA)
+  Source document vspanset (normalized output):
+    at 0 for 0.1    (link subspace — link orgl ISA; "0" is normalized output, internal V-position is 2.x)
     at 1 for 1      (text subspace — permascroll I-addresses)
 
 CREATENEWVERSION(source) → version
 
 Post-state:
   Version vspanset: at 1.1 for 0.15   (text subspace only)
-  Source vspanset:  at 0 for 0.1, at 1 for 1   (unchanged)
+  Source vspanset (normalized output):  at 0 for 0.1, at 1 for 1   (unchanged)
 ```
 
 **Code references**:
@@ -3821,8 +3822,8 @@ Post-state:
 **Concrete example:**
 ```
 Original document:
-  vspanset = [{start: "0", width: "0.1"}, {start: "1", width: "1"}]
-  (links at 0.x, text at 1.x)
+  vspanset (normalized output) = [{start: "0", width: "0.1"}, {start: "1", width: "1"}]
+  (links at 2.x internally, normalized to 0.x in output; text at 1.x)
 
 After CREATENEWVERSION:
   Version vspanset = [{start: "1.1", width: "0.34"}]
@@ -3864,7 +3865,7 @@ Without an explicit version, no prior state is recoverable. This is a hard const
 
 #### Finding 0012
 
-**What happens:** Link creation (`docreatelink`) is a compound state transition that updates both enfilades atomically: (1) create a link orgl in `granf` via `createorglingranf()`; (2) copy the link's ISA reference into the document's link subspace (`0.x`) via `docopy()`; (3) index all link endpoints in `spanf` via `insertendsetsinspanf()`. This three-step sequence modifies both `granf` (new orgl + document modification) and `spanf` (new index entries).
+**What happens:** Link creation (`docreatelink`) is a compound state transition that updates both enfilades atomically: (1) create a link orgl in `granf` via `createorglingranf()`; (2) copy the link's ISA reference into the document's link subspace (`2.x`) via `docopy()`; (3) index all link endpoints in `spanf` via `insertendsetsinspanf()`. This three-step sequence modifies both `granf` (new orgl + document modification) and `spanf` (new index entries).
 
 **Why it matters for spec:** This is the only documented operation that writes to both enfilades. The postcondition must specify effects on both: `granf' = granf + {new_link_orgl} + doc_updated` AND `spanf' = spanf + {endpoint_i_addrs → new_link}`. The precondition is that the document and endpoint content must exist in `granf`. This compound transition is where the dual-enfilade consistency invariant (INV-DUAL-ENFILADE-CONSISTENCY) is most at risk.
 
@@ -3880,7 +3881,7 @@ Pre-state:
 docreatelink(doc=1.1.0.1.0.1, from=..., to=..., three=...)
 
 Post-state:
-  granf: document orgl updated (0.1 → link ISA 1.1.0.1.0.2)
+  granf: document orgl updated (V 2.1 → link ISA 1.1.0.1.0.2)
        + new link orgl at ISA 1.1.0.1.0.2
   spanf: from-endpoint I-addrs → 1.1.0.1.0.2
        + to-endpoint I-addrs → 1.1.0.1.0.2
@@ -4142,11 +4143,11 @@ After DELETE("Findable" from Dest):
 
 #### Finding 0024
 
-**What happens:** Finding 0024 confirms and extends the delete postcondition: deletion removes content from the V-stream but preserves link objects in the 0.2.x subspace. After deleting all text from a document that contains links, the links remain accessible. The document's vspanset still shows link spans even when all text spans are gone.
+**What happens:** Finding 0024 confirms and extends the delete postcondition: deletion removes content from the V-stream but preserves link objects in the 2.x subspace. After deleting all text from a document that contains links, the links remain accessible. The document's vspanset still shows link spans even when all text spans are gone.
 
 This is consistent with Finding 0023's characterization of delete as V-stream-only, and adds the link dimension: delete affects neither I-address associations (Finding 0023) nor link objects stored in the document (Finding 0024).
 
-**Why it matters for spec:** Extends the ST-DELETE postcondition: `delete(D, span) ⟹ link_spans(D)_after = link_spans(D)_before`. Delete operates exclusively on the text subspace (1.x); the link subspace (0.2.x) is a frame condition for delete.
+**Why it matters for spec:** Extends the ST-DELETE postcondition: `delete(D, span) ⟹ link_spans(D)_after = link_spans(D)_before`. Delete operates exclusively on the text subspace (1.x); the link subspace (2.x) is a frame condition for delete.
 
 **Provenance:** Finding 0024, Semantic Insight 2 and Technical Discovery 2.
 
@@ -4165,7 +4166,7 @@ This extends the known DELETE behavior: just as deleting text at 1.x removes tex
 **Concrete example:**
 ```
 Pre-state:
-  doc vspanset: [{"start": "0", "width": "0.1"}, {"start": "1", "width": "1"}]
+  doc vspanset (normalized output): [{"start": "0", "width": "0.1"}, {"start": "1", "width": "1"}]
 
 Operation: session.delete(doc, Address(2, 1), Offset(0, 1))
 Result: SUCCESS
@@ -4773,7 +4774,7 @@ INSERT "DEF" at v+0.3:
 
 This separation enables third-party linking: a link can be stored in document A while connecting content in documents B and C. The home document is the link's container, not its subject.
 
-**Why it matters for spec:** Frame condition for delete operations: `∀ link, D_home :: delete_text(D_home) ⟹ link.source_unchanged ∧ link.target_unchanged ∧ link.type_unchanged` when the deletion targets D_home's text subspace (1.x) rather than its link subspace (0.2.x). This is a consequence of subspace isolation — operations on text spans cannot affect link spans.
+**Why it matters for spec:** Frame condition for delete operations: `∀ link, D_home :: delete_text(D_home) ⟹ link.source_unchanged ∧ link.target_unchanged ∧ link.type_unchanged` when the deletion targets D_home's text subspace (1.x) rather than its link subspace (2.x). This is a consequence of subspace isolation — operations on text spans cannot affect link spans.
 
 **Concrete example:**
 ```
@@ -4801,19 +4802,19 @@ After deleting ALL text from doc_A:
 
 #### Finding 0009
 
-**What happens**: The link subspace (`0.x`) and text subspace (`1.x`) are independent partitions of the document's V-space. Operations on one subspace should not affect the other. Evidence: after link creation, text content at `1.x` is preserved while a new entry appears at `0.x`. The `findnextlinkvsa()` function only considers positions in the `0.x` range, and text insertion only considers positions in the `1.x` range.
+**What happens**: The link subspace (`2.x` internally) and text subspace (`1.x`) are independent partitions of the document's V-space. Operations on one subspace should not affect the other. Evidence: after link creation, text content at `1.x` is preserved while a new entry appears at `2.x`. The `findnextlinkvsa()` function only considers positions in the `2.x` range, and text insertion only considers positions in the `1.x` range.
 
 **Why it matters for spec**: This is a frame condition — link creation does not modify text content, and text insertion does not modify link references. The spec should state that operations on one subspace preserve the other subspace unchanged.
 
 **Code references**:
-- `do2.c:151-167` — `findnextlinkvsa()` scoped to `0.x`
-- `do1.c:199-225` — `docreatelink()` writes only to `0.x`
+- `do2.c:151-167` — `findnextlinkvsa()` scoped to `2.x`
+- `do1.c:199-225` — `docreatelink()` writes only to `2.x`
 
 **Concrete example**:
 ```
 Before: V-range 1.1..1.16 → permascroll addresses (text)
 After docreatelink:
-  V-range 0.1 → link ISA (new)
+  V-range 2.1 → link ISA (new)
   V-range 1.x → permascroll addresses (unchanged)
 ```
 
@@ -4832,24 +4833,24 @@ After docreatelink:
 **Concrete example**:
 ```
 Pre-state:
-  Text at 1.1..1.10 ("HelloWorld"), link at 0.x
-  Vspanset: [{"start": "0", "width": "0.1"}, {"start": "1", "width": "1"}]
+  Text at 1.1..1.10 ("HelloWorld"), link at 2.x (internally)
+  Vspanset (normalized output): [{"start": "0", "width": "0.1"}, {"start": "1", "width": "1"}]
 
 doinsert("XXXXX", at V-position 1.5)
 
 Post-state:
   Text at 1.1..1.15 ("HellXXXXXoWorld")
-  Vspanset: [{"start": "0", "width": "0.10"}, {"start": "1", "width": "1"}]
-  Link span UNCHANGED — still "0" with width "0.10"
+  Vspanset (normalized output): [{"start": "0", "width": "0.10"}, {"start": "1", "width": "1"}]
+  Link span UNCHANGED — still "0" in normalized output (internal 2.x)
 ```
 
 **Provenance**: Finding 0038
 
 #### Finding 0043
 
-**What happens**: CREATENEWVERSION preserves the source document's link subspace unchanged while copying the text subspace to the version. The source document's vspanset (including its `0.x` link entries) is unmodified after version creation. The version receives a new, empty link subspace — it has no POOM-level link entries. This is an asymmetric frame condition: the source's link subspace is preserved (standard frame condition), and the version's link subspace is initialized to empty (postcondition on the new document).
+**What happens**: CREATENEWVERSION preserves the source document's link subspace unchanged while copying the text subspace to the version. The source document's vspanset (including its link entries at `2.x` internally) is unmodified after version creation. The version receives a new, empty link subspace — it has no POOM-level link entries. This is an asymmetric frame condition: the source's link subspace is preserved (standard frame condition), and the version's link subspace is initialized to empty (postcondition on the new document).
 
-**Why it matters for spec**: This extends FC-SUBSPACE beyond single-document operations to cover version creation. The frame condition is: `link_subspace(source)` is unchanged by `CREATENEWVERSION(source)`. The postcondition adds: `link_subspace(version) = {}`. For Dafny, this can be verified as part of the version-create postcondition — the version's POOM projection onto subspace `0.x`/`2.x` is empty.
+**Why it matters for spec**: This extends FC-SUBSPACE beyond single-document operations to cover version creation. The frame condition is: `link_subspace(source)` is unchanged by `CREATENEWVERSION(source)`. The postcondition adds: `link_subspace(version) = {}`. For Dafny, this can be verified as part of the version-create postcondition — the version's POOM projection onto subspace `2.x` is empty.
 
 **Code references**:
 - `do1.c:264-303` — `docreatenewversion()` only copies the vspan from `retrievedocumentpartofvspanpm`, which excludes links
@@ -5138,7 +5139,7 @@ The following sections of Finding 0016 are omitted:
 - `follow_link(link_id, LINK_SOURCE)` returns the correct source endpoint (link orgl intact)
 - Direct link ID access bypasses POOM entirely
 
-This is the converse of the text-delete frame condition: where text deletion preserves link objects in the 0.2.x subspace (Finding 0024), link-subspace deletion preserves link objects in I-space and spanfilade.
+This is the converse of the text-delete frame condition: where text deletion preserves link objects in the 2.x subspace (Finding 0024), link-subspace deletion preserves link objects in I-space and spanfilade.
 
 **Why it matters for spec:** Frame condition: `delete(D, 2.x, r) ⟹ ispace' = ispace ∧ spanfilade' = spanfilade`. The POOM is the only mutable layer for links. This is the critical frame condition distinguishing POOM removal from link destruction — the two are not equivalent.
 
@@ -5538,21 +5539,21 @@ The invariant: a link's endset always covers exactly the surviving content that 
 
 #### Finding 0009
 
-**What happens**: The system enforces by convention (not by runtime check) that V-positions `0.x` contain only link orgl ISAs as I-addresses, and V-positions `1.x` contain only permascroll I-addresses. No code in the enfilade storage path validates this invariant — it is maintained by callers (`docreatelink` writes to `0.x`, `doinsert`/`docopy` for text writes to `1.x`). The `permute()`, `retrieverestricted()`, and `docopy()` functions are all type-agnostic.
+**What happens**: The system enforces by convention (not by runtime check) that V-positions `2.x` contain only link orgl ISAs as I-addresses, and V-positions `1.x` contain only permascroll I-addresses. No code in the enfilade storage path validates this invariant — it is maintained by callers (`docreatelink` writes to `2.x`, `doinsert`/`docopy` for text writes to `1.x`). The `permute()`, `retrieverestricted()`, and `docopy()` functions are all type-agnostic.
 
 **Why it matters for spec**: This is a convention-over-enforcement invariant. The spec should state it as a property that holds across all well-formed operations, but note that the storage layer does not enforce it. This is the kind of invariant that Dafny can verify as a postcondition of each operation rather than as a storage-layer check.
 
 **Code references**:
-- `do1.c:215-216` — `findnextlinkvsa` + `docopy` for link storage (caller ensures `0.x`)
-- `do2.c:151-167` — `findnextlinkvsa` hardcodes first link at `0.1`
+- `do1.c:215-216` — `findnextlinkvsa` + `docopy` for link storage (caller ensures `2.x`)
+- `do2.c:151-167` — `findnextlinkvsa` hardcodes first link at `2.1`
 
 **Provenance**: Finding 0009
 
 #### Finding 0010
 
-**What happens**: The unified enfilade storage model treats all V→I mappings identically — `insertpm`, `docopy`, `retrieverestricted`, and `permute` are all type-agnostic. The convention that V-position `0.x` holds link orgl ISAs and `1.x` holds permascroll I-addresses is enforced solely by callers. The validation function `acceptablevsa()` in `do2.c:110-113` unconditionally returns `TRUE`, providing no runtime enforcement. This means it is possible to: (a) insert text at position `0.x`, corrupting the link subspace; (b) insert link references at position `1.x`, corrupting the text subspace; (c) create semantically invalid documents that violate the subspace convention.
+**What happens**: The unified enfilade storage model treats all V→I mappings identically — `insertpm`, `docopy`, `retrieverestricted`, and `permute` are all type-agnostic. The convention that V-position `2.x` holds link orgl ISAs and `1.x` holds permascroll I-addresses is enforced solely by callers. The validation function `acceptablevsa()` in `do2.c:110-113` unconditionally returns `TRUE`, providing no runtime enforcement. This means it is possible to: (a) insert text at position `2.x`, corrupting the link subspace; (b) insert link references at position `1.x`, corrupting the text subspace; (c) create semantically invalid documents that violate the subspace convention.
 
-**Why it matters for spec**: The convention-over-enforcement design means the subspace invariant is not a storage-layer property but a property that must be verified as a postcondition of every well-formed operation. In Dafny, this would be modeled as a `requires` clause on document mutation operations asserting that text content targets `V >= 1.0` and link references target `V < 1.0`. The `acceptablevsa` stub is a clear signal that enforcement was intended but never implemented.
+**Why it matters for spec**: The convention-over-enforcement design means the subspace invariant is not a storage-layer property but a property that must be verified as a postcondition of every well-formed operation. In Dafny, this would be modeled as a `requires` clause on document mutation operations asserting that text content targets `V` in subspace `1.x` and link references target `V` in subspace `2.x`. The `acceptablevsa` stub is a clear signal that enforcement was intended but never implemented.
 
 **Code references**:
 - `do2.c:110-113` — `acceptablevsa()` always returns `TRUE`
@@ -5563,10 +5564,10 @@ The invariant: a link's endset always covers exactly the surviving content that 
 ```
 acceptablevsa(vsaptr, orglptr) always returns TRUE
 
-Consequence: docopy(doc, vsa=0.5, text_ispanset) succeeds
+Consequence: docopy(doc, vsa=2.5, text_ispanset) succeeds
   → permascroll I-address stored in link subspace
-  → retrieve_contents on 0.x returns garbage (permascroll addr treated as link ISA)
-  → find_links on 0.x finds no valid link orgl
+  → retrieve_contents on 2.x returns garbage (permascroll addr treated as link ISA)
+  → find_links on 2.x finds no valid link orgl
 
 Similarly: docopy(doc, vsa=1.5, link_ispanset) succeeds
   → link orgl ISA stored in text subspace
@@ -5577,9 +5578,9 @@ Similarly: docopy(doc, vsa=1.5, link_ispanset) succeeds
 
 #### Finding 0011
 
-**What happens:** The subspace convention (V-position 0.x = links, 1.x = text) is a social contract enforced by convention, not by runtime checks. The unified enfilade storage treats all data uniformly — the system does not distinguish between link I-addresses and content I-addresses at the type level. Both are just tumblers. Dereferencing a link ISA as content produces garbage, but no error is raised.
+**What happens:** The subspace convention (V-position 2.x = links, 1.x = text) is a social contract enforced by convention, not by runtime checks. The unified enfilade storage treats all data uniformly — the system does not distinguish between link I-addresses and content I-addresses at the type level. Both are just tumblers. Dereferencing a link ISA as content produces garbage, but no error is raised.
 
-**Why it matters for spec:** The formal specification must model subspace membership as a type-level distinction even though the implementation uses untyped tumblers. This invariant — that data at 0.x V-positions are links and data at 1.x V-positions are text — must be stated as a global invariant in the spec. Every operation that reads or writes V-positions should preserve this invariant. The spec makes explicit what the code leaves implicit.
+**Why it matters for spec:** The formal specification must model subspace membership as a type-level distinction even though the implementation uses untyped tumblers. This invariant — that data at 2.x V-positions are links and data at 1.x V-positions are text — must be stated as a global invariant in the spec. Every operation that reads or writes V-positions should preserve this invariant. The spec makes explicit what the code leaves implicit.
 
 **Code references:**
 - `backend/green/do2.c:110-113` — `acceptablevsa` does not enforce subspace rules
@@ -5593,7 +5594,7 @@ Similarly: docopy(doc, vsa=1.5, link_ispanset) succeeds
 
 | V-Position | Contains | I-Address Type | Has "Common Origin"? | Included in compare_versions? |
 |------------|----------|----------------|---------------------|-------------------------------|
-| 0.x | Link references | Link orgl ISAs | No | No |
+| 2.x | Link references | Link orgl ISAs | No | No |
 | 1.x | Text content | Permascroll addresses | Yes | Yes |
 
 Links have no "common origin" for three reasons: (1) link ISAs are unique identities, not content origins — two documents cannot share the same link ISA via transclusion; (2) links are metadata about content, not content itself; (3) comparing link ISAs is semantically undefined — even if they matched, it wouldn't mean "shared content."
@@ -7063,12 +7064,12 @@ This is the same mechanism that causes endset fragmentation after pivot operatio
 
 **What happens**: Despite CREATENEWVERSION not copying link subspace entries to the version's POOM, `find_links` still works on the version. This is because link discovery operates on content identity (I-addresses), not POOM structure. The version shares permascroll I-addresses with the source (via the text subspace copy), and links are indexed by those I-addresses. The `find_links` operation searches I-space for links whose endpoints intersect the query's I-addresses, so any document sharing content identity with a linked document will discover those links — regardless of whether that document has link subspace entries in its own POOM.
 
-**Why it matters for spec**: The formal spec must model two completely independent mechanisms: (1) POOM link storage — the `0.x`/`2.x` subspace storing link orgl ISAs within a document, and (2) link discovery — the `find_links` operation that searches by content identity intersection. These are decoupled: a document can have no link subspace entries but still return links via `find_links`, because link discovery is content-identity-based. The spec should state: `find_links(doc) = {L | L.endpoint_content ∩ content_ids(doc) ≠ ∅}`, independent of `link_subspace(doc)`.
+**Why it matters for spec**: The formal spec must model two completely independent mechanisms: (1) POOM link storage — the `2.x` subspace storing link orgl ISAs within a document, and (2) link discovery — the `find_links` operation that searches by content identity intersection. These are decoupled: a document can have no link subspace entries but still return links via `find_links`, because link discovery is content-identity-based. The spec should state: `find_links(doc) = {L | L.endpoint_content ∩ content_ids(doc) ≠ ∅}`, independent of `link_subspace(doc)`.
 
 **Concrete example**:
 ```
 Source (has link "here" on "Click here for info"):
-  POOM: at 0 for 0.1 (link), at 1 for 1 (text)
+  POOM: at 0 for 0.1 (link — normalized output; internal 2.x), at 1 for 1 (text)
   find_links → [link_id]
 
 Version of source:
@@ -7212,7 +7213,7 @@ find_links(Version) → [link₁]  (same link, via shared I-addresses)
 
 **Source:** Finding 0010
 
-**What happens**: The `find_links` operation searches the span-f (link enfilade) by I-address to discover which links are attached to content. This only works with permascroll I-addresses from the text subspace (`1.x`). Searching with link ISAs from `0.x` is meaningless — link orgls are not indexed by other link ISAs. The caller must know to use text I-addresses, not link reference I-addresses.
+**What happens**: The `find_links` operation searches the span-f (link enfilade) by I-address to discover which links are attached to content. This only works with permascroll I-addresses from the text subspace (`1.x`). Searching with link ISAs from `2.x` is meaningless — link orgls are not indexed by other link ISAs. The caller must know to use text I-addresses, not link reference I-addresses.
 
 **Why it matters for spec**: The spec for `find_links` must state a precondition that the search I-addresses are permascroll addresses (from text subspace), not link orgl ISAs. This creates a dependency between the retrieval subsystem and the subspace convention — `find_links` implicitly requires the caller to understand the dual-enfilade structure.
 
@@ -7648,7 +7649,7 @@ The following sections of Finding 0006 are omitted from analysis:
 
 #### Finding 0009
 
-**What happens**: The `compare_versions` operation assumes a uniform content model: convert V-spans to I-spans for both documents, intersect I-spans to find shared content, map back to V-spans. When the document contains links, the `0.x` V-subspace produces link orgl ISAs as I-addresses. These are in a completely different address space from permascroll I-addresses and will never intersect with text I-addresses. The code paths in `correspond.c` do not handle the case where some V-spans produce no common I-spans, leading to crashes. The nested loop structure in `correspond.c` assumes each ispan matches at most one vspec, which the link subspace violates.
+**What happens**: The `compare_versions` operation assumes a uniform content model: convert V-spans to I-spans for both documents, intersect I-spans to find shared content, map back to V-spans. When the document contains links, the `2.x` V-subspace produces link orgl ISAs as I-addresses. These are in a completely different address space from permascroll I-addresses and will never intersect with text I-addresses. The code paths in `correspond.c` do not handle the case where some V-spans produce no common I-spans, leading to crashes. The nested loop structure in `correspond.c` assumes each ispan matches at most one vspec, which the link subspace violates.
 
 **Why it matters for spec**: This is a precondition violation — `compare_versions` requires that its input V-spans come only from the text subspace (`1.x`). Alternatively, the spec could require `compare_versions` to filter to text subspace before comparison. Either way, the formal spec must make explicit that I-span intersection is only meaningful within the same I-address type.
 
@@ -7658,11 +7659,11 @@ The following sections of Finding 0006 are omitted from analysis:
 
 **Concrete example**:
 ```
-Document A vspanset after link: at 0 for 0.1, at 1 for 1
+Document A vspanset after link: at 0 for 0.1, at 1 for 1  (normalized output; internal link position is 2.x)
 Document B vspanset (text only): at 1.1 for 0.16
 
 compare_versions(A, B):
-  A's 0.x → I-addresses are link ISAs (e.g., 1.1.0.1.0.2)
+  A's 2.x → I-addresses are link ISAs (e.g., 1.1.0.1.0.2)
   B's 1.x → I-addresses are permascroll (e.g., 2.1.0.5.0.1)
   Intersection of link ISAs ∩ permascroll = empty
   → correspond.c loop encounters empty match → crash
@@ -7748,17 +7749,17 @@ When all children of a 2D enfilade are deleted, `setwispnd` clears both `cdsp` a
 
 **Source:** Finding 0010
 
-**What happens**: The `retrieve_vspanset` operation returns the full V-extent of a document, including both the link subspace (`0.x`) and text subspace (`1.x`). Any caller that uses "full document extent" as input to another operation (compare_versions, vcopy, retrieve_contents) inadvertently includes link references. This is the root cause of multiple abstraction leaks: the unified storage model provides no built-in way to request "text content only."
+**What happens**: The `retrieve_vspanset` operation returns the full V-extent of a document, including both the link subspace (`2.x` internally, normalized to `0.x` in output) and text subspace (`1.x`). Any caller that uses "full document extent" as input to another operation (compare_versions, vcopy, retrieve_contents) inadvertently includes link references. This is the root cause of multiple abstraction leaks: the unified storage model provides no built-in way to request "text content only."
 
 **Why it matters for spec**: The spec should either: (a) define `retrieve_vspanset` as returning all subspaces and require callers to filter, or (b) provide a variant that returns text-only spans. Either choice creates a formal obligation — if (a), every operation using vspanset results must state a subspace precondition; if (b), the variant's postcondition must guarantee `V >= 1.0` for all returned spans.
 
 **Code references**:
-- Debug output evidence: `<VSpec in 1.1.0.1.0.1, at 0 for 0.1, at 1 for 1>` (both subspaces)
+- Debug output evidence: `<VSpec in 1.1.0.1.0.1, at 0 for 0.1, at 1 for 1>` (both subspaces; "0" is normalized output, internal link position is 2.x)
 
 **Concrete example**:
 ```
 Document with text and one link:
-  retrieve_vspanset → {V 0.1 for 0.1, V 1.1 for 0.16}
+  retrieve_vspanset → {V 0.1 for 0.1, V 1.1 for 0.16}  (0.1 is normalized output; internal position is 2.1)
 
 Caller uses full vspanset for compare_versions → crash (Bug 0009)
 Caller uses full vspanset for vcopy → copies link ISAs as text
@@ -7796,7 +7797,7 @@ Caller uses full vspanset for retrieve_contents → garbage bytes for link entri
 
 #### Finding 0017
 
-**What happens**: For a document containing both text and links, `retrieve_vspan` returns a single span that bridges the link subspace (`0.x`) and text subspace (`1.x`). The example shows a span `1.1 for 1.2`, which implies continuous content from position `1.1` to position `2.3`. In reality, there is a gap — positions between `0.x` and `1.x` are in different subspaces and do not represent contiguous content. Using this span for size calculation or content iteration will yield incorrect results: the span's width overstates the actual content extent.
+**What happens**: For a document containing both text and links, `retrieve_vspan` returns a single span that bridges the link subspace (`2.x` internally) and text subspace (`1.x`). The example shows a span `1.1 for 1.2`, which implies continuous content from position `1.1` to position `2.3`. In reality, there is a gap — positions between subspaces `1.x` and `2.x` are not necessarily occupied, and the subspaces do not represent contiguous content. Using this span for size calculation or content iteration will yield incorrect results: the span's width overstates the actual content extent.
 
 **Why it matters for spec**: The bounding span returned by `retrieve_vspan` does not satisfy a contiguity invariant — the V-addresses within the span are not necessarily occupied. The formal spec should distinguish between a *bounding span* (smallest span containing all content) and a *content span* (span where every V-position maps to an I-address). The `retrieve_vspan` result is the former, while individual spans in a `retrieve_vspanset` result are the latter.
 
@@ -7808,14 +7809,14 @@ Caller uses full vspanset for retrieve_contents → garbage bytes for link entri
 retrieve_vspan returns: 1.1 for 1.2
   Naive size interpretation: 1.2 units of content
   Actual content: 0.1 units in link subspace + ~1.0 units in text subspace
-  Gap: V-positions between 0.x and 1.x are unoccupied
+  Gap: V-positions between subspaces 1.x and 2.x are unoccupied
 ```
 
 **Provenance**: Finding 0017
 
 #### Finding 0035
 
-**What happens:** RETRIEVEDOCVSPAN returns a raw bounding-box width for documents containing links. For a document with 10 chars of text and 1 link, it returns `1.1 for 1.2` — a width that spans both the link subspace (0.x) and text subspace (1.x). This value is neither the text extent nor the link extent; it is the root node's V-dimension width, an internal structural artifact.
+**What happens:** RETRIEVEDOCVSPAN returns a raw bounding-box width for documents containing links. For a document with 10 chars of text and 1 link, it returns `1.1 for 1.2` — a width that spans both the link subspace (internally 2.x) and text subspace (1.x). This value is neither the text extent nor the link extent; it is the root node's V-dimension width, an internal structural artifact.
 
 **Why it matters for spec:** A precondition for any spec relying on document extent must specify which operation was used. RETRIEVEDOCVSPAN's output violates the subspace convention for mixed-content documents. The spec should mark this operation as producing a raw structural value, not a semantically meaningful V-span.
 
