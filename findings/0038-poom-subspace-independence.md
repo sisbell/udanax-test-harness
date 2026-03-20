@@ -5,17 +5,19 @@
 
 ## Summary
 
-A document's POOM maintains two independent V-address subspaces for text (1.x) and links (0.x/2.x). Operations in one subspace do not affect V-positions in the other subspace. Each maintains its own contiguous numbering independently.
+A document's POOM maintains two independent V-address subspaces for text (1.x) and links (2.x). Operations in one subspace do not affect V-positions in the other subspace. Each maintains its own contiguous numbering independently.
 
 ## V-Address Subspace Convention
 
 Documents use two V-address ranges:
-- **Text subspace**: V-positions 1.x (e.g., 1.1, 1.2, 1.50)
-- **Link subspace**: V-positions at 0.x or 2.x depending on context
+- **Text subspace**: V-positions 1.x (e.g., 1.1, 1.2, 1.50) — element field first component = 1
+- **Link subspace**: V-positions 2.x (e.g., 2.1, 2.2) — element field first component = 2
 
-### Context-Dependent Representation
+Per T4, element field components must be strictly positive. The `0` in tumbler notation (e.g., `N.0.U.0.D.V.0.2.1`) is a field separator, not part of the subspace identifier. The element field starts at `2`.
 
-The link subspace V-position varies by context:
+### Output Normalization
+
+**CAUTION:** `retrievedocvspanset` normalizes link V-positions to `0` in its output when text is also present. This is a display convention, NOT the internal V-address. The internal representation is always 2.x.
 
 1. **In `retrievedocvspanset` output when document has both text and links**:
    - Links appear at V-position "0" with width indicating link count/extent
@@ -65,7 +67,7 @@ Test scenario: Create document with text, add link, insert more text.
 - Create link with source at 1.1-1.5
 - Link ISA: `1.1.0.1.0.1.0.2.1`
 - Vspanset: `[{"start": "0", "width": "0.1"}, {"start": "1", "width": "1"}]`
-- Two independent spans: links at 0.x, text at 1.x
+- Two independent spans: links at 2.x (reported as 0 in normalized output), text at 1.x
 
 ### After Text Insertion
 - Insert "XXXXX" (5 characters) at V-position 1.5 (middle of existing text)
@@ -86,13 +88,13 @@ Test scenario: Create document with text, add link, insert more text.
 
 ## Key Observations
 
-1. **Independent numbering**: Text V-positions (1.x) and link V-positions (0.x/2.x) are maintained separately. Inserting text at 1.5 does not shift link positions.
+1. **Independent numbering**: Text V-positions (1.x) and link V-positions (2.x) are maintained separately. Inserting text at 1.5 does not shift link positions.
 
 2. **Contiguous within subspace**: Text maintains contiguous V-position numbering from 1.1 onward. Links maintain their own contiguous numbering (2.1, 2.2, ...).
 
 3. **No cross-subspace interference**: Operations in the text subspace (INSERT, DELETE) do not renumber or shift link V-positions. Each subspace evolves independently.
 
-4. **Normalized output**: When both subspaces are populated, `retrievedocvspanset` reports them as separate spans with normalized start positions (0 for links, 1 for text). When only one subspace is populated, it reports the actual V-position (e.g., 2.1 for links in an otherwise empty document).
+4. **Normalized output**: `retrievedocvspanset` normalizes link V-positions to `0` in output when text is also present. When only links are present, it reports the actual V-position (2.1). This is a display convention — the internal representation is always 2.x.
 
 ## Implementation Mechanism
 
@@ -115,8 +117,8 @@ This design enables:
 - **Efficient queries**: Link searches don't need to account for text insertion history
 
 However, it creates:
-- **Complexity in vspanset interpretation**: Callers must understand that "0" and "2.1" both refer to links depending on context
-- **Dual coordinate systems**: I-addresses use ".0.2.x" for links, but V-positions may report "0" or "2.x"
+- **Complexity in vspanset interpretation**: Callers must understand that `retrievedocvspanset` normalizes link V-positions to "0" in output, while the internal V-address is 2.x
+- **Notation confusion**: I-addresses like `1.1.0.1.0.1.0.2.1` have the `0` as a field separator — the element field is `2.1`, not `0.2.1`
 
 ## Related Findings
 

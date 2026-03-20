@@ -13,8 +13,10 @@ A document's virtual address space is partitioned:
 
 | V-Position | Subspace | Content |
 |------------|----------|---------|
-| 0.x | Link subspace | References to link orgls |
 | 1.x | Text subspace | Actual document content |
+| 2.x | Link subspace | References to link orgls |
+
+**NOTE (corrected by Finding 0038):** Links are internally stored at V-position 2.x, not 0.x. The `retrievedocvspanset` function normalizes link V-positions to `0` in output when text is also present, creating the appearance of a `0.x` subspace. The `0` in tumbler notation is a field separator (T4), not a subspace identifier.
 
 ### Evidence
 
@@ -38,7 +40,7 @@ When a link is created (`docreatelink` in do1.c:199-225):
 
 2. **Convert ISA to ispanset**: `tumbler2spanset()` wraps the link's ISA as an ispan
 
-3. **Find next link position**: `findnextlinkvsa()` returns the next available position in the 0.x subspace
+3. **Find next link position**: `findnextlinkvsa()` returns the next available position in the 2.x subspace (reported as 0.x in normalized output)
 
 4. **Copy link reference into document**: `docopy()` inserts the link's ISA at the 0.x position
 
@@ -60,7 +62,7 @@ This means:
 | What's Stored | V-Position | I-Address Type | Stored Via |
 |---------------|------------|----------------|------------|
 | Text characters | 1.x | Permascroll address | `docopy` / `doinsert` |
-| Link references | 0.x | Link orgl ISA | `docopy` |
+| Link references | 2.x | Link orgl ISA | `docopy` |
 
 This architectural unity is elegant but has consequences - it's a **leaky abstraction**.
 
@@ -84,8 +86,8 @@ The abstraction breaks down when **semantic differences** between V-subspaces ma
 | Operation | Assumption | Reality | Consequence |
 |-----------|------------|---------|-------------|
 | `compare_versions` | All I-addresses represent shared content | Link ISAs ≠ text I-addresses | Crash or meaningless intersection |
-| `retrieve_contents` | All I-addresses can be dereferenced to bytes | Link ISAs are references, not content | Would return gibberish for 0.x |
-| `find_links` | Needs to search only link subspace | Must filter to 0.x | Extra complexity |
+| `retrieve_contents` | All I-addresses can be dereferenced to bytes | Link ISAs are references, not content | Would return gibberish for 2.x |
+| `find_links` | Needs to search only link subspace | Must filter to 2.x | Extra complexity |
 | I-span intersection | I-addresses are comparable | Different address spaces | Empty intersection or crash |
 
 ### The Core Problem
@@ -132,7 +134,7 @@ The Xanadu architects had choices:
 - More complex but explicit
 
 **Option B: Uniform enfilade + convention** (chosen)
-- V-position encodes type (0.x = links, 1.x = text)
+- V-position encodes type (2.x = links, 1.x = text; output normalization may show links as 0.x)
 - Operations must "know" to filter appropriately
 - Simpler storage but implicit contract
 
@@ -166,7 +168,7 @@ There are fundamentally different types of I-addresses in the system:
 
 When `vspanset2ispanset()` converts V-spans to I-spans:
 - Text at 1.x → Permascroll I-addresses
-- Links at 0.x → Link orgl ISAs
+- Links at 2.x (reported as 0.x in normalized output) → Link orgl ISAs
 
 ## Implications for Version Comparison
 
@@ -217,7 +219,7 @@ This pattern suggests the original design expected each ispan to match at most o
 
 ## Recommendations
 
-1. **Document the subspace convention**: Position 0.x for links, 1.x for text should be formally documented
+1. **Document the subspace convention**: Position 2.x for links, 1.x for text should be formally documented (internal representation; output normalization reports links as 0.x)
 
 2. **Consider filtering**: Version comparison should probably filter to text subspace only, as comparing link references is semantically different from comparing content
 
@@ -275,7 +277,7 @@ Used when copying content to remember its provenance, enabling:
 ┌─────────────────────────────────────────────────────────────┐
 │                    Document Address Space                    │
 ├─────────────────────────────────────────────────────────────┤
-│  V-Position 0.x                    V-Position 1.x           │
+│  V-Position 2.x (links)            V-Position 1.x (text)    │
 │  ┌─────────────┐                   ┌─────────────────────┐  │
 │  │ Link        │                   │ Text Content        │  │
 │  │ Subspace    │                   │                     │  │
